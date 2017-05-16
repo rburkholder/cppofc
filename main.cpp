@@ -12,10 +12,12 @@
 #include <iomanip>
 
 #include <boost/asio.hpp>
-#include <boost/endian/arithmetic.hpp>
 
+#include <boost/endian/arithmetic.hpp>
 using namespace boost::endian;
 #include "openflow/openflow-spec1.4.1.h"
+
+#include "codecs/ofp_hello.h"
 
 using boost::asio::ip::tcp;
 
@@ -24,7 +26,7 @@ class session
 {
 public:
   session(tcp::socket socket)
-    : socket_(std::move(socket))
+    : m_socket(std::move(socket))
   {
   }
 
@@ -35,7 +37,7 @@ public:
 private:
   void do_read() {
     auto self(shared_from_this());
-    socket_.async_read_some(boost::asio::buffer(m_packet, max_length),
+    m_socket.async_read_some(boost::asio::buffer(m_packet, max_length),
         [this, self](boost::system::error_code ec, std::size_t length)
         {
           if (!ec)
@@ -54,6 +56,14 @@ private:
             std::cout << "'" <<std::dec << std::endl;
             ofp_header* pHeader = new(m_packet) ofp_header;
             std::cout << pHeader->version << "," << pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
+            if ( 0x05 == pHeader->version ) {
+              switch (pHeader->type) {
+                case 0:
+                  ofp_hello* pHello = new(m_packet) ofp_hello;
+                  break;
+              }
+            }
+        
           }
           else {
               std::cout << "error: " << ec.message() << std::endl;
@@ -63,7 +73,7 @@ private:
 
   void do_write(std::size_t length) {
     auto self(shared_from_this());
-    boost::asio::async_write(socket_, boost::asio::buffer(m_packet, length),
+    boost::asio::async_write(m_socket, boost::asio::buffer(m_packet, length),
         [this, self](boost::system::error_code ec, std::size_t /*length*/)
         {
           if (!ec)
@@ -73,7 +83,7 @@ private:
         });
   }
 
-  tcp::socket socket_;
+  tcp::socket m_socket;
   enum { max_length = 1024 };
   char m_packet[max_length];
 };
