@@ -1,0 +1,9 @@
+diff openflow-spec1.4.1.h openflow-spec1.4.1.h.original
+sed -i 's/\bint32_t\b/big_int32_t/g' openflow-spec1.4.1.h
+sed -i 's/\buint32_t\b/big_uint32_t/g' openflow-spec1.4.1.h
+sed -i 's/\buint16_t\b/big_uint16_t/g' openflow-spec1.4.1.h
+sed -i 's/\bint16_t\b/big_int16_t/g' openflow-spec1.4.1.h
+sed -i 's/\bint8_t\b/big_int8_t/g' openflow-spec1.4.1.h
+sed -i 's/\buint8_t\b/big_uint8_t/g' openflow-spec1.4.1.h
+sed -i 's/\bint64_t\b/big_int64_t/g' openflow-spec1.4.1.h
+sed -i 's/\buint64_t\b/big_uint64_t/g' openflow-spec1.4.1.h
