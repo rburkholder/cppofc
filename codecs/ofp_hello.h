@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   ofp_hello.h
  * Author: vagrant
@@ -14,21 +8,33 @@
 #ifndef OFP_HELLO_H
 #define OFP_HELLO_H
 
-#include <boost/endian/arithmetic.hpp>
-using namespace boost::endian;
+#include <functional>
+
 #include "../openflow/openflow-spec1.4.1.h"
 
 namespace codec {
 
-class ofp_hello_codec {
+class ofp_hello {
+  const ofp141::ofp_hello& m_packet;
 public:
-  ofp_hello_codec( ofp_hello& packet );
-  virtual ~ofp_hello_codec();
-private:
+  ofp_hello( const ofp141::ofp_hello& packet );
+  virtual ~ofp_hello();
+  
+  auto Version() const { return m_packet.header.version; }
+  
 
+  bool Supported( uint8_t version ) const;
+
+private:
+  typedef std::function<void(const ofp141::ofp_hello_elem_header&)> funcElemeHeader_t;
+
+  uint64_t m_bitmap;
+
+  void Elements( funcElemeHeader_t f ) const;
+  void Decode( const ofp141::ofp_hello_elem_header& );
 };
 
-}
+} // namespace codec
 
 #endif /* OFP_HELLO_H */
 

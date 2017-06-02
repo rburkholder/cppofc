@@ -34,8 +34,8 @@
 
 /* OpenFlow: protocol between controller and datapath. */
 
-#ifndef OPENFLOW_OPENFLOW_H
-#define OPENFLOW_OPENFLOW_H 1
+#ifndef OPENFLOW_OPENFLOW_141_H
+#define OPENFLOW_OPENFLOW_141_H 1
 
 #ifdef __KERNEL__
 #include <linux/types.h>
@@ -60,6 +60,12 @@
 #define OFP_PACKED              /* SWIG doesn't understand __attribute. */
 #endif
 
+#include <boost/endian/arithmetic.hpp>
+
+namespace ofp141 {
+    
+using namespace boost::endian;
+    
 /* Version number:
  * OpenFlow versions released: 0x01 = 1.0 ; 0x02 = 1.1 ; 0x03 = 1.2
  *     0x04 = 1.3.X ; 0x05 = 1.4.X
@@ -3098,5 +3104,7 @@ struct ofp_bundle_add_msg {
     //struct ofp_bundle_prop_header properties[0]; /* Zero or more properties. */
 };
 OFP_ASSERT(sizeof(struct ofp_bundle_add_msg) == 24);
+
+} // namespace
 
 #endif /* openflow/openflow.h */

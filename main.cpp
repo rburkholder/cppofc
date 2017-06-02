@@ -54,12 +54,13 @@ private:
               std::cout << upper << lower << " ";
             }
             std::cout << "'" <<std::dec << std::endl;
-            ofp_header* pHeader = new(m_packet) ofp_header;
-            std::cout << pHeader->version << "," << pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
+            auto pHeader = new(m_packet) ofp141::ofp_header;
+            std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
             if ( 0x05 == pHeader->version ) {
               switch (pHeader->type) {
                 case 0:
-                  ofp_hello* pHello = new(m_packet) ofp_hello;
+                  const auto pHello = new(m_packet) ofp141::ofp_hello;
+                  codec::ofp_hello hello( *pHello );
                   break;
               }
             }
