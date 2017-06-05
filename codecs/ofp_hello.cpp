@@ -1,6 +1,7 @@
 /* 
  * File:   ofp_hello.cpp
- * Author: vagrant
+ * Author: Raymond Burkholder
+ *         raymond@burkholder.net
  * 
  * Created on May 16, 2017, 4:40 PM
  */
@@ -10,11 +11,11 @@
 #include "ofp_hello.h"
 
 namespace codec {
-
+  
 ofp_hello::ofp_hello( const ofp141::ofp_hello& packet )
 : m_packet( packet ), m_bitmap( 0 )
 {
-  std::cout << "hello: " << packet.header.length << "," << sizeof( ofp141::ofp_header ) << std::endl;
+  std::cout << "ofp_hello: " << packet.header.length << "," << sizeof( ofp141::ofp_header ) << std::endl;
   Elements( [this]( const ofp141::ofp_hello_elem_header& element ) { Decode( element ); } );
 }
 
@@ -32,6 +33,7 @@ void ofp_hello::Elements( funcElemeHeader_t f ) const {
 }
 
 void ofp_hello::Decode(const ofp141::ofp_hello_elem_header& element ) {
+  // TODO:  logic in this whole thing needs to be redone for flexibility
   switch ( element.type ) {
     case ofp141::OFPHET_VERSIONBITMAP:
       auto& elem_versionbitmap( (const ofp141::ofp_hello_elem_versionbitmap&) element );
@@ -39,27 +41,29 @@ void ofp_hello::Decode(const ofp141::ofp_hello_elem_header& element ) {
       //auto nAllZero = (elem_versionbitmap.length + 7)/8*8 - elem_versionbitmap.length;
       m_bitmap = {};
       auto p = elem_versionbitmap.bitmaps;
-      for ( size_t ix = 0; ix < nBytes/4 && ix < 2; ix++ ) {
-        switch ( ix ) {
-          case 0: 
-            m_bitmap |= (uint64_t)( p[ix] );
-            break;
-          case 1:
-            m_bitmap |= (uint64_t)( p[ix] ) << 32;
-            break;
+      if ( sizeof( uint32_t) <= nBytes ) {
+        m_bitmap = *p;
+        auto value = OFP_VERSION;  // this is going to cause problems with multiple versioned headers
+        if ( !Supported( value ) ) {
+          throw std::runtime_error( "Requires version 1.4.1: " );
         }
       }
-      auto value = OFP_VERSION;  // this is going to cause problems with multiple versioned headers
-      if ( !Supported( value ) ) {
-        throw std::runtime_error( "Requires version 1.4.1: " );
+      else {
+        throw std::runtime_error( "no bitmap found" );
       }
-      
   }
 }
 
 bool ofp_hello::Supported( uint8_t version ) const {
-  uint64_t temp = 1;
-  return 0 < ( temp << version );
+  uint32_t temp = 1;
+  auto result = ( temp << version ) & m_bitmap;
+  return 0 < result;
+}
+
+void ofp_hello::Create( vChar_t& v ) {
+  v.resize( sizeof( ofp_hello_ ) );
+  auto* p = new( v.data() ) ofp_hello_;
+  p->init();
 }
 
 } // namespace codec

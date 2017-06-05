@@ -4,6 +4,8 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>codecs/common.h</itemPath>
+      <itemPath>codecs/ofp_header.h</itemPath>
       <itemPath>codecs/ofp_hello.h</itemPath>
       <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
     </logicalFolder>
@@ -15,6 +17,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>main.cpp</itemPath>
+      <itemPath>codecs/ofp_header.cpp</itemPath>
       <itemPath>codecs/ofp_hello.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
@@ -51,6 +54,12 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="codecs/common.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_header.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_header.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
@@ -80,6 +89,12 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="codecs/common.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_header.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_header.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
