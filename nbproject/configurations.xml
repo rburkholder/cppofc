@@ -7,7 +7,9 @@
       <itemPath>codecs/common.h</itemPath>
       <itemPath>codecs/ofp_header.h</itemPath>
       <itemPath>codecs/ofp_hello.h</itemPath>
+      <itemPath>codecs/ofp_switch_features.h</itemPath>
       <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
+      <itemPath>tcp_session.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -19,6 +21,8 @@
       <itemPath>main.cpp</itemPath>
       <itemPath>codecs/ofp_header.cpp</itemPath>
       <itemPath>codecs/ofp_hello.cpp</itemPath>
+      <itemPath>codecs/ofp_switch_features.cpp</itemPath>
+      <itemPath>tcp_session.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -64,9 +68,17 @@
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="tcp_session.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tcp_session.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -99,9 +111,17 @@
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="tcp_session.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="tcp_session.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>
