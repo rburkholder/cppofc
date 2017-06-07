@@ -10,6 +10,7 @@
 #include <iomanip>
 
 #include "codecs/common.h"
+#include "codecs/ofp_header.h"
 #include "codecs/ofp_hello.h"
 #include "codecs/ofp_switch_features.h"
 
@@ -61,6 +62,20 @@ void tcp_session::do_read() {
               case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
                 const auto pReply = new(m_vRx.data()) ofp141::ofp_switch_features;
                 codec::ofp_switch_features features( *pReply );
+                }
+                break;
+              case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
+                const auto pEcho = new(m_vRx.data()) ofp141::ofp_header;
+                vChar_t v;
+                v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+                auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+                p->init();
+                p->type = ofp141::ofp_type::OFPT_ECHO_REPLY;
+                p->xid = pEcho->xid;
+                if ( pEcho->length != p->length ) {
+                  std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
+                }
+                QueueTxToWrite( std::move( v ) );
                 }
                 break;
               default:
