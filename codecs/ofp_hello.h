@@ -14,6 +14,7 @@
 #include <array>
 
 #include <boost/asio/buffer.hpp>
+#include <boost/endian/arithmetic.hpp>
 
 #include "../openflow/openflow-spec1.4.1.h"
 
@@ -28,9 +29,9 @@ class ofp_hello {
 public:
 
   struct ofp_hello_elem_versionbitmap {
-    typedef uint32_t bitmap_t;
-    uint16_t type;
-    uint16_t length;
+    typedef boost::endian::big_uint32_t bitmap_t;
+    boost::endian::big_uint16_t type;
+    boost::endian::big_uint16_t length;
     bitmap_t bitmap[ 1 ];
     // will need more bytes when bitmap size > 1
     void init( void ) {
@@ -59,7 +60,7 @@ public:
 
   bool Supported( uint8_t version ) const;
   
-  static void Create( vChar_t& );
+  static vChar_t Create( vChar_t v);
 
 private:
   

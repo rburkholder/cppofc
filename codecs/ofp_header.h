@@ -12,6 +12,8 @@
 
 #include <cstdint>
 
+#include <boost/endian/arithmetic.hpp>
+
 #include "../openflow/openflow-spec1.4.1.h"
 
 // page 56 of version 1.4.1
@@ -21,10 +23,10 @@ namespace codec {
   public:
     
     struct ofp_header_ {
-      uint8_t version;
-      uint8_t type;
-      uint16_t length;
-      uint32_t xid;
+      boost::endian::big_uint8_t version;
+      boost::endian::big_uint8_t type;
+      boost::endian::big_uint16_t length;
+      boost::endian::big_uint32_t xid;
       void init() { 
         version = OFP_VERSION;
         type = ofp141::ofp_type::OFPT_HELLO; // will be overwritten with other types
@@ -34,8 +36,8 @@ namespace codec {
     };
     OFP_ASSERT(sizeof(ofp_header_) == 8);
     
-    void NewXid( ofp_header_& );
-    void CopyXid( const ofp_header_&, ofp_header_& );
+    static void NewXid( ofp_header_& );
+    static void CopyXid( const ofp_header_&, ofp_header_& );
   private:
     static uint32_t m_xid;
 };

@@ -60,10 +60,11 @@ bool ofp_hello::Supported( uint8_t version ) const {
   return 0 < result;
 }
 
-void ofp_hello::Create( vChar_t& v ) {
+vChar_t ofp_hello::Create( vChar_t v ) {
   v.resize( sizeof( ofp_hello_ ) );
   auto* p = new( v.data() ) ofp_hello_;
   p->init();
+  return v;
 }
 
 } // namespace codec

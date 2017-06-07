@@ -11,6 +11,8 @@
 
 #include "../openflow/openflow-spec1.4.1.h"
 
+#include "common.h"
+
 namespace codec {
 
 // page 83 of v1.4.1
@@ -19,6 +21,8 @@ class ofp_switch_features {
 public:
   ofp_switch_features( const ofp141::ofp_switch_features& packet );
   virtual ~ofp_switch_features( );
+  
+  static vChar_t CreateRequest( vChar_t );
 private:
 
 };
