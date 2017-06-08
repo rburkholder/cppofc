@@ -10,17 +10,27 @@
 
 #include "ofp_header.h"
 #include "ofp_switch_features.h"
+#include "datapathid.h"
 
 namespace codec {
 
 ofp_switch_features::ofp_switch_features( const ofp141::ofp_switch_features& packet )
 : m_packet( packet )
 {
+  datapathid id( packet.datapath_id );
   std::cout << "ofp_features: " 
-    << packet.datapath_id << "," 
+    << id << "," 
     << packet.n_buffers << ","
-    << packet.n_tables << ","
-    << packet.capabilities 
+    << (uint16_t)packet.n_tables << ","
+    << "FS=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_FLOW_STATS) ? "1" : "0") << ","
+    << "TS=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_TABLE_STATS) ? "1" : "0") << ","
+    << "PS=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_PORT_STATS) ? "1" : "0") << ","
+    << "GS=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_GROUP_STATS) ? "1" : "0") << ","
+    << "IP=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_IP_REASM) ? "1" : "0") << ","
+    << "QS=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_QUEUE_STATS) ? "1" : "0") << ","
+    << "PB=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_PORT_BLOCKED) ? "1" : "0") << ","
+    << "BU=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_BUNDLES) ? "1" : "0") << ","
+    << "FM=" << ((packet.capabilities & ofp141::ofp_capabilities::OFPC_FLOW_MONITORING) ? "1" : "0")
     << std::endl;
 }
 
