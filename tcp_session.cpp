@@ -15,6 +15,7 @@
 #include "codecs/ofp_switch_features.h"
 
 #include "tcp_session.h"
+#include "codecs/ofp_async_config.h"
 
 void tcp_session::start() {
   std::cout << "start begin: " << std::endl;
@@ -31,6 +32,8 @@ void tcp_session::do_read() {
       [this, self](boost::system::error_code ec, std::size_t length)
       {
         //std::cout << "async_read begin: " << std::endl;
+        // NOTE:  multiple responses may occur in same packet, so may need to
+        //   sequentially process the results
         if (!ec) {
           static const char hex[] = "01234567890abcdef";
           std::cout << "read: " << length << "='";
@@ -56,13 +59,22 @@ void tcp_session::do_read() {
                 //  then send hello back
                 QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
                 QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
-                //do_write();
+                
                 }
                 break;
               case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
                 const auto pReply = new(m_vRx.data()) ofp141::ofp_switch_features;
                 codec::ofp_switch_features features( *pReply );
-                }
+
+                // 1.4.1 page 138
+                vChar_t v;
+                v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+                auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+                p->init();
+                p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
+                codec::ofp_header::NewXid( *p );
+                QueueTxToWrite( std::move( v ) );
+              }
                 break;
               case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
                 const auto pEcho = new(m_vRx.data()) ofp141::ofp_header;
@@ -76,6 +88,15 @@ void tcp_session::do_read() {
                   std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
                 }
                 QueueTxToWrite( std::move( v ) );
+                }
+                break;
+              case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
+                const auto pAsyncReply = new(m_vRx.data()) ofp141::ofp_async_config;
+                codec::ofp_async_config config( *pAsyncReply );
+                }
+                break;
+              case ofp141::ofp_type::OFPT_PORT_STATUS: {
+                
                 }
                 break;
               default:
@@ -135,7 +156,7 @@ void tcp_session::do_write() {
         UnloadTxInWrite();
 //        std::cout << "do_write atomic: " << 
         if ( 2 <= m_transmitting.fetch_sub( 1, std::memory_order_release ) ) {
-          std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+          //std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
           LoadTxInWrite();
           do_write();
         }

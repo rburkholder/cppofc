@@ -36,6 +36,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/codecs/datapathid.o \
+	${OBJECTDIR}/codecs/ofp_async_config.o \
 	${OBJECTDIR}/codecs/ofp_header.o \
 	${OBJECTDIR}/codecs/ofp_hello.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
@@ -71,6 +72,11 @@ ${OBJECTDIR}/codecs/datapathid.o: codecs/datapathid.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/datapathid.o codecs/datapathid.cpp
+
+${OBJECTDIR}/codecs/ofp_async_config.o: codecs/ofp_async_config.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
 
 ${OBJECTDIR}/codecs/ofp_header.o: codecs/ofp_header.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
