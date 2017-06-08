@@ -22,9 +22,9 @@ ofp_hello::ofp_hello( const ofp141::ofp_hello& packet )
 ofp_hello::~ofp_hello() {
 }
 
-void ofp_hello::Elements( funcElemeHeader_t f ) const {
-  auto end = (uint8_t*)m_packet.elements + m_packet.header.length - sizeof( ofp141::ofp_header );
+void ofp_hello::Elements( funcElementHeader_t f ) const {
   auto   p = (uint8_t*)m_packet.elements;
+  auto end = (uint8_t*)m_packet.elements + m_packet.header.length - sizeof( ofp141::ofp_header );
   while ( p < end ) {
     auto p2 = (ofp141::ofp_hello_elem_header*) p;
     f( *p2 );

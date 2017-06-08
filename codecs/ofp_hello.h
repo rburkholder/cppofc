@@ -64,11 +64,11 @@ public:
 
 private:
   
-  typedef std::function<void(const ofp141::ofp_hello_elem_header&)> funcElemeHeader_t;
+  typedef std::function<void(const ofp141::ofp_hello_elem_header&)> funcElementHeader_t;
 
   uint32_t m_bitmap;
   
-  void Elements( funcElemeHeader_t f ) const;
+  void Elements( funcElementHeader_t f ) const;
   void Decode( const ofp141::ofp_hello_elem_header& );
   //void Encode( std::array)
 };
