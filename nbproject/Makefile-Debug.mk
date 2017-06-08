@@ -37,8 +37,10 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/codecs/datapathid.o \
 	${OBJECTDIR}/codecs/ofp_async_config.o \
+	${OBJECTDIR}/codecs/ofp_flow_mod.o \
 	${OBJECTDIR}/codecs/ofp_header.o \
 	${OBJECTDIR}/codecs/ofp_hello.o \
+	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/tcp_session.o
@@ -78,6 +80,11 @@ ${OBJECTDIR}/codecs/ofp_async_config.o: codecs/ofp_async_config.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
 
+${OBJECTDIR}/codecs/ofp_flow_mod.o: codecs/ofp_flow_mod.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
+
 ${OBJECTDIR}/codecs/ofp_header.o: codecs/ofp_header.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
@@ -87,6 +94,11 @@ ${OBJECTDIR}/codecs/ofp_hello.o: codecs/ofp_hello.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
+
+${OBJECTDIR}/codecs/ofp_port_status.o: codecs/ofp_port_status.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_port_status.o codecs/ofp_port_status.cpp
 
 ${OBJECTDIR}/codecs/ofp_switch_features.o: codecs/ofp_switch_features.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs

@@ -7,8 +7,10 @@
       <itemPath>codecs/common.h</itemPath>
       <itemPath>codecs/datapathid.h</itemPath>
       <itemPath>codecs/ofp_async_config.h</itemPath>
+      <itemPath>codecs/ofp_flow_mod.h</itemPath>
       <itemPath>codecs/ofp_header.h</itemPath>
       <itemPath>codecs/ofp_hello.h</itemPath>
+      <itemPath>codecs/ofp_port_status.h</itemPath>
       <itemPath>codecs/ofp_switch_features.h</itemPath>
       <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
       <itemPath>tcp_session.h</itemPath>
@@ -23,8 +25,10 @@
       <itemPath>codecs/datapathid.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>codecs/ofp_async_config.cpp</itemPath>
+      <itemPath>codecs/ofp_flow_mod.cpp</itemPath>
       <itemPath>codecs/ofp_header.cpp</itemPath>
       <itemPath>codecs/ofp_hello.cpp</itemPath>
+      <itemPath>codecs/ofp_port_status.cpp</itemPath>
       <itemPath>codecs/ofp_switch_features.cpp</itemPath>
       <itemPath>tcp_session.cpp</itemPath>
     </logicalFolder>
@@ -73,6 +77,10 @@
       </item>
       <item path="codecs/ofp_async_config.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/ofp_flow_mod.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_flow_mod.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/ofp_header.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_header.h" ex="false" tool="3" flavor2="0">
@@ -80,6 +88,10 @@
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_port_status.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_port_status.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -124,6 +136,10 @@
       </item>
       <item path="codecs/ofp_async_config.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/ofp_flow_mod.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_flow_mod.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/ofp_header.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_header.h" ex="false" tool="3" flavor2="0">
@@ -131,6 +147,10 @@
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_port_status.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_port_status.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
       </item>

@@ -13,9 +13,10 @@
 #include "codecs/ofp_header.h"
 #include "codecs/ofp_hello.h"
 #include "codecs/ofp_switch_features.h"
+#include "codecs/ofp_async_config.h"
+#include "codecs/ofp_port_status.h"
 
 #include "tcp_session.h"
-#include "codecs/ofp_async_config.h"
 
 void tcp_session::start() {
   std::cout << "start begin: " << std::endl;
@@ -74,7 +75,8 @@ void tcp_session::do_read() {
                 p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
                 codec::ofp_header::NewXid( *p );
                 QueueTxToWrite( std::move( v ) );
-              }
+                
+                }
                 break;
               case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
                 const auto pEcho = new(m_vRx.data()) ofp141::ofp_header;
@@ -96,7 +98,10 @@ void tcp_session::do_read() {
                 }
                 break;
               case ofp141::ofp_type::OFPT_PORT_STATUS: {
-                
+                // multiple messages stacked, so need to change code in this whole section 
+                //   to sequentially parse the inbound bytes
+                const auto pStatus = new(m_vRx.data()) ofp141::ofp_port_status;
+                codec::ofp_port_status status( *pStatus );
                 }
                 break;
               default:
