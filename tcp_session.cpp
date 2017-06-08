@@ -32,7 +32,7 @@ void tcp_session::do_read() {
       {
         //std::cout << "async_read begin: " << std::endl;
         if (!ec) {
-          char hex[] = "01234567890abcdef";
+          static const char hex[] = "01234567890abcdef";
           std::cout << "read: " << length << "='";
           //do_write(length);
           std::cout << std::showbase << std::internal << std::setfill('0');
@@ -127,7 +127,7 @@ void tcp_session::do_read() {
 
 void tcp_session::do_write() {
   auto self(shared_from_this());
-  std::cout << "do_write start: " << std::endl;
+  //std::cout << "do_write start: " << std::endl;
   boost::asio::async_write(
     m_socket, boost::asio::buffer( m_vTxInWrite ),
       [this, self](boost::system::error_code ec, std::size_t len )
@@ -139,7 +139,7 @@ void tcp_session::do_write() {
           LoadTxInWrite();
           do_write();
         }
-        std::cout << "do_write complete:" << ec << "," << len << std::endl;
+        //std::cout << "do_write complete:" << ec << "," << len << std::endl;
         //if (!ec) {
         //  do_read();
         //}
@@ -167,14 +167,14 @@ vChar_t tcp_session::GetAvailableBuffer() {
 
 void tcp_session::QueueTxToWrite( vChar_t v ) {
   std::unique_lock<std::mutex> lock( m_mutex );
-  std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+  //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
   if ( 0 == m_transmitting.fetch_add( 1, std::memory_order_acquire ) ) {
-    std::cout << "QTTW1: " << std::endl;
+    //std::cout << "QTTW1: " << std::endl;
     m_vTxInWrite = std::move( v );
     do_write();
   }
   else {
-    std::cout << "QTTW2: " << std::endl;
+    //std::cout << "QTTW2: " << std::endl;
     m_qTxBuffersToBeWritten.push( std::move( v ) );
     //m_qTxBuffersToBeProcessed.push( std::move( v ) );
     //m_qTxBuffersToBeWritten.back() = std::move( v );
@@ -183,7 +183,7 @@ void tcp_session::QueueTxToWrite( vChar_t v ) {
 
 void tcp_session::LoadTxInWrite() {
   std::unique_lock<std::mutex> lock( m_mutex );
-  std::cout << "LoadTxInWrite: " << std::endl;
+  //std::cout << "LoadTxInWrite: " << std::endl;
   //assert( 0 < m_transmitting.load( std::memory_order_acquire ) );
   m_vTxInWrite = std::move( m_qTxBuffersToBeWritten.front() );
   m_qTxBuffersToBeWritten.pop();
@@ -191,7 +191,7 @@ void tcp_session::LoadTxInWrite() {
 
 void tcp_session::UnloadTxInWrite() {
   std::unique_lock<std::mutex> lock( m_mutex );
-  std::cout << "UnloadTxInWrite: " << std::endl;
+  //std::cout << "UnloadTxInWrite: " << std::endl;
   m_vTxInWrite.clear();
   m_qBuffersAvailable.push( std::move( m_vTxInWrite ) );
 
