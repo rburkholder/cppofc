@@ -15,6 +15,7 @@
 #include "codecs/ofp_switch_features.h"
 #include "codecs/ofp_async_config.h"
 #include "codecs/ofp_port_status.h"
+#include "codecs/ofp_flow_mod.h"
 
 #include "tcp_session.h"
 
@@ -61,6 +62,26 @@ void tcp_session::do_read() {
                 QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
                 QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
                 
+                struct add_table_miss_flow {
+                  codec::ofp_flow_mod::ofp_flow_mod_ mod;
+                  codec::ofp_flow_mod::ofp_match_ match;
+                  codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+                  codec::ofp_flow_mod::ofp_action_output_ action;
+                  void init() {
+                    mod.init();
+                    match.init();
+                    actions.init();
+                    action.init();
+                    mod.header.length = sizeof( add_table_miss_flow );
+                    actions.len += sizeof( action );
+                  }
+                };
+                vChar_t v;
+                v.resize( sizeof( add_table_miss_flow ) );
+                auto pMod = new( v.data() ) add_table_miss_flow; 
+                pMod->init();
+                pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                QueueTxToWrite( std::move( v ) );
                 }
                 break;
               case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
