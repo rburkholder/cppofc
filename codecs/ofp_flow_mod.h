@@ -55,10 +55,10 @@ public:
   // pg 89 v1.4.1 s7.3.4.2
   struct ofp_flow_mod_: public ofp141::ofp_flow_mod {
     void init() {
-      auto p = new( &header ) codec::ofp_header::ofp_header_;
-      p->init();
-      p->type = ofp141::ofp_type::OFPT_FLOW_MOD;
-      codec::ofp_header::NewXid( *p );
+      auto pHeader = new( &header ) codec::ofp_header::ofp_header_;
+      pHeader->init();
+      header.type = ofp141::ofp_type::OFPT_FLOW_MOD;
+      codec::ofp_header::NewXid( *pHeader );
       cookie = 0;
       cookie_mask = 0;
       table_id = 0;
@@ -75,6 +75,8 @@ public:
         0
         ;
       importance = 0;
+      auto pMask = new( &match ) codec::ofp_flow_mod::ofp_match_;
+      pMask->init();
     }
   };
   

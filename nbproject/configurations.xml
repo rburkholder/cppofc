@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>codecs/common.h</itemPath>
       <itemPath>codecs/datapathid.h</itemPath>
+      <itemPath>hexdump.h</itemPath>
       <itemPath>codecs/ofp_async_config.h</itemPath>
       <itemPath>codecs/ofp_flow_mod.h</itemPath>
       <itemPath>codecs/ofp_header.h</itemPath>
@@ -97,6 +98,8 @@
       </item>
       <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="hexdump.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
@@ -155,6 +158,8 @@
       <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="hexdump.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>

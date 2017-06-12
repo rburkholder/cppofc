@@ -17,6 +17,7 @@
 #include "codecs/ofp_port_status.h"
 #include "codecs/ofp_flow_mod.h"
 
+#include "hexdump.h"
 #include "tcp_session.h"
 
 void tcp_session::start() {
@@ -37,108 +38,124 @@ void tcp_session::do_read() {
         // NOTE:  multiple responses may occur in same packet, so may need to
         //   sequentially process the results
         if (!ec) {
-          static const char hex[] = "01234567890abcdef";
-          std::cout << "read: " << length << "='";
-          //do_write(length);
-          std::cout << std::showbase << std::internal << std::setfill('0');
-          for ( int ix = 0; ix < length; ++ix ) {
-            uint8_t c = m_vRx[ix];
-            char upper = hex[ c >> 4 ];
-            char lower = hex[ c & 0x0f ];
-              //std::cout << std::hex << std::setw(2) << (uint16_t)data_[ix] << " ";
-            std::cout << upper << lower << " ";
-          }
-          std::cout << "'" <<std::dec << std::endl;
-          auto pHeader = new(m_vRx.data()) ofp141::ofp_header;
-          std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
-          if ( OFP_VERSION == pHeader->version ) {
-            switch (pHeader->type) {
-              case ofp141::ofp_type::OFPT_HELLO: {
-                // need to wrap following in try/catch
-                const auto pHello = new(m_vRx.data()) ofp141::ofp_hello;
-                codec::ofp_hello hello( *pHello );
-                // do some processing
-                //  then send hello back
-                QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
-                QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
-                
-                struct add_table_miss_flow {
-                  codec::ofp_flow_mod::ofp_flow_mod_ mod;
-                  codec::ofp_flow_mod::ofp_match_ match;
-                  codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-                  codec::ofp_flow_mod::ofp_action_output_ action;
-                  void init() {
-                    mod.init();
-                    match.init();
-                    actions.init();
-                    action.init();
-                    mod.header.length = sizeof( add_table_miss_flow );
-                    actions.len += sizeof( action );
-                  }
-                };
-                vChar_t v;
-                v.resize( sizeof( add_table_miss_flow ) );
-                auto pMod = new( v.data() ) add_table_miss_flow; 
-                pMod->init();
-                pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
-                QueueTxToWrite( std::move( v ) );
-                }
-                break;
-              case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
-                const auto pReply = new(m_vRx.data()) ofp141::ofp_switch_features;
-                codec::ofp_switch_features features( *pReply );
+          std::cout << "*** total read length: " << length << std::endl;
+          
+          auto* p = m_vRx.data();
+          auto* pEnd = p + length;
 
-                // 1.4.1 page 138
-                vChar_t v;
-                v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
-                auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
-                p->init();
-                p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
-                codec::ofp_header::NewXid( *p );
-                QueueTxToWrite( std::move( v ) );
-                
-                }
-                break;
-              case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
-                const auto pEcho = new(m_vRx.data()) ofp141::ofp_header;
-                vChar_t v;
-                v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
-                auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
-                p->init();
-                p->type = ofp141::ofp_type::OFPT_ECHO_REPLY;
-                p->xid = pEcho->xid;
-                if ( pEcho->length != p->length ) {
-                  std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
-                }
-                QueueTxToWrite( std::move( v ) );
-                }
-                break;
-              case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
-                const auto pAsyncReply = new(m_vRx.data()) ofp141::ofp_async_config;
-                codec::ofp_async_config config( *pAsyncReply );
-                }
-                break;
-              case ofp141::ofp_type::OFPT_PORT_STATUS: {
-                // multiple messages stacked, so need to change code in this whole section 
-                //   to sequentially parse the inbound bytes
-                const auto pStatus = new(m_vRx.data()) ofp141::ofp_port_status;
-                codec::ofp_port_status status( *pStatus );
-                }
-                break;
-              default:
-                std::cout << "do_read unprocessed packet type: " << (uint16_t)pHeader->type << std::endl;
-                break;
+          while ( p < pEnd ) {
+            
+            assert( sizeof( ofp141::ofp_header ) <= pEnd - p );
+            
+            auto pHeader = new( p ) ofp141::ofp_header;
+            assert( pHeader->length <= pEnd - p );
+
+            std::cout << "IN: ";
+            HexDump( std::cout, p, p + pHeader->length );
+            
+            std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
+            if ( OFP_VERSION == pHeader->version ) {
+              switch (pHeader->type) {
+                case ofp141::ofp_type::OFPT_HELLO: {
+                  // need to wrap following in try/catch
+                  const auto pHello = new(p) ofp141::ofp_hello;
+                  codec::ofp_hello hello( *pHello );
+                  // do some processing
+                  //  then send hello back
+                  QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
+                  QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
+
+                  struct add_table_miss_flow {
+                    codec::ofp_flow_mod::ofp_flow_mod_ mod;
+                    //codec::ofp_flow_mod::ofp_match_ match;
+                    codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+                    codec::ofp_flow_mod::ofp_action_output_ action;
+                    void init() {
+                      mod.init();
+                      //match.init();
+                      actions.init();
+                      action.init();
+                      mod.header.length = sizeof( add_table_miss_flow );
+                      actions.len += sizeof( action );
+                    }
+                  };
+                  vChar_t v = std::move( GetAvailableBuffer() );
+                  v.resize( sizeof( add_table_miss_flow ) );
+                  auto pMod = new( v.data() ) add_table_miss_flow; 
+                  pMod->init();
+                  pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                  std::cout << "MissFlow: ";
+                  HexDump( std::cout, v.begin(), v.end() );
+                  QueueTxToWrite( std::move( v ) );
+                  }
+                  break;
+                case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
+                  const auto pError = new(p) ofp141::ofp_error_msg;
+                  std::cout 
+                    << "Error type " << pError->type 
+                    << " code " << pError->code 
+                    << std::endl;
+                  break;
+                  }
+                case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
+                  const auto pReply = new(p) ofp141::ofp_switch_features;
+                  codec::ofp_switch_features features( *pReply );
+
+                  // 1.4.1 page 138
+                  vChar_t v;
+                  v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+                  auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+                  p->init();
+                  p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
+                  codec::ofp_header::NewXid( *p );
+                  QueueTxToWrite( std::move( v ) );
+
+                  }
+                  break;
+                case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
+                  const auto pEcho = new(p) ofp141::ofp_header;
+                  vChar_t v;
+                  v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+                  auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+                  p->init();
+                  p->type = ofp141::ofp_type::OFPT_ECHO_REPLY;
+                  p->xid = pEcho->xid;
+                  if ( pEcho->length != p->length ) {
+                    std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
+                  }
+                  QueueTxToWrite( std::move( v ) );
+                  }
+                  break;
+                case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
+                  const auto pAsyncReply = new(p) ofp141::ofp_async_config;
+                  codec::ofp_async_config config( *pAsyncReply );
+                  }
+                  break;
+                case ofp141::ofp_type::OFPT_PORT_STATUS: {
+                  // multiple messages stacked, so need to change code in this whole section 
+                  //   to sequentially parse the inbound bytes
+                  const auto pStatus = new(p) ofp141::ofp_port_status;
+                  codec::ofp_port_status status( *pStatus );
+                  }
+                  break;
+                default:
+                  std::cout << "do_read unprocessed packet type: " << (uint16_t)pHeader->type << std::endl;
+                  break;
+              }
             }
-          }
-          else {
-            std::cout << "do_read no match on version: " << (uint16_t)pHeader->version << std::endl;
-          }
-          //do_read();  // keep the socket open with another read
-        }
+            else {
+              std::cout << "do_read no match on version: " << (uint16_t)pHeader->version << std::endl;
+            }
+            //do_read();  // keep the socket open with another read
+            
+            
+            p += pHeader->length;
+          }  // end while     
+        } // end if ( ec )
         else {
             //std::cout << "read error: " << ec.message() << std::endl;
             // do we do another read or let it close implicitly or close explicitly?
-        }
+        } // end else ( ec )
         //std::cout << "async_read end: " << std::endl;
         do_read();
       }); // end lambda
