@@ -84,11 +84,26 @@ void tcp_session::do_read() {
                   auto pMod = new( v.data() ) add_table_miss_flow; 
                   pMod->init();
                   pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
-                  std::cout << "MissFlow: ";
-                  HexDump( std::cout, v.begin(), v.end() );
+                  //std::cout << "MissFlow: ";
+                  //HexDump( std::cout, v.begin(), v.end() );
                   QueueTxToWrite( std::move( v ) );
                   }
                   break;
+                case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
+                  const auto pPacket = new(p) ofp141::ofp_packet_in;
+                  std::cout 
+                    << "Packet in: " 
+                    << "bufid=" << pPacket->buffer_id
+                    << ", reason=" << (uint16_t)pPacket->reason
+                    << ", tabid=" << (uint16_t)pPacket->table_id
+                    << ", cookie=" << pPacket->cookie
+                    << ", match type=" << pPacket->match.type
+                    << ", match len=" << pPacket->match.length
+                    << std::endl;
+                  std::cout << "match: ";
+                  HexDump( std::cout, pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 );
+                  break;
+                  }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
                   const auto pError = new(p) ofp141::ofp_error_msg;
                   std::cout 
