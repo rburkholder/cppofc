@@ -18,6 +18,8 @@
 #include "codecs/ofp_port_status.h"
 #include "codecs/ofp_flow_mod.h"
 
+#include "protocol/ethernet.h"
+
 #include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
@@ -54,6 +56,7 @@ void tcp_session::do_read() {
 
             std::cout << "IN: ";
             HexDump( std::cout, p, p + pHeader->length );
+            std::cout << ::std::endl;
             
             std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
             if ( OFP_VERSION == pHeader->version ) {
@@ -95,7 +98,7 @@ void tcp_session::do_read() {
                   const auto pPacket = new(p) ofp141::ofp_packet_in;
                   std::cout 
                     << "Packet in: " 
-                    << "bufid=" << pPacket->buffer_id
+                    << "bufid=" << std::hex << pPacket->buffer_id << std::dec
                     << ", reason=" << (uint16_t)pPacket->reason
                     << ", tabid=" << (uint16_t)pPacket->table_id
                     << ", cookie=" << pPacket->cookie
@@ -104,9 +107,14 @@ void tcp_session::do_read() {
                     << std::endl;
                   std::cout << "match: ";
                   HexDump( std::cout, pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 );
+                  std::cout << ::std::endl;
                   std::cout << "packet: ";
                   auto pMatch = new(&pPacket->match) codec::ofp_flow_mod::ofp_match_;
-                  HexDump( std::cout, p + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip(), p + pPacket->header.length );
+                  const auto pPayload = p + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
+                  HexDump( std::cout, pPayload, p + pPacket->header.length );
+                  std::cout << ::std::endl;
+                  protocol::Ethernet ethernet( *pPayload );
+                  ethernet.Decode( std::cout );
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
@@ -280,3 +288,11 @@ void tcp_session::UnloadTxInWrite() {
   m_qBuffersAvailable.push( std::move( m_vTxInWrite ) );
 
 }
+
+
+/*
+ * http://www.cplusplus.com/forum/windows/51591/
+     cout << showbase // show the 0x prefix
+          << internal // fill between the prefix and the number
+          << setfill('0'); // fill with 0s
+ */
