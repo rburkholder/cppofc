@@ -6,6 +6,8 @@
  * Created on June 6, 2017, 11:07 AM
  */
 
+// 
+
 #include <iostream>
 #include <iomanip>
 
@@ -102,6 +104,9 @@ void tcp_session::do_read() {
                     << std::endl;
                   std::cout << "match: ";
                   HexDump( std::cout, pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 );
+                  std::cout << "packet: ";
+                  auto pMatch = new(&pPacket->match) codec::ofp_flow_mod::ofp_match_;
+                  HexDump( std::cout, p + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip(), p + pPacket->header.length );
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148

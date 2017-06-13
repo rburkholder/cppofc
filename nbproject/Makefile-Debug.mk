@@ -43,6 +43,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/tcp_session.o
 
 
@@ -109,6 +110,11 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
 
 ${OBJECTDIR}/tcp_session.o: tcp_session.cpp
 	${MKDIR} -p ${OBJECTDIR}

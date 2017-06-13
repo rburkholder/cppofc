@@ -23,6 +23,8 @@ public:
       type = ofp141::ofp_match_type::OFPMT_OXM;
       length = sizeof( type ) + sizeof( length );
     }
+    size_t oxm_len() const { return length - 4; }
+    size_t skip() const { return length + ((length + 7)/8*8 - length); }
   };
   
   // pg 74 v1.4.1 s7.2.3 (a default empty entry)
