@@ -18,7 +18,7 @@
 
 #include "../openflow/openflow-spec1.4.1.h"
 
-#include "common.h"
+#include "../common.h"
 #include "ofp_header.h"
 
 namespace codec {

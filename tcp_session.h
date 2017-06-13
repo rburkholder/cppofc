@@ -15,7 +15,7 @@
 
 #include <boost/asio.hpp>
 
-#include "codecs/common.h"
+#include "common.h"
 
 class tcp_session
   : public std::enable_shared_from_this<tcp_session>

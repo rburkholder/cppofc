@@ -11,7 +11,7 @@
 
 #include "../openflow/openflow-spec1.4.1.h"
 
-#include "common.h"
+#include "../common.h"
 
 namespace codec {
 

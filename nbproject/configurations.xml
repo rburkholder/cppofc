@@ -4,7 +4,7 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>codecs/common.h</itemPath>
+      <itemPath>common.h</itemPath>
       <itemPath>codecs/datapathid.h</itemPath>
       <itemPath>protocol/ethernet.h</itemPath>
       <itemPath>hexdump.h</itemPath>
@@ -70,8 +70,6 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
-      <item path="codecs/common.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/datapathid.h" ex="false" tool="3" flavor2="0">
@@ -99,6 +97,8 @@
       <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="common.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="hexdump.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -135,8 +135,6 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
-      <item path="codecs/common.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/datapathid.h" ex="false" tool="3" flavor2="0">
@@ -164,6 +162,8 @@
       <item path="codecs/ofp_switch_features.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_switch_features.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="common.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="hexdump.h" ex="false" tool="3" flavor2="0">
       </item>

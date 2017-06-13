@@ -11,7 +11,6 @@
 #include <iostream>
 #include <iomanip>
 
-#include "codecs/common.h"
 #include "codecs/ofp_header.h"
 #include "codecs/ofp_hello.h"
 #include "codecs/ofp_switch_features.h"
@@ -19,6 +18,7 @@
 #include "codecs/ofp_port_status.h"
 #include "codecs/ofp_flow_mod.h"
 
+#include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
 
