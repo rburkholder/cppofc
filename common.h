@@ -12,7 +12,7 @@
 
 #include <vector>
 
-typedef std::vector<uint8_t> vChar_t;
+typedef std::vector<uint8_t> vByte_t;
 
 #endif /* COMMON_H */
 

@@ -22,7 +22,7 @@ public:
   ofp_switch_features( const ofp141::ofp_switch_features& packet );
   virtual ~ofp_switch_features( );
   
-  static vChar_t CreateRequest( vChar_t );
+  static vByte_t CreateRequest( vByte_t );
 private:
 
 };

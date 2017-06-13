@@ -60,7 +60,7 @@ public:
 
   bool Supported( uint8_t version ) const;
   
-  static vChar_t Create( vChar_t v);
+  static vByte_t Create( vByte_t v);
 
 private:
   

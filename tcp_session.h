@@ -48,21 +48,21 @@ private:
 
   boost::asio::ip::tcp::socket m_socket;
   
-  vChar_t m_vRx;
+  vByte_t m_vRx;
   //vChar_t m_vTx;
   
-  typedef std::queue<vChar_t> qBuffers_t; 
+  typedef std::queue<vByte_t> qBuffers_t; 
   
   std::mutex m_mutex;
   std::atomic<uint32_t> m_transmitting;
   
   qBuffers_t m_qBuffersAvailable;
   qBuffers_t m_qTxBuffersToBeWritten;
-  vChar_t m_vTxInWrite;
+  vByte_t m_vTxInWrite;
   
-  void GetAvailableBuffer( vChar_t& v );
-  vChar_t GetAvailableBuffer();
-  void QueueTxToWrite( vChar_t  );
+  void GetAvailableBuffer( vByte_t& v );
+  vByte_t GetAvailableBuffer();
+  void QueueTxToWrite( vByte_t  );
   void LoadTxInWrite();
   void UnloadTxInWrite();
   

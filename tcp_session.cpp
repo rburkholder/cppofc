@@ -81,7 +81,7 @@ void tcp_session::do_read() {
                       actions.len += sizeof( action );
                     }
                   };
-                  vChar_t v = std::move( GetAvailableBuffer() );
+                  vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( sizeof( add_table_miss_flow ) );
                   auto pMod = new( v.data() ) add_table_miss_flow; 
                   pMod->init();
@@ -122,7 +122,7 @@ void tcp_session::do_read() {
                   codec::ofp_switch_features features( *pReply );
 
                   // 1.4.1 page 138
-                  vChar_t v;
+                  vByte_t v;
                   v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
                   auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
                   p->init();
@@ -134,7 +134,7 @@ void tcp_session::do_read() {
                   break;
                 case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
                   const auto pEcho = new(p) ofp141::ofp_header;
-                  vChar_t v;
+                  vByte_t v;
                   v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
                   auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
                   p->init();
@@ -230,26 +230,26 @@ void tcp_session::do_write() {
       });
 }
 
-void tcp_session::GetAvailableBuffer( vChar_t& v ) {
+void tcp_session::GetAvailableBuffer( vByte_t& v ) {
   std::unique_lock<std::mutex> lock( m_mutex );
   if ( m_qBuffersAvailable.empty() ) {
-    m_qBuffersAvailable.push( vChar_t() );
+    m_qBuffersAvailable.push( vByte_t() );
   }
   v = std::move( m_qBuffersAvailable.front() );
   m_qBuffersAvailable.pop();
 }
 
-vChar_t tcp_session::GetAvailableBuffer() {
+vByte_t tcp_session::GetAvailableBuffer() {
   std::unique_lock<std::mutex> lock( m_mutex );
   if ( m_qBuffersAvailable.empty() ) {
-    m_qBuffersAvailable.push( vChar_t() );
+    m_qBuffersAvailable.push( vByte_t() );
   }
-  vChar_t v = std::move( m_qBuffersAvailable.front() );
+  vByte_t v = std::move( m_qBuffersAvailable.front() );
   m_qBuffersAvailable.pop();
   return v;
 }
 
-void tcp_session::QueueTxToWrite( vChar_t v ) {
+void tcp_session::QueueTxToWrite( vByte_t v ) {
   std::unique_lock<std::mutex> lock( m_mutex );
   //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
   if ( 0 == m_transmitting.fetch_add( 1, std::memory_order_acquire ) ) {

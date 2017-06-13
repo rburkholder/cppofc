@@ -37,7 +37,7 @@ ofp_switch_features::ofp_switch_features( const ofp141::ofp_switch_features& pac
 ofp_switch_features::~ofp_switch_features( ) {
 }
 
-vChar_t ofp_switch_features::CreateRequest( vChar_t v ) {
+vByte_t ofp_switch_features::CreateRequest( vByte_t v ) {
   v.resize( sizeof( ofp_header::ofp_header_ ) );
   auto* p = new( v.data() ) ofp_header::ofp_header_;
   p->init();

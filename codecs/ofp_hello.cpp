@@ -60,7 +60,7 @@ bool ofp_hello::Supported( uint8_t version ) const {
   return 0 < result;
 }
 
-vChar_t ofp_hello::Create( vChar_t v ) {
+vByte_t ofp_hello::Create( vByte_t v ) {
   v.resize( sizeof( ofp_hello_ ) );
   auto* p = new( v.data() ) ofp_hello_;
   p->init();
