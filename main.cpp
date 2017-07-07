@@ -1,15 +1,11 @@
 /* 
  * File:   main.cpp
- * Author: vagrant
- *
+ * Author: Raymond Burkholder
+ *         raymond@burkholder.net *
  * Created on May 12, 2017, 9:15 PM
  */
 
-//#include <cstdlib>
 #include <iostream>
-//#include <memory>
-//#include <utility>
-//#include <vector>
 
 #include <boost/asio.hpp>
 

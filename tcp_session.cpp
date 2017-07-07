@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 
 #include "codecs/ofp_header.h"
 #include "codecs/ofp_hello.h"
@@ -17,6 +18,7 @@
 #include "codecs/ofp_async_config.h"
 #include "codecs/ofp_port_status.h"
 #include "codecs/ofp_flow_mod.h"
+#include "codecs/ofp_packet_out.h"
 
 #include "protocol/ethernet.h"
 
@@ -115,6 +117,25 @@ void tcp_session::do_read() {
                   std::cout << ::std::endl;
                   protocol::Ethernet ethernet( *pPayload );
                   ethernet.Decode( std::cout );
+                  switch ( ethernet.GetEthertype() ) {
+                    case protocol::Ethernet::Ethertype::arp: {
+                      // packet out 
+                      struct packet {
+                        codec::ofp_packet_out::ofp_packet_out_ message;
+                        codec::ofp_packet_out::ofp_action_output_ action;
+                        uint8_t data[0];
+                        packet(): message( true ), action( true ) {}
+                        void init( const size_t nTotal, uint8_t const* p, size_t cnt ) {
+                          // nTotal is the size allocated in the external new placement structure
+                          // need to confirm this constructed structure matches that size
+                          //assert( nTotal = )
+                          // use nTotal to confirm enough space 
+                          std::memcpy( &data, p, cnt );
+                        }
+                      };
+                      }
+                      break;
+                  }
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148

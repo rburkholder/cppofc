@@ -40,6 +40,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_flow_mod.o \
 	${OBJECTDIR}/codecs/ofp_header.o \
 	${OBJECTDIR}/codecs/ofp_hello.o \
+	${OBJECTDIR}/codecs/ofp_packet_out.o \
 	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/main.o \
@@ -95,6 +96,11 @@ ${OBJECTDIR}/codecs/ofp_hello.o: codecs/ofp_hello.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
+
+${OBJECTDIR}/codecs/ofp_packet_out.o: codecs/ofp_packet_out.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_packet_out.o codecs/ofp_packet_out.cpp
 
 ${OBJECTDIR}/codecs/ofp_port_status.o: codecs/ofp_port_status.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs

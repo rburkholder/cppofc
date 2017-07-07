@@ -31,6 +31,11 @@ public:
   Ethernet( uint8_t& );
   virtual ~Ethernet( );
   
+  uint16_t GetEthertype() const {
+    auto p = new( &m_rOctets ) prelude;
+    return p->m_ethertype;
+  }
+  
   template<typename Stream>
   void Decode( Stream& stream ) {
     auto p = new( &m_rOctets ) prelude;
@@ -40,8 +45,7 @@ public:
     std::stringstream sSrcMac;
     HexDump( sSrcMac, p->m_macSrc, p->m_macSrc + 6, ':' );
     
-      
-  // http://www.cplusplus.com/forum/windows/51591/
+    // http://www.cplusplus.com/forum/windows/51591/
     std::ios_base::fmtflags oldFlags = stream.flags();
     std::streamsize         oldPrec  = stream.precision();
          char               oldFill  = stream.fill();

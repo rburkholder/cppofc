@@ -12,6 +12,7 @@
       <itemPath>codecs/ofp_flow_mod.h</itemPath>
       <itemPath>codecs/ofp_header.h</itemPath>
       <itemPath>codecs/ofp_hello.h</itemPath>
+      <itemPath>codecs/ofp_packet_out.h</itemPath>
       <itemPath>codecs/ofp_port_status.h</itemPath>
       <itemPath>codecs/ofp_switch_features.h</itemPath>
       <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
@@ -31,6 +32,7 @@
       <itemPath>codecs/ofp_flow_mod.cpp</itemPath>
       <itemPath>codecs/ofp_header.cpp</itemPath>
       <itemPath>codecs/ofp_hello.cpp</itemPath>
+      <itemPath>codecs/ofp_packet_out.cpp</itemPath>
       <itemPath>codecs/ofp_port_status.cpp</itemPath>
       <itemPath>codecs/ofp_switch_features.cpp</itemPath>
       <itemPath>tcp_session.cpp</itemPath>
@@ -89,6 +91,10 @@
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_packet_out.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_packet_out.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/ofp_port_status.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -154,6 +160,10 @@
       <item path="codecs/ofp_hello.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_hello.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_packet_out.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_packet_out.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/ofp_port_status.cpp" ex="false" tool="1" flavor2="0">
       </item>
