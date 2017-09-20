@@ -12,6 +12,7 @@
 #include <cstdint>
 //#include <cassert>
 #include <sstream>
+#include <iomanip>
 
 #include <boost/endian/arithmetic.hpp>
 

@@ -8,3 +8,42 @@ C++ based openflow packet encoder/decoder
   * use distributed network minmax algorithms based upon link bandwidth to manage routes and traffic
   * load a linux distribution onto Mellanox SN2700 switches, and make use of the hardware offload functionality currently in development for the kernel and openvswitch
   * control hypervisors for traffic encapsulation and function chaining
+
+# A test setup:
+
+# show existing service
+ovs-vsctl show
+# add two namespaces
+ip netns add left
+ip netns add right
+# turn up lo in the namespaces
+ip netns exec left ip link set dev lo up
+ip netns exec right ip link set dev lo up
+# add a bridge
+ovs-vsctl add-br ovsbr
+# set controller of the bridge for openflow
+ovs-vsctl set-fail-mode ovsbr secure
+ovs-vsctl set-controller ovsbr tcp:0.0.0.0:6633
+# bridge needs to be turned up as that is how it handles some stp stuff
+ip link set dev ovsbr up
+ip link set dev ovs-system up
+# add two ports
+ovs-vsctl add-port ovsbr ethleft -- set interface ethleft type=internal
+ovs-vsctl add-port ovsbr ethright -- set interface ethright type=internal
+# move the two interfaces into the namespaces
+ip link set dev ethleft netns left
+ip link set dev ethright netns right
+# turn the interfaces up
+ip netns exec right ip link set dev ethright up
+ip netns exec left ip link set dev ethleft up
+# add addresses to the interfaces
+ip netns exec left ip addr add dev ethleft 172.16.1.1/24
+ip netns exec right ip addr add dev ethright 172.16.1.2/24
+# confirm connectivity with a ping
+ip netns exec right ping 172.16.1.1
+
+
+
+Dump Flows:
+
+ovs-ofctl dump-flows ovsbr

@@ -68,7 +68,7 @@
         </ccTool>
         <linkerTool>
           <linkerLibItems>
-            <linkerLibLibItem>boost_system-gcc63-mt-1_64</linkerLibLibItem>
+            <linkerLibLibItem>boost_system-gcc-mt-1_65_1</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>

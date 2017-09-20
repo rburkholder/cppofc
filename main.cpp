@@ -43,16 +43,21 @@ private:
 };
 
 int main(int argc, char* argv[]) {
+    
+  int port( 6633 );
+    
+  boost::asio::io_service io_service;
+
   try   {
     if (argc != 2) {
-      std::cerr << "Usage: async_tcp_echo_server <port>\n";
-      return 1;
+      std::cerr << "Usage: async_tcp_echo_server <port> (using " << port << ")\n";
+//      return 1;
+    }
+    else {
+      port = std::atoi(argv[1]);
     }
 
-    boost::asio::io_service io_service;
-
-    server s(io_service, std::atoi(argv[1]));
-    //server s( io_service, 6653) ;
+    server s(io_service, port);
 
     io_service.run();
   }

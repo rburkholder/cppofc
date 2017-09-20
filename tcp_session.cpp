@@ -44,20 +44,20 @@ void tcp_session::do_read() {
         // NOTE:  multiple responses may occur in same packet, so may need to
         //   sequentially process the results
         if (!ec) {
-          std::cout << "*** total read length: " << length << std::endl;
+          std::cout << ">>> total read length: " << length << std::endl;
           
-          auto* p = m_vRx.data();
-          auto* pEnd = p + length;
+          auto* pPacketIn = m_vRx.data();
+          auto* pEnd = pPacketIn + length;
 
-          while ( p < pEnd ) {
+          while ( pPacketIn < pEnd ) {
             
-            assert( sizeof( ofp141::ofp_header ) <= pEnd - p );
+            assert( sizeof( ofp141::ofp_header ) <= pEnd - pPacketIn );
             
-            auto pHeader = new( p ) ofp141::ofp_header;
-            assert( pHeader->length <= pEnd - p );
+            auto pHeader = new( pPacketIn ) ofp141::ofp_header;
+            assert( pHeader->length <= pEnd - pPacketIn );
 
             std::cout << "IN: ";
-            HexDump( std::cout, p, p + pHeader->length );
+            HexDump( std::cout, pPacketIn, pPacketIn + pHeader->length );
             std::cout << ::std::endl;
             
             std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
@@ -65,7 +65,7 @@ void tcp_session::do_read() {
               switch (pHeader->type) {
                 case ofp141::ofp_type::OFPT_HELLO: {
                   // need to wrap following in try/catch
-                  const auto pHello = new(p) ofp141::ofp_hello;
+                  const auto pHello = new(pPacketIn) ofp141::ofp_hello;
                   codec::ofp_hello hello( *pHello );
                   // do some processing
                   //  then send hello back
@@ -97,7 +97,7 @@ void tcp_session::do_read() {
                   }
                   break;
                 case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
-                  const auto pPacket = new(p) ofp141::ofp_packet_in;
+                  const auto pPacket = new(pPacketIn) ofp141::ofp_packet_in;
                   std::cout 
                     << "Packet in: " 
                     << "bufid=" << std::hex << pPacket->buffer_id << std::dec
@@ -112,18 +112,17 @@ void tcp_session::do_read() {
                   std::cout << ::std::endl;
                   std::cout << "packet: ";
                   auto pMatch = new(&pPacket->match) codec::ofp_flow_mod::ofp_match_;
-                  const auto pPayload = p + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
-                  HexDump( std::cout, pPayload, p + pPacket->header.length );
+                  const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
+                  HexDump( std::cout, pPayload, pPacketIn + pPacket->header.length );
                   std::cout << ::std::endl;
                   protocol::Ethernet ethernet( *pPayload );
                   ethernet.Decode( std::cout );
                   switch ( ethernet.GetEthertype() ) {
                     case protocol::Ethernet::Ethertype::arp: {
-                      // packet out 
-                      struct packet {
+                      struct packet {  // construct packet_out
                         codec::ofp_packet_out::ofp_packet_out_ message;
                         codec::ofp_packet_out::ofp_action_output_ action;
-                        uint8_t data[0];
+                        uint8_t data[0];  // placeholder
                         packet(): message( true ), action( true ) {}
                         void init( const size_t nTotal, uint8_t const* p, size_t cnt ) {
                           // nTotal is the size allocated in the external new placement structure
@@ -139,7 +138,7 @@ void tcp_session::do_read() {
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
-                  const auto pError = new(p) ofp141::ofp_error_msg;
+                  const auto pError = new(pPacketIn) ofp141::ofp_error_msg;
                   std::cout 
                     << "Error type " << pError->type 
                     << " code " << pError->code 
@@ -147,7 +146,7 @@ void tcp_session::do_read() {
                   break;
                   }
                 case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
-                  const auto pReply = new(p) ofp141::ofp_switch_features;
+                  const auto pReply = new(pPacketIn) ofp141::ofp_switch_features;
                   codec::ofp_switch_features features( *pReply );
 
                   // 1.4.1 page 138
@@ -162,7 +161,7 @@ void tcp_session::do_read() {
                   }
                   break;
                 case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
-                  const auto pEcho = new(p) ofp141::ofp_header;
+                  const auto pEcho = new(pPacketIn) ofp141::ofp_header;
                   vByte_t v;
                   v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
                   auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
@@ -176,14 +175,14 @@ void tcp_session::do_read() {
                   }
                   break;
                 case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
-                  const auto pAsyncReply = new(p) ofp141::ofp_async_config;
+                  const auto pAsyncReply = new(pPacketIn) ofp141::ofp_async_config;
                   codec::ofp_async_config config( *pAsyncReply );
                   }
                   break;
                 case ofp141::ofp_type::OFPT_PORT_STATUS: {
                   // multiple messages stacked, so need to change code in this whole section 
                   //   to sequentially parse the inbound bytes
-                  const auto pStatus = new(p) ofp141::ofp_port_status;
+                  const auto pStatus = new(pPacketIn) ofp141::ofp_port_status;
                   codec::ofp_port_status status( *pStatus );
                   }
                   break;
@@ -198,8 +197,9 @@ void tcp_session::do_read() {
             //do_read();  // keep the socket open with another read
             
             
-            p += pHeader->length;
+            pPacketIn += pHeader->length;
           }  // end while     
+          std::cout << "<<< end." << std::endl;
         } // end if ( ec )
         else {
             //std::cout << "read error: " << ec.message() << std::endl;

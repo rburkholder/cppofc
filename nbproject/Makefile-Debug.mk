@@ -62,7 +62,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=-lboost_system-gcc63-mt-1_64
+LDLIBSOPTIONS=-lboost_system-gcc-mt-1_65_1
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}

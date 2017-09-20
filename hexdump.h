@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 
 template<typename Stream, typename Iterator>
 Stream& HexDump( Stream& stream, Iterator begin, Iterator end, char sep = ' ' ) {
