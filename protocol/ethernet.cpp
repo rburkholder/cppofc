@@ -16,7 +16,12 @@ Ethernet::Ethernet( uint8_t& rOctets ): m_rOctets( rOctets ) {
 Ethernet::~Ethernet( ) {
 }
 
+std::ostream& operator<<( std::ostream& stream, const protocol::Ethernet& ethernet ) {
+  ethernet.Emit( stream );
+  return stream;
 }
+
+} // namespace protocol
 
 // m_etherType:
 //  <= 1500 sizo of payload in octets

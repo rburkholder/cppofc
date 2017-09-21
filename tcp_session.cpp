@@ -25,6 +25,7 @@
 #include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
+#include "protocol/arp.h"
 
 void tcp_session::start() {
   std::cout << "start begin: " << std::endl;
@@ -56,9 +57,10 @@ void tcp_session::do_read() {
             auto pHeader = new( pPacketIn ) ofp141::ofp_header;
             assert( pHeader->length <= pEnd - pPacketIn );
 
-            std::cout << "IN: ";
-            HexDump( std::cout, pPacketIn, pPacketIn + pHeader->length );
-            std::cout << ::std::endl;
+            std::cout 
+              << "IN: "
+              << HexDump<uint8_t*>( pPacketIn, pPacketIn + pHeader->length )
+              << std::endl;
             
             std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
             if ( OFP_VERSION == pHeader->version ) {
@@ -107,19 +109,25 @@ void tcp_session::do_read() {
                     << ", match type=" << pPacket->match.type
                     << ", match len=" << pPacket->match.length
                     << std::endl;
-                  std::cout << "match: ";
-                  HexDump( std::cout, pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 );
-                  std::cout << ::std::endl;
-                  std::cout << "packet: ";
+                  //std::cout  // need to figure out how to iterate big_endian
+                  //  << "match: "
+                  //  << HexDump<uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
+                  //  << ::std::endl;
+                  std::cout 
+                    << "packet: ";
                   auto pMatch = new(&pPacket->match) codec::ofp_flow_mod::ofp_match_;
                   const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
-                  HexDump( std::cout, pPayload, pPacketIn + pPacket->header.length );
-                  std::cout << ::std::endl;
+                  std::cout
+                    << HexDump<uint8_t*>( pPayload, pPacketIn + pPacket->header.length )
+                    << ::std::endl;
                   protocol::Ethernet ethernet( *pPayload );
-                  ethernet.Decode( std::cout );
+                  std::cout
+                    << ethernet
+                    << ::std::endl;
                   switch ( ethernet.GetEthertype() ) {
                     case protocol::Ethernet::Ethertype::arp: {
                       struct packet {  // construct packet_out
+                        //protocol::Arp( )
                         codec::ofp_packet_out::ofp_packet_out_ message;
                         codec::ofp_packet_out::ofp_action_output_ action;
                         uint8_t data[0];  // placeholder
