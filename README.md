@@ -9,8 +9,15 @@ C++ based openflow packet encoder/decoder
   * load a linux distribution onto Mellanox SN2700 switches, and make use of the hardware offload functionality currently in development for the kernel and openvswitch
   * control hypervisors for traffic encapsulation and function chaining
 
-# A test setup:
+# Build boost:
+```
+wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+sh booststrap.sh
+./b2 --layout=versioned variant=release link=shared threading=multi runtime-link=shared install
+```
 
+# A test setup:
+```
 # show existing service
 ovs-vsctl show
 # add two namespaces
@@ -41,9 +48,9 @@ ip netns exec left ip addr add dev ethleft 172.16.1.1/24
 ip netns exec right ip addr add dev ethright 172.16.1.2/24
 # confirm connectivity with a ping
 ip netns exec right ping 172.16.1.1
+```
 
 
+# Dump Flows:
 
-Dump Flows:
-
-ovs-ofctl dump-flows ovsbr
+    ovs-ofctl dump-flows ovsbr
