@@ -16,11 +16,9 @@
 namespace ethernet {
 
 struct vlan_ {
-  
   boost::endian::big_uint16_t m_tpid;
   boost::endian::big_uint16_t m_tci;
 };
-
 
 class vlan {
   friend std::ostream& operator<<( std::ostream&, const vlan& );
