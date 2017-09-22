@@ -38,13 +38,19 @@ public:
     return p->m_ethertype;
   }
   
-  private:
+  uint8_t& GetContent() { 
+    auto p = new( &m_rOctets ) prelude;
+    return (p->m_content)[0];
+  }
+  
+private:
 
   struct prelude {
     uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
     uint8_t m_macDest[ 6 ];
     uint8_t m_macSrc[ 6 ];
     boost::endian::big_uint16_t m_ethertype;
+    uint8_t m_content[0];
   };
   
   struct vlan {
@@ -71,11 +77,11 @@ std::ostream& Emit( std::ostream& stream ) const {
            << std::setfill('0'); // fill with 0s
 
     stream 
-      << "ethernet: "
-      << "dstmac=" << HexDump<uint8_t*>( p->m_macDest, p->m_macDest + 6 )
-      << " srcmac=" << HexDump<uint8_t*>( p->m_macSrc, p->m_macSrc + 6 )
+      << "ethernet:"
       << " ethertype=" << std::hex << p->m_ethertype << std::dec
-      << std::endl;
+      << " srcmac=" << HexDump<uint8_t*>( p->m_macSrc, p->m_macSrc + 6 )
+      << " dstmac=" << HexDump<uint8_t*>( p->m_macDest, p->m_macDest + 6 )
+      ;
     
     stream.flags(oldFlags);
     stream.precision(oldPrec);

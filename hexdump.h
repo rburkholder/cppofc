@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <iostream>
 
+// https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Making_New_Friends
+
 template<typename Iterator> class HexDump;
 
 template<typename Iterator>

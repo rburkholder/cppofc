@@ -126,8 +126,11 @@ void tcp_session::do_read() {
                     << ::std::endl;
                   switch ( ethernet.GetEthertype() ) {
                     case protocol::Ethernet::Ethertype::arp: {
+                      protocol::arp::Packet arp( ethernet.GetContent() );
+                      std::cout
+                        << arp
+                        << ::std::endl;
                       struct packet {  // construct packet_out
-                        //protocol::Arp( )
                         codec::ofp_packet_out::ofp_packet_out_ message;
                         codec::ofp_packet_out::ofp_action_output_ action;
                         uint8_t data[0];  // placeholder
