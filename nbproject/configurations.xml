@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>protocol/arp.h</itemPath>
+      <itemPath>bridge.h</itemPath>
       <itemPath>common.h</itemPath>
       <itemPath>codecs/datapathid.h</itemPath>
       <itemPath>protocol/ethernet.h</itemPath>
@@ -28,6 +29,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>protocol/arp.cpp</itemPath>
+      <itemPath>bridge.cpp</itemPath>
       <itemPath>codecs/datapathid.cpp</itemPath>
       <itemPath>protocol/ethernet.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
@@ -79,6 +81,10 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="bridge.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="bridge.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/datapathid.h" ex="false" tool="3" flavor2="0">
@@ -156,6 +162,10 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="bridge.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="bridge.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/datapathid.h" ex="false" tool="3" flavor2="0">

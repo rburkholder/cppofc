@@ -35,6 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/bridge.o \
 	${OBJECTDIR}/codecs/datapathid.o \
 	${OBJECTDIR}/codecs/ofp_async_config.o \
 	${OBJECTDIR}/codecs/ofp_flow_mod.o \
@@ -73,6 +74,11 @@ LDLIBSOPTIONS=-lboost_system-gcc-mt-1_65_1
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/bridge.o: bridge.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/bridge.o bridge.cpp
 
 ${OBJECTDIR}/codecs/datapathid.o: codecs/datapathid.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
