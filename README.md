@@ -12,8 +12,10 @@ C++ based openflow packet encoder/decoder
 # Build boost:
 ```
 wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz
+tar zxvf boost_1_65_1.tar.gz
+cd boost_1_65_1
 sh booststrap.sh
-./b2 --layout=versioned variant=release link=shared threading=multi runtime-link=shared install
+sudo ./b2 --layout=versioned variant=release link=shared threading=multi runtime-link=shared install
 ```
 
 # A test setup:
