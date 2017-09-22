@@ -120,13 +120,13 @@ void tcp_session::do_read() {
                   std::cout
                     << HexDump<uint8_t*>( pPayload, pPacketIn + pPacket->header.length )
                     << ::std::endl;
-                  protocol::Ethernet ethernet( *pPayload );
+                  ethernet::header ethernet( *pPayload );
                   std::cout
                     << ethernet
                     << ::std::endl;
                   switch ( ethernet.GetEthertype() ) {
-                    case protocol::Ethernet::Ethertype::arp: {
-                      protocol::arp::Packet arp( ethernet.GetContent() );
+                    case ethernet::Ethertype::arp: {
+                      protocol::arp::Packet arp( ethernet.GetMessage() );
                       std::cout
                         << arp
                         << ::std::endl;

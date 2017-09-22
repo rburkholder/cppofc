@@ -10,90 +10,52 @@
 #define ETHERNET_H
 
 #include <cstdint>
-//#include <cassert>
-//#include <sstream>
-#include <iomanip>
+//#include <iomanip>
 
 #include <boost/endian/arithmetic.hpp>
 
 #include "../common.h"
 #include "../hexdump.h"
 
-namespace protocol {
+namespace ethernet {
   
 // https://en.wikipedia.org/wiki/Ethernet_frame
 // https://en.wikipedia.org/wiki/IEEE_802.1Q
-  
-class Ethernet {
-  friend std::ostream& operator<<( std::ostream&, const Ethernet& );
-public:
-  
-  enum Ethertype { ipv4=0x0800, arp=0x0806, ieee8021q=0x8100, ipv6=0x86dd, ieee8021ad=0x88ab };
-  
-  Ethernet( uint8_t& ); // packet data, determine whether to init or not
-  virtual ~Ethernet( );
-  
-  uint16_t GetEthertype() const {
-    auto p = new( &m_rOctets ) prelude;
-    return p->m_ethertype;
-  }
-  
-  uint8_t& GetContent() { 
-    auto p = new( &m_rOctets ) prelude;
-    return (p->m_content)[0];
-  }
-  
-private:
 
-  struct prelude {
-    uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
-    uint8_t m_macDest[ 6 ];
-    uint8_t m_macSrc[ 6 ];
-    boost::endian::big_uint16_t m_ethertype;
-    uint8_t m_content[0];
-  };
-  
-  struct vlan {
-    boost::endian::big_uint16_t m_tpid;
-    boost::endian::big_uint16_t m_tci;
-    uint8_t GetPCP()  { return ( m_tci & 0xE000 ) >> 13; } // aka class of service
-    uint8_t GetDEI()  { return ( m_tci & 0x1000 ) >> 12; } // drop eligible indicator
-    uint16_t GetVID() { return ( m_tci & 0x0FFF ); } // vlan identifier
-  };
-  
-  uint8_t& m_rOctets;
-  
-std::ostream& Emit( std::ostream& stream ) const {
-    
-    auto p = new( &m_rOctets ) prelude;
-    
-    // http://www.cplusplus.com/forum/windows/51591/
-    std::ios_base::fmtflags oldFlags = stream.flags();
-    std::streamsize         oldPrec  = stream.precision();
-         char               oldFill  = stream.fill();
-         
-    stream << std::showbase // show the 0x prefix
-           << std::internal // fill between the prefix and the number
-           << std::setfill('0'); // fill with 0s
+enum Ethertype { ipv4=0x0800, arp=0x0806, ieee8021q=0x8100, ipv6=0x86dd, ieee8021ad=0x88ab };
 
-    stream 
-      << "ethernet:"
-      << " ethertype=" << std::hex << p->m_ethertype << std::dec
-      << " srcmac=" << HexDump<uint8_t*>( p->m_macSrc, p->m_macSrc + 6 )
-      << " dstmac=" << HexDump<uint8_t*>( p->m_macDest, p->m_macDest + 6 )
-      ;
-    
-    stream.flags(oldFlags);
-    stream.precision(oldPrec);
-    stream.fill(oldFill);
-    
-    return stream;
-    
-  }
-
+struct header_ {
+  uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
+  uint8_t m_macDest[ 6 ];
+  uint8_t m_macSrc[ 6 ];
+  boost::endian::big_uint16_t m_ethertype;
+  uint8_t m_message[0];
 };
 
-} // namespace protocol
+class header {
+  friend std::ostream& operator<<( std::ostream&, const header& );
+public:
+  
+  header( uint8_t& ); // packet data, determine whether to init or not
+  virtual ~header( );
+  
+  uint16_t GetEthertype() const {
+    return m_pHeader->m_ethertype;
+  }
+  
+  uint8_t& GetMessage() { 
+    return (m_pHeader->m_message)[0];
+  }
+  
+  std::ostream& Emit( std::ostream& stream ) const;
+  
+private:
+  
+  header_* m_pHeader;
+  
+};
+
+} // namespace ethernet
 
 #endif /* ETHERNET_H */
 

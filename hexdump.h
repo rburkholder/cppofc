@@ -38,6 +38,10 @@ public:
     std::ios_base::fmtflags oldFlags = std::cout.flags();
     std::streamsize         oldPrec  = std::cout.precision();
     char                    oldFill  = std::cout.fill();
+
+//    stream << std::showbase // show the 0x prefix
+//           << std::internal // fill between the prefix and the number
+//           << std::setfill('0'); // fill with 0s
     
     Iterator begin( m_begin );
 
