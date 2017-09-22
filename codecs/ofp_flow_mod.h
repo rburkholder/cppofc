@@ -9,6 +9,9 @@
 #ifndef OFP_FLOW_MOD_H
 #define OFP_FLOW_MOD_H
 
+#include <iostream>
+#include <cassert>
+
 #include "../openflow/openflow-spec1.4.1.h"
 #include "ofp_header.h"
 
@@ -16,6 +19,18 @@ namespace codec {
 
 class ofp_flow_mod {
 public:
+  
+  struct oxm_header_ {
+    boost::endian::big_uint16_t m_class;
+    boost::endian::big_uint8_t m_mixed;
+    boost::endian::big_uint8_t m_length;
+    uint8_t field[0];
+    
+    uint16_t oxm_class() { return m_class; }
+    uint8_t oxm_field() { return (uint8_t)m_mixed >> 1; }
+    bool oxm_hasmask() { return (uint8_t)m_mixed && 0x01; }
+    uint8_t oxm_length() { return m_length; }
+  };
   
   // pg 63 v1.4.1 s7.2.2 (a default empty entry)
   struct ofp_match_: public ofp141::ofp_match {
@@ -25,6 +40,32 @@ public:
     }
     size_t oxm_len() const { return length - 4; }
     size_t skip() const { return length + ((length + 7)/8*8 - length); }
+    void decode() {
+      const uint16_t lenMatches( length - 4 );
+      uint16_t cnt( 0 );
+      oxm_header_* p; 
+      while ( lenMatches > cnt ) {
+        p = new( &ofp141::ofp_match::oxm_fields[cnt] ) oxm_header_;
+        std::cout 
+          << "ofp_match: "
+          << "class=" << std::hex << p->oxm_class() << std::dec
+          << ",field=" << (uint16_t)p->oxm_field()
+          << ",hasmask=" << p->oxm_hasmask()
+          << ",length=" << (uint16_t)p->oxm_length()
+          << std::endl;
+        switch ( p->oxm_field() ) {
+          case ofp141::OFPXMT_OFB_IN_PORT: {
+            assert( size(uint32_t) == p->oxm_length() );
+            //boost::endian::big_uint32_t pInt = new( p)
+            }
+            break;
+          default:
+            std::cout << "ofp_match: unknown field" << std::endl;
+        }
+        assert( p->oxm_length() <= cnt );
+        cnt += sizeof( oxm_header_ ) + p->oxm_length();
+      }
+    }
   };
   
   // pg 74 v1.4.1 s7.2.3 (a default empty entry)

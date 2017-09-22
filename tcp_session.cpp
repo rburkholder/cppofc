@@ -101,36 +101,30 @@ void tcp_session::do_read() {
                 case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
                   const auto pPacket = new(pPacketIn) ofp141::ofp_packet_in;
                   std::cout 
-                    << "Packet in: " 
+                    << "packet in meta: " 
                     << "bufid=" << std::hex << pPacket->buffer_id << std::dec
                     << ", reason=" << (uint16_t)pPacket->reason
                     << ", tabid=" << (uint16_t)pPacket->table_id
                     << ", cookie=" << pPacket->cookie
                     << ", match type=" << pPacket->match.type
                     << ", match len=" << pPacket->match.length
-                    << std::endl;
-                  //std::cout  // need to figure out how to iterate big_endian
-                  //  << "match: "
-                  //  << HexDump<uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
-                  //  << ::std::endl;
-                  std::cout 
-                    << "packet: ";
-                  auto pMatch = new(&pPacket->match) codec::ofp_flow_mod::ofp_match_;
+                    << ", match=" // section 7.2.2 page 63
+                    << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
+                    << ::std::endl;
+                  auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
+                  pMatch->decode();
                   const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
-                  std::cout
+                  std::cout 
+                    << "  content: "
                     << HexDump<uint8_t*>( pPayload, pPacketIn + pPacket->header.length )
                     << ::std::endl;
-                  ethernet::header ethernet( *pPayload );
-                  std::cout
-                    << ethernet
-                    << ::std::endl;
+                  ethernet::header ethernet( *pPayload ); // pull out ethernet header
+                  std::cout << ethernet << ::std::endl;
                   switch ( ethernet.GetEthertype() ) {
                     case ethernet::Ethertype::arp: {
                       protocol::arp::Packet arp( ethernet.GetMessage() );
-                      std::cout
-                        << arp
-                        << ::std::endl;
-                      struct packet {  // construct packet_out
+                      std::cout << arp << ::std::endl;
+                      struct packet {  // construct packet_out for initial flood
                         codec::ofp_packet_out::ofp_packet_out_ message;
                         codec::ofp_packet_out::ofp_action_output_ action;
                         uint8_t data[0];  // placeholder
@@ -320,11 +314,3 @@ void tcp_session::UnloadTxInWrite() {
   m_qBuffersAvailable.push( std::move( m_vTxInWrite ) );
 
 }
-
-
-/*
- * http://www.cplusplus.com/forum/windows/51591/
-     cout << showbase // show the 0x prefix
-          << internal // fill between the prefix and the number
-          << setfill('0'); // fill with 0s
- */
