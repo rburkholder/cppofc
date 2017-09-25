@@ -26,8 +26,8 @@ enum Ethertype { ipv4=0x0800, arp=0x0806, ieee8021q=0x8100, ipv6=0x86dd, ieee802
 
 struct header_ {
   uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
-  uint8_t m_macDest[ 6 ];
-  uint8_t m_macSrc[ 6 ];
+  mac_t m_macDest;
+  mac_t m_macSrc;
   boost::endian::big_uint16_t m_ethertype;
   uint8_t m_message[0];
 };
@@ -42,6 +42,9 @@ public:
   uint16_t GetEthertype() const {
     return m_pHeader->m_ethertype;
   }
+  
+  const mac_t& GetDstMac() const { return m_pHeader->m_macDest; }
+  const mac_t& GetSrcMac() const { return m_pHeader->m_macSrc; }
   
   uint8_t& GetMessage() { 
     return (m_pHeader->m_message)[0];

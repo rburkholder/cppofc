@@ -11,6 +11,8 @@
 
 #include <iostream>
 #include <cassert>
+#include <functional>
+#include <tuple>
 
 #include "../openflow/openflow-spec1.4.1.h"
 #include "ofp_header.h"
@@ -19,6 +21,9 @@ namespace codec {
 
 class ofp_flow_mod {
 public:
+  
+  typedef std::function<void( uint32_t )> fInPort_t;
+  typedef std::tuple<fInPort_t> rfMatch_t;
   
   struct oxm_header_ {
     boost::endian::big_uint16_t m_class;
@@ -32,6 +37,11 @@ public:
     uint8_t oxm_length() { return m_length; }
   };
   
+  struct ofpxmt_ofb_in_port_ {
+    oxm_header_ header;
+    boost::endian::big_uint32_t port;
+  };
+  
   // pg 63 v1.4.1 s7.2.2 (a default empty entry)
   struct ofp_match_: public ofp141::ofp_match {
     void init() {
@@ -40,7 +50,7 @@ public:
     }
     size_t oxm_len() const { return length - 4; }
     size_t skip() const { return length + ((length + 7)/8*8 - length); }
-    void decode() {
+    void decode( rfMatch_t& rfMatch ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p; 
@@ -55,15 +65,19 @@ public:
           << std::endl;
         switch ( p->oxm_field() ) {
           case ofp141::OFPXMT_OFB_IN_PORT: {
-            assert( size(uint32_t) == p->oxm_length() );
-            //boost::endian::big_uint32_t pInt = new( p)
+            assert( sizeof(uint32_t) == p->oxm_length() );
+            ofpxmt_ofb_in_port_* pInPort = new( p ) ofpxmt_ofb_in_port_;
+            std::cout << "in_port=" << pInPort->port << std::endl;
+            if ( nullptr != std::get<fInPort_t>( rfMatch ) ) {
+              std::get<fInPort_t>( rfMatch )( pInPort->port );
+            }
             }
             break;
           default:
-            std::cout << "ofp_match: unknown field" << std::endl;
+            std::cout << "**** ofp_match: unknown field" << std::endl;
         }
-        assert( p->oxm_length() <= cnt );
         cnt += sizeof( oxm_header_ ) + p->oxm_length();
+        assert( lenMatches >= cnt );
       }
     }
   };

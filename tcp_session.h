@@ -16,6 +16,7 @@
 #include <boost/asio.hpp>
 
 #include "common.h"
+#include "bridge.h"
 
 class tcp_session
   : public std::enable_shared_from_this<tcp_session>
@@ -59,6 +60,8 @@ private:
   qBuffers_t m_qBuffersAvailable;
   qBuffers_t m_qTxBuffersToBeWritten;
   vByte_t m_vTxInWrite;
+  
+  Bridge m_bridge;
   
   void GetAvailableBuffer( vByte_t& v );
   vByte_t GetAvailableBuffer();

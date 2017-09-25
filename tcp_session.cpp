@@ -112,7 +112,6 @@ void tcp_session::do_read() {
                     << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
                     << ::std::endl;
                   auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
-                  pMatch->decode();
                   const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
                   std::cout 
                     << "  content: "
@@ -120,6 +119,12 @@ void tcp_session::do_read() {
                     << ::std::endl;
                   ethernet::header ethernet( *pPayload ); // pull out ethernet header
                   std::cout << ethernet << ::std::endl;
+                  codec::ofp_flow_mod::rfMatch_t rfMatch;
+                  std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
+                    [this,&ethernet](nPort_t nPort) {
+                      m_bridge.Update( nPort, ethernet.GetSrcMac() );
+                    };
+                  pMatch->decode( rfMatch );
                   switch ( ethernet.GetEthertype() ) {
                     case ethernet::Ethertype::arp: {
                       protocol::arp::Packet arp( ethernet.GetMessage() );
