@@ -111,6 +111,7 @@ void tcp_session::do_read() {
                   std::cout 
                     << "packet in meta: " 
                     << "bufid=" << std::hex << pPacket->buffer_id << std::dec
+                    << ", total_len=" << pPacket->total_len
                     << ", reason=" << (uint16_t)pPacket->reason
                     << ", tabid=" << (uint16_t)pPacket->table_id
                     << ", cookie=" << pPacket->cookie
@@ -120,11 +121,10 @@ void tcp_session::do_read() {
                     << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
                     << ::std::endl;
                   auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
-                  const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
-                  size_t lenPacketIn = ( pPacketIn + pPacket->header.length ) - pPayload;
+                  const auto pPayload = pPacketIn + pPacket->header.length - pPacket->total_len;
                   std::cout 
                     << "  content: "
-                    << HexDump<uint8_t*>( pPayload, pPacketIn + pPacket->header.length )
+                    << HexDump<uint8_t*>( pPayload, pPayload + pPacket->total_len )
                     << ::std::endl;
                   ethernet::header ethernet( *pPayload ); // pull out ethernet header
                   std::cout << ethernet << ::std::endl;
@@ -139,31 +139,18 @@ void tcp_session::do_read() {
                   pMatch->decode( rfMatch );
                   codec::ofp_packet_out out;
                   vByte_t v = std::move( GetAvailableBuffer() );
-                  out.build( v, nPort, lenPacketIn - 2, pPayload + 2 );
+                  out.build( v, nPort, pPacket->total_len, pPayload );
                   QueueTxToWrite( std::move( v ) );
                   
+                  // expand on this to enable routing
                   switch ( ethernet.GetEthertype() ) {
                     case ethernet::Ethertype::arp: {
                       protocol::arp::Packet arp( ethernet.GetMessage() );
                       std::cout << arp << ::std::endl;
-                      struct packet {  // construct packet_out for initial flood
-                        codec::ofp_packet_out::ofp_packet_out_ message;
-                        codec::ofp_packet_out::ofp_action_output_ action;
-                        uint8_t data[0];  // placeholder
-                        //packet(): message( true ), action( true ) {}
-                        void init( const size_t nTotal, uint8_t const* p, size_t cnt ) {
-                          // nTotal is the size allocated in the external new placement structure
-                          // need to confirm this constructed structure matches that size
-                          //assert( nTotal = )
-                          // use nTotal to confirm enough space 
-                          std::memcpy( &data, p, cnt );
-                        }
-                      };
+                      // maybe start a thread for other aux packet processing from above
                       }
                       break;
                   }
-                  // flood the packet out. maybe start a thread for other aux packet processing from above
-                  
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148

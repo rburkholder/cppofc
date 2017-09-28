@@ -25,7 +25,7 @@ namespace ethernet {
 enum Ethertype { ipv4=0x0800, arp=0x0806, ieee8021q=0x8100, ipv6=0x86dd, ieee8021ad=0x88ab };
 
 struct header_ {
-  uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
+  //uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in
   mac_t m_macDest;
   mac_t m_macSrc;
   boost::endian::big_uint16_t m_ethertype;
