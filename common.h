@@ -35,7 +35,7 @@ namespace std {
 }
 
 
-typedef std::vector<uint8_t> vByte_t;
+typedef std::vector<uint8_t> vByte_t;  // rename to octet?
 
 #endif /* COMMON_H */
 

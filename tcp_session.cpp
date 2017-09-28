@@ -27,9 +27,17 @@
 #include "tcp_session.h"
 #include "protocol/arp.h"
 
+// 2017/09/28 - once the bridge works, then can start work on routing:
+//   https://dtucker.co.uk/hack/building-a-router-with-openvswitch.html
+
 void tcp_session::start() {
   std::cout << "start begin: " << std::endl;
-  do_read();
+  try {
+    do_read();
+  }
+  catch(...) {
+    std::cout << "do_read issues" << std::endl;
+  }
   std::cout << "start end: " << std::endl;
 }
 
@@ -113,18 +121,27 @@ void tcp_session::do_read() {
                     << ::std::endl;
                   auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
                   const auto pPayload = pPacketIn + sizeof( ofp141::ofp_packet_in ) - sizeof( ofp141::ofp_match ) + pMatch->skip();
+                  size_t lenPacketIn = ( pPacketIn + pPacket->header.length ) - pPayload;
                   std::cout 
                     << "  content: "
                     << HexDump<uint8_t*>( pPayload, pPacketIn + pPacket->header.length )
                     << ::std::endl;
                   ethernet::header ethernet( *pPayload ); // pull out ethernet header
                   std::cout << ethernet << ::std::endl;
-                  codec::ofp_flow_mod::rfMatch_t rfMatch;
+                  codec::ofp_flow_mod::rfMatch_t rfMatch; // probably want this init outside of loop
+                  uint32_t nPort;
                   std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
-                    [this,&ethernet](nPort_t nPort) {
-                      m_bridge.Update( nPort, ethernet.GetSrcMac() );
+                    [this,&nPort, &ethernet](nPort_t nPort_) {
+                      nPort = nPort_;
+                      m_bridge.Update( nPort_, ethernet.GetSrcMac() );
+                      // need notification of src change so can update flow tables
                     };
                   pMatch->decode( rfMatch );
+                  codec::ofp_packet_out out;
+                  vByte_t v = std::move( GetAvailableBuffer() );
+                  out.build( v, nPort, lenPacketIn - 2, pPayload + 2 );
+                  QueueTxToWrite( std::move( v ) );
+                  
                   switch ( ethernet.GetEthertype() ) {
                     case ethernet::Ethertype::arp: {
                       protocol::arp::Packet arp( ethernet.GetMessage() );
@@ -133,7 +150,7 @@ void tcp_session::do_read() {
                         codec::ofp_packet_out::ofp_packet_out_ message;
                         codec::ofp_packet_out::ofp_action_output_ action;
                         uint8_t data[0];  // placeholder
-                        packet(): message( true ), action( true ) {}
+                        //packet(): message( true ), action( true ) {}
                         void init( const size_t nTotal, uint8_t const* p, size_t cnt ) {
                           // nTotal is the size allocated in the external new placement structure
                           // need to confirm this constructed structure matches that size
@@ -145,6 +162,8 @@ void tcp_session::do_read() {
                       }
                       break;
                   }
+                  // flood the packet out. maybe start a thread for other aux packet processing from above
+                  
                   break;
                   }
                 case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
@@ -160,7 +179,7 @@ void tcp_session::do_read() {
                   codec::ofp_switch_features features( *pReply );
 
                   // 1.4.1 page 138
-                  vByte_t v;
+                  vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
                   auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
                   p->init();
@@ -172,7 +191,7 @@ void tcp_session::do_read() {
                   break;
                 case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
                   const auto pEcho = new(pPacketIn) ofp141::ofp_header;
-                  vByte_t v;
+                  vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
                   auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
                   p->init();

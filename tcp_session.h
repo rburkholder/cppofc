@@ -36,7 +36,18 @@ public:
 
 private:
 
-  enum { max_length = 17000 };
+  enum { max_length = 17000 };  // not sure where I got 17k from.
+
+// need to use a function object instead so that the functions are embedded.
+// can be stack based function object or a heap based function object
+// supplied by the primary data structure being built
+// then can embed the related dependencies for building the various fields.  
+  struct build {
+    typedef std::function<size_t(void)> fSize_t;
+    typedef std::function<void(vByte_t&)> fAppend_t;
+  };
+  
+  std::vector<build> m_vBuild; // used for building up a packet from composite structures.
 
   void do_read();
   
