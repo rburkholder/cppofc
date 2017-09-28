@@ -10,6 +10,7 @@
 #define BRIDGE_H
 
 #include <cstdint>
+#include <cstring>
 #include <unordered_map>
 
 #include "common.h"
@@ -18,54 +19,25 @@ class MacAddress {
 public:
   
   MacAddress() {
-    m_mac[0] = 0;
-    m_mac[1] = 0;
-    m_mac[2] = 0;
-    m_mac[3] = 0;
-    m_mac[4] = 0;
-    m_mac[5] = 0;
+    std::memset( m_mac, 0, sizeof( mac_t ) );
   }
   
   MacAddress( const mac_t& mac ) {
-    m_mac[0] = mac[0];
-    m_mac[1] = mac[1];
-    m_mac[2] = mac[2];
-    m_mac[3] = mac[3];
-    m_mac[4] = mac[4];
-    m_mac[5] = mac[5];
+    std::memcpy( m_mac, mac, sizeof( mac_t ) );
   }
   
   MacAddress( const MacAddress& rhs ) {
-    m_mac[0] = rhs.m_mac[0];
-    m_mac[1] = rhs.m_mac[1];
-    m_mac[2] = rhs.m_mac[2];
-    m_mac[3] = rhs.m_mac[3];
-    m_mac[4] = rhs.m_mac[4];
-    m_mac[5] = rhs.m_mac[5];
+    std::memcpy( m_mac, rhs.m_mac, sizeof( mac_t ) );
   }
   
   const mac_t& Value() const { return m_mac; }
   
   bool operator==( const mac_t& rhs ) const {
-    return 
-      ( m_mac[0] == rhs[0] ) &&
-      ( m_mac[1] == rhs[1] ) &&
-      ( m_mac[2] == rhs[2] ) &&
-      ( m_mac[3] == rhs[3] ) &&
-      ( m_mac[4] == rhs[4] ) &&
-      ( m_mac[5] == rhs[5] ) 
-      ;
+    return 0 == std::memcmp( m_mac, rhs, sizeof( mac_t ) );
   }
   
   bool operator==( const MacAddress& rhs ) const { 
-    return 
-      ( m_mac[0] == rhs.m_mac[0] ) &&
-      ( m_mac[1] == rhs.m_mac[1] ) &&
-      ( m_mac[2] == rhs.m_mac[2] ) &&
-      ( m_mac[3] == rhs.m_mac[3] ) &&
-      ( m_mac[4] == rhs.m_mac[4] ) &&
-      ( m_mac[5] == rhs.m_mac[5] ) 
-      ;
+    return 0 == std::memcmp( m_mac, rhs.m_mac, sizeof( mac_t ) );
   }
   
 protected:
@@ -88,10 +60,12 @@ namespace std {
 class Bridge {
 public:
   
+  enum MacStatus { StatusQuo, Broadcast, Learned, Moved }; // add 'Flap' ?
+  
   Bridge( );
   virtual ~Bridge( );
   
-  void Update( nPort_t nPort, const mac_t& macSource );
+  MacStatus Update( nPort_t nPort, const mac_t& macSource );
   
 private:
   

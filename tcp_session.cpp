@@ -30,6 +30,8 @@
 // 2017/09/28 - once the bridge works, then can start work on routing:
 //   https://dtucker.co.uk/hack/building-a-router-with-openvswitch.html
 
+// 2017/09/28 - test port up/down/add/delete messages
+
 void tcp_session::start() {
   std::cout << "start begin: " << std::endl;
   try {
@@ -133,12 +135,53 @@ void tcp_session::do_read() {
                   std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
                     [this,&nPort, &ethernet](nPort_t nPort_) {
                       nPort = nPort_;
-                      m_bridge.Update( nPort_, ethernet.GetSrcMac() );
+                      Bridge::MacStatus status = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
                       // need notification of src change so can update flow tables
+
+                      switch ( status ) {
+                        case Bridge::MacStatus::Learned:
+                          break;
+                        case Bridge::MacStatus::Moved:
+                          break;
+                        case Bridge::MacStatus::StatusQuo:
+                          // issues if we reach this?
+                          break;
+                        case Bridge::MacStatus::Broadcast:
+                          // probably just ignore this, as we already flood stuff.
+                          // but maybe need to be testing for this differently
+                          // probably this is an error if a broadcast is from a source.
+                          break;
+                      }
+                      /* fix up for adding a flow:
+                      // match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                      struct add_table_miss_flow {
+                        codec::ofp_flow_mod::ofp_flow_mod_ mod;
+                        //codec::ofp_flow_mod::ofp_match_ match;
+                        codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+                        codec::ofp_flow_mod::ofp_action_output_ action;
+                        void init() {
+                          mod.init();
+                          //match.init();
+                          actions.init();
+                          action.init();
+                          mod.header.length = sizeof( add_table_miss_flow );
+                          actions.len += sizeof( action );
+                        }
+                      };
+                      vByte_t v = std::move( GetAvailableBuffer() );
+                      v.resize( sizeof( add_table_miss_flow ) );
+                      auto pMod = new( v.data() ) add_table_miss_flow; 
+                      pMod->init();
+                      pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                      //std::cout << "MissFlow: ";
+                      //HexDump( std::cout, v.begin(), v.end() );
+                      QueueTxToWrite( std::move( v ) );
+                       * */
+                      
                     };
                   pMatch->decode( rfMatch );
-                  codec::ofp_packet_out out;
                   vByte_t v = std::move( GetAvailableBuffer() );
+                  codec::ofp_packet_out out;
                   out.build( v, nPort, pPacket->total_len, pPayload );
                   QueueTxToWrite( std::move( v ) );
                   

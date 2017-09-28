@@ -44,6 +44,7 @@ public:
       pHeader->init();
       header.type = ofp141::ofp_type::OFPT_PACKET_OUT;
       header.length = size;
+      codec::ofp_header::NewXid( *pHeader );
       buffer_id = buffer_id_;
       in_port = in_port_;
       assert( sizeof( ofp_packet_out_ ) == sizeof( ofp141::ofp_packet_out ) );

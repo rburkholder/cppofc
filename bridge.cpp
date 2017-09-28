@@ -16,10 +16,12 @@ Bridge::Bridge( ) {
 Bridge::~Bridge( ) {
 }
 
-void Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
+Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
   static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  MacStatus status( StatusQuo );
   MacAddress mac( macSource );
   if ( mac == broadcast ) {
+    status = Broadcast;
     std::cout 
       << "bridge: found source broadcast " << macSource
       << " on port " << nPort 
@@ -27,17 +29,19 @@ void Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
   }
   else {
     mapMac_t::iterator iter = m_mapMac.find( mac );
-    if ( m_mapMac.end() == iter ) {\
+    if ( m_mapMac.end() == iter ) { // didn't find mac
       std::pair<MacAddress, MacInfo> pair( mac, MacInfo( nPort ) );
       m_mapMac.insert( pair );
+      status = Learned;
       std::cout 
         << "bridge: learned mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' ) 
         << " on port " << nPort
         << std::endl;
     }
     else {
-      if ( nPort != iter->second.m_inPort ) {
+      if ( nPort != iter->second.m_inPort ) { // mac moved (check for flap sometime)
         iter->second.m_inPort = nPort;
+        status = Moved;
         std::cout 
           << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
           << " moved to port " << nPort 
@@ -45,4 +49,5 @@ void Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
       }
     }
   }
+  return status;
 }
