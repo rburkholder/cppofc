@@ -65,7 +65,13 @@ void tcp_session::do_read() {
             assert( sizeof( ofp141::ofp_header ) <= pEnd - pPacketIn );
             
             auto pHeader = new( pPacketIn ) ofp141::ofp_header;
-            assert( pHeader->length <= pEnd - pPacketIn );
+            if ( pHeader->length <= pEnd - pPacketIn ) {}
+            else {
+              auto len = pHeader->length;
+              auto diff = pEnd - pPacketIn;
+              std::cout << "problem (expected,supplied): " << len << "," << diff << std::endl;
+              assert( 0 );
+            }
 
             std::cout 
               << "IN: "
@@ -196,7 +202,7 @@ void tcp_session::do_read() {
                             + 8 // maximum padding
                           );
                           auto pMod = new( v.data() ) update_flow_mac_dest; 
-                          pMod->init( ethernet.GetDstMac(), nPort );
+                          pMod->init( ethernet.GetSrcMac(), nPort );
                           //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
                           v.resize( pMod->mod.header.length ); // remove pading (invalidates pMod )
                           //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
