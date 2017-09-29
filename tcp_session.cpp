@@ -86,29 +86,33 @@ void tcp_session::do_read() {
 
                   struct add_table_miss_flow {
                     codec::ofp_flow_mod::ofp_flow_mod_ mod;
-                    //codec::ofp_flow_mod::ofp_match_ match;
                     codec::ofp_flow_mod::ofp_instruction_actions_ actions;
                     codec::ofp_flow_mod::ofp_action_output_ action;
                     void init() {
                       mod.init();
-                      //match.init();
                       actions.init();
                       action.init();
                       mod.header.length = sizeof( add_table_miss_flow );
                       actions.len += sizeof( action );
+
+                      // need to update pMatch length once match fields are added                      
                     }
                   };
                   vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( sizeof( add_table_miss_flow ) );
                   auto pMod = new( v.data() ) add_table_miss_flow; 
                   pMod->init();
-                  pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                  //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
                   //std::cout << "MissFlow: ";
                   //HexDump( std::cout, v.begin(), v.end() );
                   QueueTxToWrite( std::move( v ) );
                   }
                   break;
                 case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
+                  
+                  // rather than flood (output), re-use the table when possible
+                  // now should be able to modularize this code
+                  
                   const auto pPacket = new(pPacketIn) ofp141::ofp_packet_in;
                   std::cout 
                     << "packet in meta: " 
@@ -137,11 +141,70 @@ void tcp_session::do_read() {
                       nPort = nPort_;
                       Bridge::MacStatus status = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
                       // need notification of src change so can update flow tables
+                      
+                      struct update_flow_mac_dest_actions {
+                        codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+                        codec::ofp_flow_mod::ofp_action_output_ action;
+                        void init( uint32_t nPort ) {
+                          actions.init();
+                          action.init( nPort );
+                        }
+                      };
+                      
+                      struct update_flow_mac_dest {
+                        // once functional, could be used as a temlate for what to dow with variable matches, actions
+                        codec::ofp_flow_mod::ofp_flow_mod_ mod;
+                        
+                        void init( const mac_t& macDest, uint32_t nPortDest) {
+                          
+                          mod.init();
+                          
+                          mod.cookie = 1000;
+                          mod.idle_timeout = 10; // seconds
+                          mod.priority = 100;
+                          
+                          auto* pMatchEthDest = new ( mod.match.oxm_fields ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
+                          pMatchEthDest->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDest );
+                          mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
+                          
+                          mod.header.length += mod.match.length; // fixed after all oxm fields processed
+                          
+                          uint8_t fill_size( 0 );
+                          uint8_t* pAligned = mod.fill( fill_size );
+                          mod.header.length += fill_size; // skip over additional padding
+                          
+                          auto* pActions = new( pAligned ) update_flow_mac_dest_actions;
+                          pActions->init( nPortDest );
+                          pActions->actions.len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
+                         
+                          mod.header.length += pActions->actions.len;
 
+                        }
+                      };
+                      
                       switch ( status ) {
-                        case Bridge::MacStatus::Learned:
-                          break;
                         case Bridge::MacStatus::Moved:
+                          // remove/overwrite/add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                          //break; // skip to regular action
+                        case Bridge::MacStatus::Learned: {
+                          // add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                          vByte_t v = std::move( GetAvailableBuffer() );
+                          v.resize( 
+                              sizeof( codec::ofp_flow_mod::ofp_flow_mod_ ) 
+                            + sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ )
+                            + sizeof( update_flow_mac_dest_actions )
+                            + 8 // maximum padding
+                          );
+                          auto pMod = new( v.data() ) update_flow_mac_dest; 
+                          pMod->init( ethernet.GetDstMac(), nPort );
+                          //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
+                          v.resize( pMod->mod.header.length ); // remove pading (invalidates pMod )
+                          //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
+                          //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                          //std::cout << "MissFlow: ";
+                          //HexDump( std::cout, v.begin(), v.end() );
+                          QueueTxToWrite( std::move( v ) );
+                          }
                           break;
                         case Bridge::MacStatus::StatusQuo:
                           // issues if we reach this?
@@ -152,34 +215,10 @@ void tcp_session::do_read() {
                           // probably this is an error if a broadcast is from a source.
                           break;
                       }
-                      /* fix up for adding a flow:
-                      // match dest mac, set dest port, use expiry of 10 seconds ( for testing )
-                      struct add_table_miss_flow {
-                        codec::ofp_flow_mod::ofp_flow_mod_ mod;
-                        //codec::ofp_flow_mod::ofp_match_ match;
-                        codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-                        codec::ofp_flow_mod::ofp_action_output_ action;
-                        void init() {
-                          mod.init();
-                          //match.init();
-                          actions.init();
-                          action.init();
-                          mod.header.length = sizeof( add_table_miss_flow );
-                          actions.len += sizeof( action );
-                        }
-                      };
-                      vByte_t v = std::move( GetAvailableBuffer() );
-                      v.resize( sizeof( add_table_miss_flow ) );
-                      auto pMod = new( v.data() ) add_table_miss_flow; 
-                      pMod->init();
-                      pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
-                      //std::cout << "MissFlow: ";
-                      //HexDump( std::cout, v.begin(), v.end() );
-                      QueueTxToWrite( std::move( v ) );
-                       * */
                       
                     };
-                  pMatch->decode( rfMatch );
+                    
+                  pMatch->decode( rfMatch ); // process match fields
                   vByte_t v = std::move( GetAvailableBuffer() );
                   codec::ofp_packet_out out;
                   out.build( v, nPort, pPacket->total_len, pPayload );

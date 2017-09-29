@@ -9,12 +9,14 @@
 #ifndef OFP_FLOW_MOD_H
 #define OFP_FLOW_MOD_H
 
+#include <cstring>
 #include <iostream>
 #include <cassert>
 #include <functional>
 #include <tuple>
 
 #include "../openflow/openflow-spec1.4.1.h"
+#include "../common.h"
 #include "ofp_header.h"
 
 namespace codec {
@@ -23,9 +25,16 @@ class ofp_flow_mod {
 public:
   
   typedef std::function<void( uint32_t )> fInPort_t;
-  typedef std::tuple<fInPort_t> rfMatch_t;
+  typedef std::function<void( mac_t& )> fEthDest_t;
+  typedef std::function<void( mac_t& )> fEthSrc_t;
+  typedef std::tuple< // need to rework this, duplicate signatures won't work
+    fInPort_t
+//    fEthDest_t
+//    fEthSrc_t
+      > rfMatch_t;
   
-  struct oxm_header_ {
+  // included in oxm fields.
+  struct oxm_header_ { // convert to OXM_CLASS, OXM_FIELD, OXM_TYPE, ... ?
     boost::endian::big_uint16_t m_class;
     boost::endian::big_uint8_t m_mixed;
     boost::endian::big_uint8_t m_length;
@@ -38,8 +47,35 @@ public:
   };
   
   struct ofpxmt_ofb_in_port_ {
-    oxm_header_ header;
+    //oxm_header_ header;
+    boost::endian::big_uint32_t header;
     boost::endian::big_uint32_t port;
+    
+    void init( uint32_t port_ ) {
+      header = OXM_HEADER( 
+        ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+        ofp141::oxm_ofb_match_fields::OFPXMT_OFB_IN_PORT, 
+        4 
+        );
+      port = port_;
+    }
+  };
+  
+  struct ofpxmt_ofb_eth_ {
+    //oxm_header_ header;
+    boost::endian::big_uint32_t header;
+    mac_t mac;
+    
+    void init( ofp141::oxm_ofb_match_fields field, const mac_t& mac_ ) {
+      assert( 
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ARP_SHA == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ARP_THA == field )
+        );
+      header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC, field, 6 );
+      std::memcpy( mac, mac_, sizeof( mac_t ) );
+    }
   };
   
   // pg 63 v1.4.1 s7.2.2 (a default empty entry)
@@ -48,8 +84,19 @@ public:
       type = ofp141::ofp_match_type::OFPMT_OXM;
       length = sizeof( type ) + sizeof( length );
     }
-    size_t oxm_len() const { return length - 4; }
-    size_t skip() const { return length + ((length + 7)/8*8 - length); }
+    size_t fill_size() const { return ( length + 7 ) / 8 * 8 - length; }
+    uint8_t* fill() {  // returns next available octet location
+      auto* pPad = new( this ) uint8_t;
+      pPad += length;
+      uint8_t cnt = fill_size();
+      while ( 0 != cnt ) {
+       *pPad = 0;
+        pPad++;
+        cnt--;
+      }
+      return pPad;
+    }
+    
     void decode( rfMatch_t& rfMatch ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
@@ -70,9 +117,23 @@ public:
             std::cout << "in_port=" << pInPort->port << std::endl;
             if ( nullptr != std::get<fInPort_t>( rfMatch ) ) {
               std::get<fInPort_t>( rfMatch )( pInPort->port );
-            }
-            }
+            } // if
+            } // case
             break;
+          case ofp141::OFPXMT_OFB_ETH_DST: {
+            assert( 6 == p->oxm_length() );
+            ofpxmt_ofb_eth_* pMac = new( p ) ofpxmt_ofb_eth_;
+            //if ( nullptr != std::get<fEthDest_t>( rfMatch ) ) {
+            //  std::get<fEthDest_t>( rfMatch )( pMac->mac );
+            //}
+            }
+          case ofp141::OFPXMT_OFB_ETH_SRC: {
+            assert( 6 == p->oxm_length() );
+            ofpxmt_ofb_eth_* pMac = new( p ) ofpxmt_ofb_eth_;
+            //if ( nullptr != std::get<fEthSrc_t>( rfMatch ) ) {
+            //  std::get<fEthSrc_t>( rfMatch )( pMac->mac );
+            //}
+            }
           default:
             std::cout << "**** ofp_match: unknown field" << std::endl;
         }
@@ -93,11 +154,12 @@ public:
 
   // pg 77 v1.4.1 s7.2.4
   struct ofp_action_output_: public ofp141::ofp_action_output {
-    void init() {
+    void init( uint32_t nPort = ofp141::ofp_port_no::OFPP_CONTROLLER ) {
       type = ofp141::ofp_action_type::OFPAT_OUTPUT;
       len = sizeof( ofp141::ofp_action_output );
-      port = ofp141::ofp_port_no::OFPP_CONTROLLER;
+      port = nPort;
       max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+      std::memset( pad, 0, 6 );
     }
   };
   
@@ -115,11 +177,13 @@ public:
       auto pHeader = new( &header ) codec::ofp_header::ofp_header_;
       pHeader->init();
       header.type = ofp141::ofp_type::OFPT_FLOW_MOD;
+      assert( sizeof( ofp_flow_mod_ ) == sizeof( ofp141::ofp_flow_mod ) );
+      header.length = sizeof( ofp_flow_mod_ ) - sizeof( match );
       codec::ofp_header::NewXid( *pHeader );
       cookie = 0;
       cookie_mask = 0;
       table_id = 0;
-      command = 0;
+      command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
       idle_timeout = 0;
       hard_timeout = 0;
       priority = 0;
@@ -132,13 +196,17 @@ public:
         0
         ;
       importance = 0;
-      auto pMask = new( &match ) codec::ofp_flow_mod::ofp_match_;
-      pMask->init();
+      auto pMatch = new( &match ) codec::ofp_flow_mod::ofp_match_;
+      pMatch->init();
+    }
+    
+    uint8_t* fill( uint8_t& fill_size ) {  // returns next available octet location
+      auto pMatch = new( &match ) codec::ofp_flow_mod::ofp_match_;
+      fill_size = pMatch->fill_size();
+      return pMatch->fill();
     }
   };
   
-  ofp_flow_mod( );
-  virtual ~ofp_flow_mod( );
 private:
 
 };
