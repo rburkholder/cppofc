@@ -61,6 +61,7 @@ private:
   boost::asio::ip::tcp::socket m_socket;
   
   vByte_t m_vRx;
+  vByte_t m_vReassembly;
   //vChar_t m_vTx;
   
   typedef std::queue<vByte_t> qBuffers_t; 

@@ -12,12 +12,6 @@
 
 namespace codec {
 
-ofp_packet_out::ofp_packet_out( ) {
-}
-
-ofp_packet_out::~ofp_packet_out( ) {
-}
-
 void ofp_packet_out::build( vByte_t& vDestination, uint32_t nPort, size_t nOctets, void* src ) {
   
   size_t size // need to check for packing and padding issues

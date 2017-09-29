@@ -62,6 +62,13 @@ void tcp_session::do_read() {
 
           while ( pPacketIn < pEnd ) {
             
+            // need to change this initial section
+            // if less then header size, then buffer and wait for more
+            // if less than header.length, then buffer and wait for more
+            // if >= header.length, then process portion while data available.
+            // when merging unused end of buffer and beginning of new data:
+            //    assign to m_vReassembly, then add new stuff, then move back, then process
+            
             assert( sizeof( ofp141::ofp_header ) <= pEnd - pPacketIn );
             
             auto pHeader = new( pPacketIn ) ofp141::ofp_header;
@@ -132,14 +139,17 @@ void tcp_session::do_read() {
                     << ", match=" // section 7.2.2 page 63
                     << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
                     << ::std::endl;
+                
                   auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
                   const auto pPayload = pPacketIn + pPacket->header.length - pPacket->total_len;
                   std::cout 
                     << "  content: "
                     << HexDump<uint8_t*>( pPayload, pPayload + pPacket->total_len )
                     << ::std::endl;
+                  
                   ethernet::header ethernet( *pPayload ); // pull out ethernet header
                   std::cout << ethernet << ::std::endl;
+                  
                   codec::ofp_flow_mod::rfMatch_t rfMatch; // probably want this init outside of loop
                   uint32_t nPort;
                   std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
@@ -224,10 +234,14 @@ void tcp_session::do_read() {
                       
                     };
                     
-                  pMatch->decode( rfMatch ); // process match fields
+                  // three choices - refactor in to switch ( status ) statement above
+                  // 1) flood to all ports if dest mac not found
+                  // 2) flood to all ports if broadcast mac found
+                  // 3) send to table if found in bridge table (flow should have been installed above)
+                  pMatch->decode( rfMatch ); // process match fields via the lambda
                   vByte_t v = std::move( GetAvailableBuffer() );
                   codec::ofp_packet_out out;
-                  out.build( v, nPort, pPacket->total_len, pPayload );
+                  out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
                   QueueTxToWrite( std::move( v ) );
                   
                   // expand on this to enable routing

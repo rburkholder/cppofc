@@ -163,11 +163,24 @@ public:
     }
   };
   
+  // pg 74, v1.4.1 s7.2.3
+  struct ofp_instructions_goto_table: public ofp141::ofp_instruction_goto_table {
+    void init( uint8_t idTable ) {
+      type = ofp141::ofp_instruction_type::OFPIT_GOTO_TABLE;
+      len = sizeof( ofp141::ofp_instruction_goto_table );
+      table_id = idTable;
+      memset( pad, 0, 3 );
+    }
+  };
+  
   // pg 75 v1.4.1 s7.2.3
   struct ofp_instruction_actions_: public ofp141::ofp_instruction_actions {
-    void init() {
-      type = ofp141::ofp_instruction_type::OFPIT_APPLY_ACTIONS;
+    //void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_APPLY_ACTIONS ) {
+    void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_WRITE_ACTIONS ) {
+      type = type_;
       len = sizeof( ofp141::ofp_instruction_actions ); // needs to be updated with added actions
+      memset( pad, 0, 4 );
+      // specific actions to follow this structure
     }
   };
     

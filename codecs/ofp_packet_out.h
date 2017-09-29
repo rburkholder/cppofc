@@ -56,8 +56,6 @@ public:
     //}
   };
   
-  ofp_packet_out();
-  virtual ~ofp_packet_out( );
   void build( vByte_t&, uint32_t nPort, size_t nOctets, void* pSrc );
 private:
 
