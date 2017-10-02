@@ -175,8 +175,8 @@ public:
   
   // pg 75 v1.4.1 s7.2.3
   struct ofp_instruction_actions_: public ofp141::ofp_instruction_actions {
-    //void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_APPLY_ACTIONS ) {
-    void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_WRITE_ACTIONS ) {
+    void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_APPLY_ACTIONS ) {
+    //void init( ofp141::ofp_instruction_type type_ = ofp141::ofp_instruction_type::OFPIT_WRITE_ACTIONS ) {
       type = type_;
       len = sizeof( ofp141::ofp_instruction_actions ); // needs to be updated with added actions
       memset( pad, 0, 4 );
