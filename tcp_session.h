@@ -62,7 +62,7 @@ private:
   
   vByte_t m_vRx;
   vByte_t m_vReassembly;
-  //vChar_t m_vTx;
+  typedef vByte_t::iterator vByte_iter_t;
   
   typedef std::queue<vByte_t> qBuffers_t; 
   
@@ -74,6 +74,8 @@ private:
   vByte_t m_vTxInWrite;
   
   Bridge m_bridge;
+  
+  void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
   
   void GetAvailableBuffer( vByte_t& v );
   vByte_t GetAvailableBuffer();

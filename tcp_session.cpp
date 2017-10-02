@@ -43,284 +43,87 @@ void tcp_session::start() {
   std::cout << "start end: " << std::endl;
 }
 
+
 void tcp_session::do_read() {
   //std::cout << "do_read begin: " << std::endl;
   // going to need to perform serialization as bytes come in (multiple packets joined together)?
   auto self(shared_from_this());
   m_vRx.resize( max_length );
   m_socket.async_read_some(boost::asio::buffer(m_vRx),
-      [this, self](boost::system::error_code ec, std::size_t length)
+      [this, self](boost::system::error_code ec, const std::size_t lenRead)
       {
         //std::cout << "async_read begin: " << std::endl;
-        // NOTE:  multiple responses may occur in same packet, so may need to
-        //   sequentially process the results
         if (!ec) {
-          std::cout << ">>> total read length: " << length << std::endl;
+          std::cout << ">>> total read length: " << lenRead << std::endl;
+
+          // inbound data arrives
+          // if reassembly data available;
+          //    append to reassembly buffer, 
+          //    clear inbound buffer
+          //    move adjusted reassembly buffer to inbound buffer
+          // loop on input buffer:
+          //   if less then header size:
+          //     move remaining octets to reassembly buffer
+          //     exit loop for more
+          //   if less than header.length:
+          //     move remaining octets to reassembly buffer
+          //     exit loop for more
+          //   if >= header.length: 
+          //     process packet
+          //     move beginning to end
+          //     loop for more
           
-          auto* pPacketIn = m_vRx.data();
-          auto* pEnd = pPacketIn + length;
+          std::size_t length = lenRead;
+          
+          if ( 0 != m_vReassembly.size() ) {
+            m_vReassembly.insert( m_vReassembly.end(), m_vRx.begin(), m_vRx.begin() + lenRead );
+            m_vRx.clear();
+            m_vRx = std::move( m_vReassembly );
+            length = m_vRx.size();
+          }
+          
+          vByte_iter_t iterBegin = m_vRx.begin();
+          vByte_iter_t iterEnd = iterBegin + length;
+          
+          ofp141::ofp_header* pOfpHeader;
+          bool bReassemble( false );
+          
+          bool bLooping( true );
+          
+          while ( bLooping ) {
+            
+            auto nOctetsRemaining = iterEnd - iterBegin;
 
-          while ( pPacketIn < pEnd ) {
-            
-            // need to change this initial section
-            // if less then header size, then buffer and wait for more
-            // if less than header.length, then buffer and wait for more
-            // if >= header.length, then process portion while data available.
-            // when merging unused end of buffer and beginning of new data:
-            //    assign to m_vReassembly, then add new stuff, then move back, then process
-            
-            assert( sizeof( ofp141::ofp_header ) <= pEnd - pPacketIn );
-            
-            auto pHeader = new( pPacketIn ) ofp141::ofp_header;
-            if ( pHeader->length <= pEnd - pPacketIn ) {}
+            if ( nOctetsRemaining < sizeof( ofp141::ofp_header ) ) bReassemble = true;
             else {
-              auto len = pHeader->length;
-              auto diff = pEnd - pPacketIn;
-              std::cout << "problem (expected,supplied): " << len << "," << diff << std::endl;
-              assert( 0 );
+              pOfpHeader = new( &(*iterBegin) ) ofp141::ofp_header;
+              if ( nOctetsRemaining < pOfpHeader->length ) bReassemble = true;
             }
 
-            std::cout 
-              << "IN: "
-              << HexDump<uint8_t*>( pPacketIn, pPacketIn + pHeader->length )
-              << std::endl;
-            
-            std::cout << (uint16_t)pHeader->version << "," << (uint16_t)pHeader->type << "," << pHeader->length << "," << pHeader->xid << std::endl;
-            if ( OFP_VERSION == pHeader->version ) {
-              switch (pHeader->type) {
-                case ofp141::ofp_type::OFPT_HELLO: {
-                  // need to wrap following in try/catch
-                  const auto pHello = new(pPacketIn) ofp141::ofp_hello;
-                  codec::ofp_hello hello( *pHello );
-                  // do some processing
-                  //  then send hello back
-                  QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
-                  QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
-
-                  struct add_table_miss_flow {
-                    codec::ofp_flow_mod::ofp_flow_mod_ mod;
-                    codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-                    codec::ofp_flow_mod::ofp_action_output_ action;
-                    void init() {
-                      mod.init();
-                      actions.init();
-                      action.init();
-                      mod.header.length = sizeof( add_table_miss_flow );
-                      actions.len += sizeof( action );
-
-                      // need to update pMatch length once match fields are added                      
-                    }
-                  };
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  v.resize( sizeof( add_table_miss_flow ) );
-                  auto pMod = new( v.data() ) add_table_miss_flow; 
-                  pMod->init();
-                  //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
-                  //std::cout << "MissFlow: ";
-                  //HexDump( std::cout, v.begin(), v.end() );
-                  QueueTxToWrite( std::move( v ) );
-                  }
-                  break;
-                case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
-                  
-                  // rather than flood (output), re-use the table when possible
-                  // now should be able to modularize this code
-                  
-                  const auto pPacket = new(pPacketIn) ofp141::ofp_packet_in;
-                  std::cout 
-                    << "packet in meta: " 
-                    << "bufid=" << std::hex << pPacket->buffer_id << std::dec
-                    << ", total_len=" << pPacket->total_len
-                    << ", reason=" << (uint16_t)pPacket->reason
-                    << ", tabid=" << (uint16_t)pPacket->table_id
-                    << ", cookie=" << pPacket->cookie
-                    << ", match type=" << pPacket->match.type
-                    << ", match len=" << pPacket->match.length
-                    << ", match=" // section 7.2.2 page 63
-                    << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
-                    << ::std::endl;
-                
-                  auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
-                  const auto pPayload = pPacketIn + pPacket->header.length - pPacket->total_len;
-                  std::cout 
-                    << "  content: "
-                    << HexDump<uint8_t*>( pPayload, pPayload + pPacket->total_len )
-                    << ::std::endl;
-                  
-                  ethernet::header ethernet( *pPayload ); // pull out ethernet header
-                  std::cout << ethernet << ::std::endl;
-                  
-                  codec::ofp_flow_mod::rfMatch_t rfMatch; // probably want this init outside of loop
-                  uint32_t nPort;
-                  std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
-                    [this,&nPort, &ethernet](nPort_t nPort_) {
-                      nPort = nPort_;
-                      Bridge::MacStatus status = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
-                      // need notification of src change so can update flow tables
-                      
-                      struct update_flow_mac_dest_actions {
-                        codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-                        codec::ofp_flow_mod::ofp_action_output_ action;
-                        void init( uint32_t nPort ) {
-                          actions.init();
-                          action.init( nPort );
-                        }
-                      };
-                      
-                      struct update_flow_mac_dest {
-                        // once functional, could be used as a temlate for what to dow with variable matches, actions
-                        codec::ofp_flow_mod::ofp_flow_mod_ mod;
-                        
-                        void init( const mac_t& macDest, uint32_t nPortDest) {
-                          
-                          mod.init();
-                          
-                          mod.cookie = 1000;
-                          mod.idle_timeout = 10; // seconds
-                          mod.priority = 100;
-                          
-                          auto* pMatchEthDest = new ( mod.match.oxm_fields ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
-                          pMatchEthDest->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDest );
-                          mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
-                          
-                          mod.header.length += mod.match.length; // fixed after all oxm fields processed
-                          
-                          uint8_t fill_size( 0 );
-                          uint8_t* pAligned = mod.fill( fill_size );
-                          mod.header.length += fill_size; // skip over additional padding
-                          
-                          auto* pActions = new( pAligned ) update_flow_mac_dest_actions;
-                          pActions->init( nPortDest );
-                          pActions->actions.len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
-                         
-                          mod.header.length += pActions->actions.len;
-
-                        }
-                      };
-                      
-                      switch ( status ) {
-                        case Bridge::MacStatus::Moved:
-                          // remove/overwrite/add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
-                          //break; // skip to regular action
-                        case Bridge::MacStatus::Learned: {
-                          // add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
-                          vByte_t v = std::move( GetAvailableBuffer() );
-                          v.resize( 
-                              sizeof( codec::ofp_flow_mod::ofp_flow_mod_ ) 
-                            + sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ )
-                            + sizeof( update_flow_mac_dest_actions )
-                            + 8 // maximum padding
-                          );
-                          auto pMod = new( v.data() ) update_flow_mac_dest; 
-                          pMod->init( ethernet.GetSrcMac(), nPort );
-                          //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
-                          v.resize( pMod->mod.header.length ); // remove pading (invalidates pMod )
-                          //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
-                          //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
-                          //std::cout << "MissFlow: ";
-                          //HexDump( std::cout, v.begin(), v.end() );
-                          QueueTxToWrite( std::move( v ) );
-                          }
-                          break;
-                        case Bridge::MacStatus::StatusQuo:
-                          // issues if we reach this?
-                          break;
-                        case Bridge::MacStatus::Broadcast:
-                          // probably just ignore this, as we already flood stuff.
-                          // but maybe need to be testing for this differently
-                          // probably this is an error if a broadcast is from a source.
-                          break;
-                      }
-                      
-                    };
-                    
-                  // three choices - refactor in to switch ( status ) statement above
-                  // 1) flood to all ports if dest mac not found
-                  // 2) flood to all ports if broadcast mac found
-                  // 3) send to table if found in bridge table (flow should have been installed above)
-                  pMatch->decode( rfMatch ); // process match fields via the lambda
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  codec::ofp_packet_out out;
-                  out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
-                  QueueTxToWrite( std::move( v ) );
-                  
-                  // expand on this to enable routing
-                  switch ( ethernet.GetEthertype() ) {
-                    case ethernet::Ethertype::arp: {
-                      protocol::arp::Packet arp( ethernet.GetMessage() );
-                      std::cout << arp << ::std::endl;
-                      // maybe start a thread for other aux packet processing from above
-                      }
-                      break;
-                  }
-                  break;
-                  }
-                case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
-                  const auto pError = new(pPacketIn) ofp141::ofp_error_msg;
-                  std::cout 
-                    << "Error type " << pError->type 
-                    << " code " << pError->code 
-                    << std::endl;
-                  break;
-                  }
-                case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
-                  const auto pReply = new(pPacketIn) ofp141::ofp_switch_features;
-                  codec::ofp_switch_features features( *pReply );
-
-                  // 1.4.1 page 138
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
-                  auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
-                  p->init();
-                  p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
-                  codec::ofp_header::NewXid( *p );
-                  QueueTxToWrite( std::move( v ) );
-
-                  }
-                  break;
-                case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
-                  const auto pEcho = new(pPacketIn) ofp141::ofp_header;
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
-                  auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
-                  p->init();
-                  p->type = ofp141::ofp_type::OFPT_ECHO_REPLY;
-                  p->xid = pEcho->xid;
-                  if ( pEcho->length != p->length ) {
-                    std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
-                  }
-                  QueueTxToWrite( std::move( v ) );
-                  }
-                  break;
-                case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
-                  const auto pAsyncReply = new(pPacketIn) ofp141::ofp_async_config;
-                  codec::ofp_async_config config( *pAsyncReply );
-                  }
-                  break;
-                case ofp141::ofp_type::OFPT_PORT_STATUS: {
-                  // multiple messages stacked, so need to change code in this whole section 
-                  //   to sequentially parse the inbound bytes
-                  const auto pStatus = new(pPacketIn) ofp141::ofp_port_status;
-                  codec::ofp_port_status status( *pStatus );
-                  }
-                  break;
-                default:
-                  std::cout << "do_read unprocessed packet type: " << (uint16_t)pHeader->type << std::endl;
-                  break;
-              }
+            if ( bReassemble ) {
+              // wait for more octets
+              m_vReassembly = std::move( m_vRx );
+              bLooping = false;
             }
             else {
-              std::cout << "do_read no match on version: " << (uint16_t)pHeader->version << std::endl;
-            }
-            //do_read();  // keep the socket open with another read
-            
-            
-            pPacketIn += pHeader->length;
-          }  // end while     
+              // normal packet processing
+              uint8_t* pBegin = &(*iterBegin);
+              ProcessPacket( pBegin, pBegin + pOfpHeader->length );
+              iterBegin += pOfpHeader->length;
+              bLooping = iterBegin != iterEnd;
+           }
+          }
+          
           std::cout << "<<< end." << std::endl;
+
         } // end if ( ec )
         else {
-            //std::cout << "read error: " << ec.message() << std::endl;
+          if ( 2 == ec.value() ) {
+            assert( 0 );  // 'End of file', so need to re-open, or abort
+          }
+          else {
+            std::cout << "read error: " << ec.value() << "," << ec.message() << std::endl;
+          }
             // do we do another read or let it close implicitly or close explicitly?
         } // end else ( ec )
         //std::cout << "async_read end: " << std::endl;
@@ -328,6 +131,269 @@ void tcp_session::do_read() {
       }); // end lambda
   //std::cout << "do_read end: " << std::endl;
 }
+
+void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
+  
+  ofp141::ofp_header* pHeader = new( pBegin ) ofp141::ofp_header;
+
+  // can probably remove this check after code is validated
+  auto diff = pEnd - pBegin;
+  assert( 0 < diff );
+  if ( pHeader->length <= diff ) {}
+  else {
+    auto len = pHeader->length;
+    std::cout << "problem (expected,supplied): " << len << "," << diff << std::endl;
+    assert( 0 );
+  }
+
+  std::cout 
+    << "IN: "
+    << HexDump<const uint8_t*>( pBegin, pEnd )
+    << std::endl;
+
+  std::cout 
+    << (uint16_t)pHeader->version 
+    << "," << (uint16_t)pHeader->type 
+    << "," << pHeader->length 
+    << "," << pHeader->xid 
+    << std::endl;
+  
+  if ( OFP_VERSION == pHeader->version ) {
+    switch (pHeader->type) {
+      case ofp141::ofp_type::OFPT_HELLO: {
+        // need to wrap following in try/catch
+        const auto pHello = new(pBegin) ofp141::ofp_hello;
+        codec::ofp_hello hello( *pHello );
+        // do some processing
+        //  then send hello back
+        QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
+        QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
+
+        struct add_table_miss_flow {
+          codec::ofp_flow_mod::ofp_flow_mod_ mod;
+          codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+          codec::ofp_flow_mod::ofp_action_output_ action;
+          void init() {
+            mod.init();
+            actions.init();
+            action.init();
+            mod.header.length = sizeof( add_table_miss_flow );
+            actions.len += sizeof( action );
+
+            // need to update pMatch length once match fields are added                      
+          }
+        };
+        
+        vByte_t v = std::move( GetAvailableBuffer() );
+        v.resize( sizeof( add_table_miss_flow ) );
+        auto pMod = new( v.data() ) add_table_miss_flow; 
+        pMod->init();
+        pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
+        std::cout 
+          << "Sent MissFlow: " 
+          << HexDump<vByte_iter_t>( v.begin(), v.end() )
+          << std::endl;
+        QueueTxToWrite( std::move( v ) );
+        }
+        break;
+      case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
+
+        // rather than flood (output), re-use the table when possible
+        // now should be able to modularize this code
+
+        const auto pPacket = new(pBegin) ofp141::ofp_packet_in;
+        std::cout 
+          << "packet in meta: " 
+          << "bufid=" << std::hex << pPacket->buffer_id << std::dec
+          << ", total_len=" << pPacket->total_len
+          << ", reason=" << (uint16_t)pPacket->reason
+          << ", tabid=" << (uint16_t)pPacket->table_id
+          << ", cookie=" << pPacket->cookie
+          << ", match type=" << pPacket->match.type
+          << ", match len=" << pPacket->match.length
+          << ", match=" // section 7.2.2 page 63
+          << HexDump<boost::endian::big_uint8_t*>( pPacket->match.oxm_fields, pPacket->match.oxm_fields + pPacket->match.length - 4 )
+          << ::std::endl;
+
+        auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
+        const auto pPayload = pBegin + pPacket->header.length - pPacket->total_len;
+        std::cout 
+          << "  content: "
+          << HexDump<uint8_t*>( pPayload, pPayload + pPacket->total_len )
+          << ::std::endl;
+
+        ethernet::header ethernet( *pPayload ); // pull out ethernet header
+        std::cout << ethernet << ::std::endl;
+
+        codec::ofp_flow_mod::rfMatch_t rfMatch; // probably want this init outside of loop
+        uint32_t nPort;
+        std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
+          [this,&nPort, &ethernet](nPort_t nPort_) {
+            nPort = nPort_;
+            Bridge::MacStatus status = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
+            // need notification of src change so can update flow tables
+
+            struct update_flow_mac_dest_actions {
+              codec::ofp_flow_mod::ofp_instruction_actions_ actions;
+              codec::ofp_flow_mod::ofp_action_output_ action;
+              void init( uint32_t nPort ) {
+                actions.init();
+                action.init( nPort );
+              }
+            };
+
+            struct update_flow_mac_dest {
+              // once functional, could be used as a temlate for what to dow with variable matches, actions
+              codec::ofp_flow_mod::ofp_flow_mod_ mod;
+
+              void init( const mac_t& macDest, uint32_t nPortDest) {
+
+                mod.init();
+
+                mod.cookie = 1000;
+                mod.idle_timeout = 10; // seconds
+                mod.priority = 100;
+
+                auto* pMatchEthDest = new ( mod.match.oxm_fields ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
+                pMatchEthDest->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDest );
+                mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
+
+                mod.header.length += mod.match.length; // fixed after all oxm fields processed
+
+                uint8_t fill_size( 0 );
+                uint8_t* pAligned = mod.fill( fill_size );
+                mod.header.length += fill_size; // skip over additional padding
+
+                auto* pActions = new( pAligned ) update_flow_mac_dest_actions;
+                pActions->init( nPortDest );
+                pActions->actions.len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
+
+                mod.header.length += pActions->actions.len;
+
+              }
+            };
+
+            switch ( status ) {
+              case Bridge::MacStatus::Moved:
+                std::cout << "Bridge: moved" << std::endl;
+                // remove/overwrite/add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                //break; // skip to regular action
+              case Bridge::MacStatus::Learned: {
+                std::cout << "Bridge: learned" << std::endl;
+                // add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                vByte_t v = std::move( GetAvailableBuffer() );
+                v.resize( 
+                    sizeof( codec::ofp_flow_mod::ofp_flow_mod_ ) 
+                  + sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ )
+                  + sizeof( update_flow_mac_dest_actions )
+                  + 8 // maximum padding
+                );
+                auto pMod = new( v.data() ) update_flow_mac_dest; 
+                pMod->init( ethernet.GetSrcMac(), nPort );
+                //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
+                v.resize( pMod->mod.header.length ); // remove pading (invalidates pMod )
+                //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
+                //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
+                //std::cout << "MissFlow: ";
+                //HexDump( std::cout, v.begin(), v.end() );
+                QueueTxToWrite( std::move( v ) );
+                }
+                break;
+              case Bridge::MacStatus::StatusQuo:
+                std::cout << "Bridge: status quo" << std::endl;
+                // issues if we reach this?
+                break;
+              case Bridge::MacStatus::Broadcast:
+                std::cout << "Bridge: broadcast" << std::endl;
+                // probably just ignore this, as we already flood stuff.
+                // but maybe need to be testing for this differently
+                // probably this is an error if a broadcast is from a source.
+                break;
+            }
+
+          };
+
+        // three choices - refactor in to switch ( status ) statement above
+        // 1) flood to all ports if dest mac not found
+        // 2) flood to all ports if broadcast mac found
+        // 3) send to table if found in bridge table (flow should have been installed above)
+        pMatch->decode( rfMatch ); // process match fields via the lambda
+        vByte_t v = std::move( GetAvailableBuffer() );
+        codec::ofp_packet_out out;
+        out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
+        QueueTxToWrite( std::move( v ) );
+
+        // expand on this to enable routing
+        switch ( ethernet.GetEthertype() ) {
+          case ethernet::Ethertype::arp: {
+            protocol::arp::Packet arp( ethernet.GetMessage() );
+            std::cout << arp << ::std::endl;
+            // maybe start a thread for other aux packet processing from above
+            }
+            break;
+        }
+        break;
+        }
+      case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
+        const auto pError = new(pBegin) ofp141::ofp_error_msg;
+        std::cout 
+          << "Error type " << pError->type 
+          << " code " << pError->code 
+          << std::endl;
+        break;
+        }
+      case ofp141::ofp_type::OFPT_FEATURES_REPLY: {
+        const auto pReply = new(pBegin) ofp141::ofp_switch_features;
+        codec::ofp_switch_features features( *pReply );
+
+        // 1.4.1 page 138
+        vByte_t v = std::move( GetAvailableBuffer() );
+        v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+        auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+        p->init();
+        p->type = ofp141::ofp_type::OFPT_GET_ASYNC_REQUEST;
+        codec::ofp_header::NewXid( *p );
+        QueueTxToWrite( std::move( v ) );
+
+        }
+        break;
+      case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
+        const auto pEcho = new(pBegin) ofp141::ofp_header;
+        vByte_t v = std::move( GetAvailableBuffer() );
+        v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
+        auto* p = new( v.data() ) codec::ofp_header::ofp_header_;
+        p->init();
+        p->type = ofp141::ofp_type::OFPT_ECHO_REPLY;
+        p->xid = pEcho->xid;
+        if ( pEcho->length != p->length ) {
+          std::cout << "Echo request len=" << pEcho->length << " reply len=" << p->length << std::endl;
+        }
+        QueueTxToWrite( std::move( v ) );
+        }
+        break;
+      case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
+        const auto pAsyncReply = new(pBegin) ofp141::ofp_async_config;
+        codec::ofp_async_config config( *pAsyncReply );
+        }
+        break;
+      case ofp141::ofp_type::OFPT_PORT_STATUS: {
+        // multiple messages stacked, so need to change code in this whole section 
+        //   to sequentially parse the inbound bytes
+        const auto pStatus = new(pBegin) ofp141::ofp_port_status;
+        codec::ofp_port_status status( *pStatus );
+        }
+        break;
+      default:
+        std::cout << "do_read unprocessed packet type: " << (uint16_t)pHeader->type << std::endl;
+        break;
+    }
+  }
+  else {
+    //std::cout << "do_read no match on version: " << (uint16_t)pHeader->version << std::endl;
+  }
+  //do_read();  // keep the socket open with another read
+}
+
 
 //void tcp_session::do_write(std::size_t length) {
 //  auto self(shared_from_this());
