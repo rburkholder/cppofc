@@ -178,6 +178,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             actions.init();
             action.init();
             mod.header.length = sizeof( add_table_miss_flow );
+            mod.cookie = 0x101; // can change this as cookie usage becomes refined
             actions.len += sizeof( action );
 
             // need to update pMatch length once match fields are added                      
@@ -225,13 +226,21 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         ethernet::header ethernet( *pPayload ); // pull out ethernet header
         std::cout << ethernet << ::std::endl;
 
-        codec::ofp_flow_mod::rfMatch_t rfMatch; // probably want this init outside of loop
+        // expand on this to enable routing, for now, is just random information
+        switch ( ethernet.GetEthertype() ) {
+          case ethernet::Ethertype::arp: {
+            protocol::arp::Packet arp( ethernet.GetMessage() );
+            std::cout << arp << ::std::endl;
+            // maybe start a thread for other aux packet processing from above
+            }
+            break;
+        }
+        
+        // create a lambda (TODO: needs to be restructured, for handling message
+        //   needs to be integral to the cookie switch statement (to be refactored)
         uint32_t nPort;
-        std::get<codec::ofp_flow_mod::fInPort_t>(rfMatch) =  // this will require improvement as more matches are implemented
-          [this,&nPort, &ethernet](nPort_t nPort_) {
-            nPort = nPort_;
-            Bridge::MacStatus status = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
-            // need notification of src change so can update flow tables
+        codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
+          [this, &nPort, &ethernet](nPort_t nPort_) {
 
             struct update_flow_mac_dest_actions {
               codec::ofp_flow_mod::ofp_instruction_actions_ actions;
@@ -242,20 +251,29 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               }
             };
 
-            struct update_flow_mac_dest {
+            struct update_flow_mac_src_dest {
               // once functional, could be used as a temlate for what to dow with variable matches, actions
               codec::ofp_flow_mod::ofp_flow_mod_ mod;
 
-              void init( const mac_t& macDest, uint32_t nPortDest) {
+              void init( const mac_t& macSrc, const mac_t& macDst, uint32_t nPortDest ) {
 
                 mod.init();
 
                 mod.cookie = 1000;
                 mod.idle_timeout = 10; // seconds
                 mod.priority = 100;
+                
+                // pMatch used as placeholder for match structures
+                auto* pMatch = &mod.match.oxm_fields;
 
-                auto* pMatchEthDest = new ( mod.match.oxm_fields ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
-                pMatchEthDest->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDest );
+                auto* pMatchEthSrc = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
+                pMatchEthSrc->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc );
+                mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
+                
+                pMatch += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
+
+                auto* pMatchEthDst = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
+                pMatchEthDst->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst );
                 mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
 
                 mod.header.length += mod.match.length; // fixed after all oxm fields processed
@@ -273,25 +291,44 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               }
             };
 
-            switch ( status ) {
+            nPort = nPort_;
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
+            
+            // TODO: need to put the constants into an enumerated array, and use indexed lookup
+            std::cout << "Bridge ";
+            switch ( statusSrcLookup ) {
               case Bridge::MacStatus::Moved:
-                std::cout << "Bridge: moved" << std::endl;
+                std::cout << "moved" << std::endl;
+                break;
+              case Bridge::MacStatus::Learned:
+                std::cout << "learned";
+                break;
+              case Bridge::MacStatus::StatusQuo:
+                std::cout << "status quo";
+                break;
+              case Bridge::MacStatus::Broadcast:
+                std::cout << "broadcast";
+                break;
+              std::cout << std::endl;
+            }
+           
+            switch ( statusSrcLookup ) {
                 // remove/overwrite/add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
-                //break; // skip to regular action
-              case Bridge::MacStatus::Learned: {
-                std::cout << "Bridge: learned" << std::endl;
-                // add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+              case Bridge::MacStatus::StatusQuo: // already in table, but expired from flow table, so re-establish
+              case Bridge::MacStatus::Moved: // TODO: will need to remove flows with moved macs, or has it expired?
+              case Bridge::MacStatus::Learned: { // new mac, so insert flow
+                // if a mac-dest only flow is inserted, won't learn source mac
+                //   therefore, only insert src/dest based flows
+                //   use flow expiry of 10 seconds for testing
+                //   match srcmac, destmac, set dest port
+                //   put in both directions
+                //   flood if destination is broadcast
                 vByte_t v = std::move( GetAvailableBuffer() );
-                v.resize( 
-                    sizeof( codec::ofp_flow_mod::ofp_flow_mod_ ) 
-                  + sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ )
-                  + sizeof( update_flow_mac_dest_actions )
-                  + 8 // maximum padding
-                );
-                auto pMod = new( v.data() ) update_flow_mac_dest; 
-                pMod->init( ethernet.GetSrcMac(), nPort );
+                v.resize( max_length );
+                auto pMod = new( v.data() ) update_flow_mac_src_dest; 
+                pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nPort );
                 //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
-                v.resize( pMod->mod.header.length ); // remove pading (invalidates pMod )
+                v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                 //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
                 //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
                 //std::cout << "MissFlow: ";
@@ -299,39 +336,33 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 QueueTxToWrite( std::move( v ) );
                 }
                 break;
-              case Bridge::MacStatus::StatusQuo:
-                std::cout << "Bridge: status quo" << std::endl;
-                // issues if we reach this?
-                break;
               case Bridge::MacStatus::Broadcast:
-                std::cout << "Bridge: broadcast" << std::endl;
                 // probably just ignore this, as we already flood stuff.
                 // but maybe need to be testing for this differently
                 // probably this is an error if a broadcast is from a source.
                 break;
             }
 
-          };
-
+          }; // end of lambda( in_port )
+          
         // three choices - refactor in to switch ( status ) statement above
         // 1) flood to all ports if dest mac not found
         // 2) flood to all ports if broadcast mac found
         // 3) send to table if found in bridge table (flow should have been installed above)
-        pMatch->decode( rfMatch ); // process match fields via the lambda
-        vByte_t v = std::move( GetAvailableBuffer() );
-        codec::ofp_packet_out out;
-        out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
-        QueueTxToWrite( std::move( v ) );
-
-        // expand on this to enable routing
-        switch ( ethernet.GetEthertype() ) {
-          case ethernet::Ethertype::arp: {
-            protocol::arp::Packet arp( ethernet.GetMessage() );
-            std::cout << arp << ::std::endl;
-            // maybe start a thread for other aux packet processing from above
+        switch ( pPacket->cookie ) {
+          case 0x101: {
+            pMatch->decode( fCookie0x101 ); // process match fields via the lambda
+            vByte_t v = std::move( GetAvailableBuffer() );
+            codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
+            out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
+            QueueTxToWrite( std::move( v ) );
             }
             break;
+          default:
+            assert( 0 );  // need to catch unknown packet_in, shouldn't be any
+            break;
         }
+
         break;
         }
       case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148

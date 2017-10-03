@@ -24,14 +24,8 @@ namespace codec {
 class ofp_flow_mod {
 public:
   
-  typedef std::function<void( uint32_t )> fInPort_t;
-  typedef std::function<void( mac_t& )> fEthDest_t;
-  typedef std::function<void( mac_t& )> fEthSrc_t;
-  typedef std::tuple< // need to rework this, duplicate signatures won't work
-    fInPort_t
-//    fEthDest_t
-//    fEthSrc_t
-      > rfMatch_t;
+  typedef std::function<void( uint32_t )> fCookie0x101_t; // in_port
+  //typedef std::function<void( mac_t& )> fEth_t;
   
   // included in oxm fields.
   struct oxm_header_ { // convert to OXM_CLASS, OXM_FIELD, OXM_TYPE, ... ?
@@ -97,7 +91,8 @@ public:
       return pPad;
     }
     
-    void decode( rfMatch_t& rfMatch ) {
+    // TODO: will need to refactor as different matches are required
+    void decode( fCookie0x101_t& fCookie0x101 ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p; 
@@ -111,12 +106,12 @@ public:
           << ",length=" << (uint16_t)p->oxm_length()
           << std::endl;
         switch ( p->oxm_field() ) {
-          case ofp141::OFPXMT_OFB_IN_PORT: {
+          case ofp141::OFPXMT_OFB_IN_PORT: {  
             assert( sizeof(uint32_t) == p->oxm_length() );
             ofpxmt_ofb_in_port_* pInPort = new( p ) ofpxmt_ofb_in_port_;
             std::cout << "in_port=" << pInPort->port << std::endl;
-            if ( nullptr != std::get<fInPort_t>( rfMatch ) ) {
-              std::get<fInPort_t>( rfMatch )( pInPort->port );
+            if ( nullptr != fCookie0x101 ) {
+              fCookie0x101( pInPort->port );
             } // if
             } // case
             break;
