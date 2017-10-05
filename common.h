@@ -10,6 +10,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <cstdint>
 #include <vector>
 
 typedef uint32_t nPort_t;  // switch port number

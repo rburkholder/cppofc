@@ -238,9 +238,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         
         // create a lambda (TODO: needs to be restructured, for handling message
         //   needs to be integral to the cookie switch statement (to be refactored)
-        uint32_t nPort;
+        uint32_t nSrcPort;
         codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
-          [this, &nPort, &ethernet](nPort_t nPort_) {
+          [this, &nSrcPort, &ethernet](nPort_t nSrcPort_) {
 
             struct update_flow_mac_dest_actions {
               codec::ofp_flow_mod::ofp_instruction_actions_ actions;
@@ -252,47 +252,67 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             };
 
             struct update_flow_mac_src_dest {
-              // once functional, could be used as a temlate for what to dow with variable matches, actions
+              // once functional, could be used as a template for what to do with variable number of matches, actions
               codec::ofp_flow_mod::ofp_flow_mod_ mod;
 
               void init( const mac_t& macSrc, const mac_t& macDst, uint32_t nPortDest ) {
 
                 mod.init();
 
-                mod.cookie = 1000;
+                mod.cookie = 0x201;
                 mod.idle_timeout = 10; // seconds
                 mod.priority = 100;
                 
                 // pMatch used as placeholder for match structures
                 auto* pMatch = &mod.match.oxm_fields;
 
+                // create match on source mac
                 auto* pMatchEthSrc = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
                 pMatchEthSrc->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc );
                 mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
                 
+                // match structures start from here
                 pMatch += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
 
+                // create match on destination mac
                 auto* pMatchEthDst = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
                 pMatchEthDst->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst );
                 mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
 
+                // update overall length from match structures
                 mod.header.length += mod.match.length; // fixed after all oxm fields processed
 
+                // standard requires some padding
                 uint8_t fill_size( 0 );
                 uint8_t* pAligned = mod.fill( fill_size );
                 mod.header.length += fill_size; // skip over additional padding
 
+                // set action for output port
                 auto* pActions = new( pAligned ) update_flow_mac_dest_actions;
                 pActions->init( nPortDest );
                 pActions->actions.len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
 
+                // update overall length from action structures
                 mod.header.length += pActions->actions.len;
 
-              }
-            };
+              } // init()
+            }; // update_flow_mac_src_dest
 
-            nPort = nPort_;
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nPort_, ethernet.GetSrcMac() );
+            nSrcPort = nSrcPort_;
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, ethernet.GetSrcMac() );
+            
+            nPort_t nDstPort;
+            try {
+              nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );
+            }
+            catch( std::runtime_error& e ) {
+              std::cout << "Bridge Lookup problem: " << e.what() << std::endl;
+              assert( 0 );
+            }
+            
+            // TODO:
+            
+            
             
             // TODO: need to put the constants into an enumerated array, and use indexed lookup
             std::cout << "Bridge ";
@@ -326,7 +346,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 vByte_t v = std::move( GetAvailableBuffer() );
                 v.resize( max_length );
                 auto pMod = new( v.data() ) update_flow_mac_src_dest; 
-                pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nPort );
+                pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nSrcPort );
                 //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
                 v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                 //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
@@ -354,7 +374,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             pMatch->decode( fCookie0x101 ); // process match fields via the lambda
             vByte_t v = std::move( GetAvailableBuffer() );
             codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
-            out.build( v, nPort, pPacket->total_len, pPayload ); // set for flood
+            out.build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
             QueueTxToWrite( std::move( v ) );
             }
             break;

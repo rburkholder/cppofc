@@ -17,10 +17,13 @@ Bridge::~Bridge( ) {
 }
 
 Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
-  static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  if ( 0 == nPort ) {
+    throw std::runtime_error( "Bridge::Update need port > 0" );
+  }
+  
   MacStatus status( StatusQuo );
   MacAddress mac( macSource );
-  if ( mac == broadcast ) {
+  if ( MacAddress::IsBroadcast( mac ) ) {
     status = Broadcast;
     std::cout 
       << "bridge: found source broadcast " << macSource
@@ -50,4 +53,21 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
     }
   }
   return status;
+}
+
+nPort_t Bridge::Lookup( const mac_t& mac_ ) {
+  nPort_t nPort( 0 );
+  MacAddress mac( mac_ );
+  if ( MacAddress::IsBroadcast( mac_ ) ) {
+  }
+  else {
+    mapMac_t::iterator iter = m_mapMac.find( mac );
+    if ( m_mapMac.end() == iter ) {
+      throw std::runtime_error( "Bridge::Lookup: no address found" );
+    }
+    else {
+      return iter->second.m_inPort;
+    }
+  }
+  return nPort;
 }

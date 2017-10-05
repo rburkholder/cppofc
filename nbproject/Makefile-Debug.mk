@@ -44,6 +44,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_packet_out.o \
 	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
+	${OBJECTDIR}/mac.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/protocol/arp.o \
 	${OBJECTDIR}/protocol/ethernet.o \
@@ -119,6 +120,11 @@ ${OBJECTDIR}/codecs/ofp_switch_features.o: codecs/ofp_switch_features.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
+
+${OBJECTDIR}/mac.o: mac.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
 
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
