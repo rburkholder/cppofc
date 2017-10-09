@@ -24,7 +24,9 @@ namespace codec {
 class ofp_flow_mod {
 public:
   
-  typedef std::function<void( uint32_t )> fCookie0x101_t; // in_port
+  enum Verdict { Drop, Directed, Flood };
+  
+  typedef std::function<Verdict( uint32_t )> fCookie0x101_t; // in_port
   //typedef std::function<void( mac_t& )> fEth_t;
   
   // included in oxm fields.
@@ -92,7 +94,8 @@ public:
     }
     
     // TODO: will need to refactor as different matches are required
-    void decode( fCookie0x101_t& fCookie0x101 ) {
+    Verdict decode( fCookie0x101_t& fCookie0x101 ) {
+      Verdict verdict( Verdict::Drop );
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p; 
@@ -111,7 +114,7 @@ public:
             ofpxmt_ofb_in_port_* pInPort = new( p ) ofpxmt_ofb_in_port_;
             std::cout << "in_port=" << pInPort->port << std::endl;
             if ( nullptr != fCookie0x101 ) {
-              fCookie0x101( pInPort->port );
+              verdict = fCookie0x101( pInPort->port );
             } // if
             } // case
             break;
@@ -135,6 +138,7 @@ public:
         cnt += sizeof( oxm_header_ ) + p->oxm_length();
         assert( lenMatches >= cnt );
       }
+    return verdict;
     }
   };
   
