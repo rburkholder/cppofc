@@ -18,6 +18,7 @@ Bridge::~Bridge( ) {
 }
 
 Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
+  
   if ( 0 == nPort ) {
     throw std::runtime_error( "Bridge::Update need port > 0" );
   }
@@ -70,13 +71,16 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
 nPort_t Bridge::Lookup( const mac_t& mac_ ) {
   nPort_t nPort( ofp141::ofp_port_no::OFPP_ANY );  // neither ingress nor egress (pg 15)
   MacAddress mac( mac_ );
-  if ( MacAddress::IsBroadcast( mac_ ) ) {
+  if ( MacAddress::IsBroadcast( mac_ ) 
+    || MacAddress::IsMulticast( mac_ )
+  ) {
     nPort_t nPort( ofp141::ofp_port_no::OFPP_ALL ); // all but ingress (pg 15)
   }
   else {
     mapMac_t::iterator iter = m_mapMac.find( mac );
     if ( m_mapMac.end() == iter ) {
       //throw std::runtime_error( "Bridge::Lookup: no address found" );
+      // default to OFPP_ANY
     }
     else {
       nPort = iter->second.m_inPort;
