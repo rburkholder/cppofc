@@ -28,6 +28,9 @@ public:
   static bool IsBroadcast( const mac_t& mac );
   static bool IsBroadcast( const MacAddress& mac );
   
+  static bool IsMulticast( const mac_t& mac );
+  static bool IsMulticast( const MacAddress& mac );
+  
   const mac_t& Value() const;
   
   bool operator==( const mac_t& rhs ) const;

@@ -327,7 +327,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               std::cout << "source based broadcast address found" << std::endl;
             }
             else {
-              if ( MacAddress::IsBroadcast(( ethernet.GetDstMac() ) ) ) {
+              if ( MacAddress::IsMulticast( ethernet.GetDstMac() ) 
+                || MacAddress::IsBroadcast( ethernet.GetDstMac() )
+              ) {
                 // need to flood the packet
                 verdict = Verdict::Flood;
               }

@@ -17,6 +17,14 @@ namespace {
 static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 }
 
+bool MacAddress::IsMulticast( const mac_t& mac ) {
+  return 1 == ( mac[0] & 1 );
+}
+
+bool MacAddress::IsMulticast( const MacAddress& mac) {
+  return 1 == ( mac.m_mac[0] & 1 );
+}
+
 bool MacAddress::IsBroadcast( const mac_t& mac ) {
   return 0 == std::memcmp( mac, broadcast, 6 );
 }

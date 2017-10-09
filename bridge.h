@@ -17,7 +17,7 @@
 class Bridge {
 public:
   
-  enum MacStatus { StatusQuo, Broadcast, Learned, Moved }; // add 'Flap' ?
+  enum MacStatus { StatusQuo, Multicast, Broadcast, Learned, Moved }; // add 'Flap' ?
   
   Bridge( );
   virtual ~Bridge( );
