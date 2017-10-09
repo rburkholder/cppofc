@@ -303,19 +303,15 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
               } // init()
             }; // update_flow_mac_src_dest
+            
+            MacAddress macSrc( ethernet.GetSrcMac() );
+            MacAddress macDst( ethernet.GetDstMac() );
 
             nSrcPort = nSrcPort_;
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, ethernet.GetSrcMac() );
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, macSrc.Value() );
             
-            nPort_t nDstPort;
-            try {
-              nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );
-            }
-            catch( std::runtime_error& e ) {
-              std::cout << "Bridge Lookup problem: " << e.what() << std::endl;
-              assert( 0 );
-            }
-
+            nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
+            
             // if we arrived in this code, it means a flow or set of flows:
             //   a) have not existed, or
             //   b) have expired
@@ -323,48 +319,53 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             typedef codec::ofp_flow_mod::Verdict Verdict;
             Verdict verdict( Verdict::Drop );
             
-            if ( MacAddress::IsBroadcast( ethernet.GetSrcMac() ) ) {
-              std::cout << "source based broadcast address found" << std::endl;
+            if ( MacAddress::IsMulticast( macSrc ) 
+              || MacAddress::IsBroadcast( macSrc )
+            ) {
+              std::cout << "source based broadcast/multicast address found" << std::endl;
             }
             else {
-              if ( MacAddress::IsMulticast( ethernet.GetDstMac() ) 
-                || MacAddress::IsBroadcast( ethernet.GetDstMac() )
+              if (   MacAddress::IsMulticast( macDst ) 
+                ||   MacAddress::IsBroadcast( macDst )
+                || ( ofp141::ofp_port_no::OFPP_MAX <= nDstPort )
               ) {
                 // need to flood the packet
                 verdict = Verdict::Flood;
               }
               else {
                 // configure flow in each direction
-                // remove/overwrite/add flow: match dest mac, set dest port, use expiry of 10 seconds ( for testing )
+                // remove/overwrite/add flow: match dest mac, set dest port,
                 // if a mac-dest only flow is inserted, 
                 //   won't get a packet_in from the other direction to learn those macs
-                //   therefore, only insert src/dest based flows, both ways
+                // therefore, only insert src/dest based flows, both ways
                 //   use flow expiry of 10 seconds for testing
                 //   match srcmac, destmac, set dest port
                 //   put in both directions
-                //   flood if destination is broadcast
                 
                 {
                   vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( max_length );
-                  auto pMod1 = new( v.data() ) update_flow_mac_src_dest; 
-                  pMod1->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nDstPort );
+                  auto pMod = new( v.data() ) update_flow_mac_src_dest; 
+                  pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nDstPort );
                   //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
-                  v.resize( pMod1->mod.header.length ); // remove padding (invalidates pMod )
+                  v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                   //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
                   //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
                   //std::cout << "MissFlow: ";
                   //HexDump( std::cout, v.begin(), v.end() );
                   QueueTxToWrite( std::move( v ) );
+                  std::cout << "Update Flow1: " 
+                    << std::hex << nDstPort << std::dec << std::endl;
                 }
 
                 {
                   vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( max_length );
-                  auto pMod2 = new( v.data() ) update_flow_mac_src_dest; 
-                  pMod2->init( ethernet.GetDstMac(), ethernet.GetSrcMac(), nSrcPort );
-                  v.resize( pMod2->mod.header.length ); // remove padding (invalidates pMod )
+                  auto pMod = new( v.data() ) update_flow_mac_src_dest; 
+                  pMod->init( ethernet.GetDstMac(), ethernet.GetSrcMac(), nSrcPort );
+                  v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                   QueueTxToWrite( std::move( v ) );
+                  std::cout << "Update Flow2: " << nSrcPort << std::endl;
                 }
                 
                 verdict = Verdict::Directed;
@@ -384,13 +385,16 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             switch ( verdict ) {
               case Verdict::Drop:
                 // do nothing
+                std::cout << "Verdict Drop " << std::endl;
                 break;
               case Verdict::Directed:{
                 // send via table?  // TODO: fix this to be a send via table, may need a barrier message
                 vByte_t v = std::move( GetAvailableBuffer() );
                 codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
-                out.build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
+                //out.build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_TABLE );
+                out.build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_ALL );
                 QueueTxToWrite( std::move( v ) );
+                std::cout << "Verdict Directed " << std::endl;
                 }
                 
                 break;
@@ -400,6 +404,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
                 out.build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
                 QueueTxToWrite( std::move( v ) );
+                std::cout << "Verdict Flood" << std::endl;
                 }
                 break;
             }

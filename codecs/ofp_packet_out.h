@@ -51,12 +51,10 @@ public:
       actions_len = sizeof( ofp_action_output_ );
       std::memset( pad, 0, 6 );
     }
-    //size_t size() const {
-    //  return 0; // need to add up sub-structures
-    //}
   };
   
-  void build( vByte_t&, uint32_t nPort, size_t nOctets, void* pSrc );
+  void build( vByte_t&, uint32_t nPort, size_t nOctets, void* pSrc, 
+              ofp141::ofp_port_no portOutput = ofp141::ofp_port_no::OFPP_ALL );
 private:
 
 };

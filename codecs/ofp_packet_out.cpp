@@ -12,7 +12,9 @@
 
 namespace codec {
 
-void ofp_packet_out::build( vByte_t& vDestination, uint32_t nPort, size_t nOctets, void* src ) {
+void ofp_packet_out::build( 
+  vByte_t& vDestination, uint32_t nPort, size_t nOctets, void* src, ofp141::ofp_port_no portOutput
+) {
   
   size_t size // need to check for packing and padding issues
     = sizeof( ofp_packet_out_ )
@@ -27,7 +29,8 @@ void ofp_packet_out::build( vByte_t& vDestination, uint32_t nPort, size_t nOctet
   // will need to loop this structure for multiple actions
   auto* pActionOutput = new( pOfpPacketOut->actions ) ofp_action_output_;
   //pActionOutput->init( ofp141::ofp_port_no::OFPP_FLOOD );
-  pActionOutput->init( ofp141::ofp_port_no::OFPP_ALL );
+  //pActionOutput->init( ofp141::ofp_port_no::OFPP_ALL );
+  pActionOutput->init( portOutput );
   
   // TODO: pull the xid out of the packet_in message.
   
