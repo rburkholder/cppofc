@@ -1,15 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   mac.cpp
  * Author: sysadmin
  * 
  * Created on October 5, 2017, 7:09 PM
  */
+
+// https://en.wikipedia.org/wiki/Multicast_address
 
 #include "mac.h"
 

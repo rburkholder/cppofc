@@ -270,7 +270,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 mod.priority = 100;
                 
                 // pMatch used as placeholder for match structures
-                auto* pMatch = &mod.match.oxm_fields;
+                boost::endian::big_uint8_t* pMatch = &mod.match.oxm_fields[0];
 
                 // create match on source mac
                 auto* pMatchEthSrc = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
@@ -347,12 +347,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                   v.resize( max_length );
                   auto pMod = new( v.data() ) update_flow_mac_src_dest; 
                   pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nDstPort );
-                  //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
                   v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
-                  //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ':' ) << std::endl;
-                  //pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD;
-                  //std::cout << "MissFlow: ";
-                  //HexDump( std::cout, v.begin(), v.end() );
+                  //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
                   QueueTxToWrite( std::move( v ) );
                   std::cout << "Update Flow1: " 
                     << std::hex << nDstPort << std::dec << std::endl;
@@ -364,6 +360,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                   auto pMod = new( v.data() ) update_flow_mac_src_dest; 
                   pMod->init( ethernet.GetDstMac(), ethernet.GetSrcMac(), nSrcPort );
                   v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
+                  //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
                   QueueTxToWrite( std::move( v ) );
                   std::cout << "Update Flow2: " << nSrcPort << std::endl;
                 }
