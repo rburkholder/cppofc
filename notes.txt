@@ -1,0 +1,12 @@
+2017/10/29
+
+From an email on 2017/10/19 on the ovs-discuss list:
+
+I don't know how it works with OVS+DPDK, but with the kernel datapath you need some L3 interfaces 
+(one for each subnet/VLAN; IIRC you can use OVS internal interfaces here) and then you need to 
+enable routing in the Linux kernel. That, or you need to use an OpenFlow controller 
+and program all the routing functions (rewrite MAC address, decrement TTL, etc.) via flows.
+
+Some example code in a larger project:
+http://www.coe.neu.edu/research/krclab/crens3-doc/dir_18efecfc53739d22f2a1dd4b16c9d749.html
+
