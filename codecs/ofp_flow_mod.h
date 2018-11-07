@@ -219,6 +219,8 @@ public:
     }
   };
   
+protected:
+  
 private:
 
 };

@@ -10,10 +10,10 @@
 
 namespace codec {
 
-ofp_flow_mod::ofp_flow_mod( ) {
-}
+//ofp_flow_mod::ofp_flow_mod( ) {
+//}
 
-ofp_flow_mod::~ofp_flow_mod( ) {
-}
+//ofp_flow_mod::~ofp_flow_mod( ) {
+//}
 
 } // namespace codec

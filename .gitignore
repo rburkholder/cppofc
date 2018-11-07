@@ -1,0 +1,8 @@
+/build/
+/dist/
+.dep.inc
+nbproject/private/Makefile-variables.mk
+nbproject/private/c_standard_headers_indexer.c
+nbproject/private/cpp_standard_headers_indexer.cpp
+nbproject/private/launcher.properties
+nbproject/private/private.xml
