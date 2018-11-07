@@ -7,17 +7,20 @@
 
 #include <iostream>
 
-#include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 #include "tcp_session.h"
 
-using boost::asio::ip::tcp;
+namespace asio = boost::asio;
+namespace ip = boost::asio::ip;
+
 
 class server {
 public:
-  server(boost::asio::io_service& io_service, short port)
-    : acceptor_(io_service, tcp::endpoint(tcp::v4(), port)),
-      socket_(io_service)
+  server(asio::io_context& io_context, short port)
+    : acceptor_(io_context, ip::tcp::endpoint(ip::tcp::v4(), port)),
+      socket_(io_context)
   {
     do_accept();
   }
@@ -38,15 +41,15 @@ private:
         });
   }
 
-  tcp::acceptor acceptor_;
-  tcp::socket socket_;
+  ip::tcp::acceptor acceptor_;
+  ip::tcp::socket socket_;
 };
 
 int main(int argc, char* argv[]) {
     
   int port( 6633 );
     
-  boost::asio::io_service io_service;
+  asio::io_context io_context;
 
   try   {
     if (argc != 2) {
@@ -57,9 +60,9 @@ int main(int argc, char* argv[]) {
       port = std::atoi(argv[1]);
     }
 
-    server s(io_service, port);
+    server s(io_context, port);
 
-    io_service.run();
+    io_context.run();
   }
   catch (std::exception& e)   {
     std::cerr << "Exception: " << e.what() << "\n";

@@ -8,9 +8,11 @@
 
 // 
 
-#include <iostream>
+#include <ostream>
 #include <iomanip>
 #include <cstring>
+
+#include <boost/asio/write.hpp>
 
 #include "codecs/ofp_header.h"
 #include "codecs/ofp_hello.h"
@@ -27,6 +29,8 @@
 #include "tcp_session.h"
 #include "protocol/arp.h"
 
+namespace asio = boost::asio;
+
 // 2017/09/28 - once the bridge works, then can start work on routing:
 //   https://dtucker.co.uk/hack/building-a-router-with-openvswitch.html
 
@@ -42,7 +46,6 @@ void tcp_session::start() {
   }
   std::cout << "start end: " << std::endl;
 }
-
 
 void tcp_session::do_read() {
   //std::cout << "do_read begin: " << std::endl;
@@ -505,7 +508,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 void tcp_session::do_write() {
   auto self(shared_from_this());
   //std::cout << "do_write start: " << std::endl;
-  boost::asio::async_write(
+  asio::async_write(
     m_socket, boost::asio::buffer( m_vTxInWrite ),
       [this, self](boost::system::error_code ec, std::size_t len )
       {

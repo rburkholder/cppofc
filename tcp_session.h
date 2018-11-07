@@ -13,16 +13,19 @@
 #include <mutex>
 #include <atomic>
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include "common.h"
 #include "bridge.h"
+
+namespace ip = boost::asio::ip;
 
 class tcp_session
   : public std::enable_shared_from_this<tcp_session>
 {
 public:
-  tcp_session(boost::asio::ip::tcp::socket socket)
+  tcp_session(ip::tcp::socket socket)
     : m_socket(std::move(socket)), m_transmitting( 0 )
   { 
       std::cout << "session construct" << std::endl;
@@ -58,7 +61,7 @@ private:
   //void do_write( vChar_t& v );
   void do_write();
 
-  boost::asio::ip::tcp::socket m_socket;
+  ip::tcp::socket m_socket;
   
   vByte_t m_vRx;
   vByte_t m_vReassembly;
