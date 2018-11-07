@@ -5,6 +5,15 @@
  * Created on May 12, 2017, 9:15 PM
  */
 
+/*
+ Sample setup
+   ovs-vsctl add-br ovsbr0
+   ovs-vsctl set-fail-mode ovsbr0 secure
+   ovs-vsctl set-controller ovsbr0 tcp:0.0.0.0:6633
+   ip link set dev ovsbr0 up
+   ip link set dev ovs-system up
+ */
+
 #include <iostream>
 
 #include <boost/asio/io_context.hpp>
@@ -14,7 +23,6 @@
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
-
 
 class server {
 public:

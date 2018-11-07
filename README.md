@@ -29,16 +29,16 @@ ip netns add right
 ip netns exec left ip link set dev lo up
 ip netns exec right ip link set dev lo up
 # add a bridge
-ovs-vsctl add-br ovsbr
+ovs-vsctl add-br ovsbr0
 # set controller of the bridge for openflow
-ovs-vsctl set-fail-mode ovsbr secure
-ovs-vsctl set-controller ovsbr tcp:0.0.0.0:6633
+ovs-vsctl set-fail-mode ovsbr0 secure
+ovs-vsctl set-controller ovsbr0 tcp:0.0.0.0:6633
 # bridge needs to be turned up as that is how it handles some stp stuff
-ip link set dev ovsbr up
+ip link set dev ovsbr0 up
 ip link set dev ovs-system up
 # add two ports
-ovs-vsctl add-port ovsbr ethleft -- set interface ethleft type=internal
-ovs-vsctl add-port ovsbr ethright -- set interface ethright type=internal
+ovs-vsctl add-port ovsbr0 ethleft -- set interface ethleft type=internal
+ovs-vsctl add-port ovsbr0 ethright -- set interface ethright type=internal
 # move the two interfaces into the namespaces
 ip link set dev ethleft netns left
 ip link set dev ethright netns right
@@ -55,4 +55,8 @@ ip netns exec right ping 172.16.1.1
 
 # Dump Flows:
 
-    ovs-ofctl dump-flows ovsbr
+    ovs-ofctl dump-flows ovsbr0
+
+# Dump rules:
+
+    ovs-appctl dpif/dump-flows ovsbr0
