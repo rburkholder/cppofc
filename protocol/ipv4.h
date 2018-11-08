@@ -27,23 +27,32 @@ namespace endian=boost::endian;
 struct Header_ { // used to overlay inbound data
   uint8_t version_ihl;
   uint8_t qos;
-  endian::big_int16_t length;
-  endian::big_int16_t identification;
-  endian::big_int16_t flags_fragment;
-  uint8_t ttl;
-  uint8_t protocol;
-  endian::big_int16_t checksum;
-  endian::big_int32_t source_ip;
-  endian::big_int32_t destination_ip;
+  endian::big_uint16_t length;
+  endian::big_uint16_t identification;
+  endian::big_uint16_t flags_fragment;
+  endian::big_uint8_t ttl;
+  endian::big_uint8_t protocol;
+  endian::big_uint16_t checksum;
+  endian::big_uint32_t source_ip;
+  endian::big_uint32_t destination_ip;
   uint8_t options[0];
   
   uint8_t ihl() const { return version_ihl & 0x0f; }
   uint8_t version() const { return version_ihl >> 4; }
   uint8_t dscp() const { return qos >> 2; }
   uint8_t ecn() const { return qos & 0x03; }
-  uint16_t offset() const { return flags_fragment & 0x1fff; }
-  bool df() const { return ( 0 < flags_fragment & 0x400 ); }
-  bool mf() const { return ( 0 < flags_fragment & 0x200 ); }
+  uint16_t offset() const { 
+    uint16_t flags_fragment_ = flags_fragment;
+    return flags_fragment_ & 0x1fff; 
+  }
+  bool df() const { 
+    uint16_t flags_fragment_ = flags_fragment;
+    return ( 0 < ( flags_fragment_ & 0x400 ) ); 
+  }
+  bool mf() const { 
+    uint16_t flags_fragment_ = flags_fragment;
+    return ( 0 < ( flags_fragment_ & 0x200 ) ); 
+  }
   
   uint8_t& data() {
     assert( 5 <= ihl() );

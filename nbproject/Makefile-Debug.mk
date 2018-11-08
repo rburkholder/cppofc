@@ -49,6 +49,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/protocol/arp.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
+	${OBJECTDIR}/protocol/tcp.o \
 	${OBJECTDIR}/protocol/udp.o \
 	${OBJECTDIR}/protocol/vlan.o \
 	${OBJECTDIR}/tcp_session.o
@@ -147,6 +148,11 @@ ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+
+${OBJECTDIR}/protocol/tcp.o: protocol/tcp.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/tcp.o protocol/tcp.cpp
 
 ${OBJECTDIR}/protocol/udp.o: protocol/udp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol

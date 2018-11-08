@@ -27,6 +27,7 @@
 #include "protocol/vlan.h"
 #include "protocol/ipv4.h"
 #include "protocol/udp.h"
+#include "protocol/tcp.h"
 
 #include "common.h"
 #include "hexdump.h"
@@ -255,11 +256,15 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             std::cout << ipv4 << ::std::endl;
             
             switch ( ipv4.GetHeader().protocol ) {
-              case 6: // tcp
+              case 6: {// tcp
+                protocol::tcp::Packet tcp( ipv4.GetData() );
+                std::cout << tcp << ::std::endl;
+                }
                 break;
-              case 17: // udp
+              case 17: {// udp
                 protocol::udp::Packet udp( ipv4.GetData() );
                 std::cout << udp << ::std::endl;
+                }
                 break;
               }
             }

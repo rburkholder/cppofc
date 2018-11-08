@@ -15,7 +15,7 @@
 
 #include "../hexdump.h"
 
-// https://en.wikipedia.org/wiki/IPv4
+// https://en.wikipedia.org/wiki/User_Datagram_Protocol
 
 namespace protocol {
 namespace udp {
@@ -25,10 +25,10 @@ namespace endian=boost::endian;
 // ** Header_
 
 struct Header_ { // used to overlay inbound data
-  endian::big_int16_t src_port;
-  endian::big_int16_t dst_port;
-  endian::big_int16_t length;
-  endian::big_int16_t checksum;
+  endian::big_uint16_t src_port;
+  endian::big_uint16_t dst_port;
+  endian::big_uint16_t length;
+  endian::big_uint16_t checksum;
   uint8_t data[0];
 };
 
