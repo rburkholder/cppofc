@@ -23,11 +23,12 @@
 #include "codecs/ofp_packet_out.h"
 
 #include "protocol/ethernet.h"
+#include "protocol/arp.h"
+#include "protocol/vlan.h"
 
 #include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
-#include "protocol/arp.h"
 
 namespace asio = boost::asio;
 
@@ -202,8 +203,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // TODO:  install two flows (higher priority than default packet_in):
         //   match src broadcast -> drop (should there be such an animal?)
         //   match dst broadcast -> flood
-        
-        
+
         }
         break;
       case ofp141::ofp_type::OFPT_PACKET_IN: { // v1.4.1 page 140
@@ -242,6 +242,17 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             std::cout << arp << ::std::endl;
             // maybe start a thread for other aux packet processing from above
             }
+            break;
+          case ethernet::Ethertype::ieee8021q: {  // vlan
+            ethernet::vlan vlan( ethernet.GetMessage() );
+            std::cout << vlan << ::std::endl;
+            }
+            break;
+          case ethernet::Ethertype::ieee8021ad: // QinQ
+            break;
+          case ethernet::Ethertype::ipv4:
+            break;
+          case ethernet::Ethertype::ipv6:
             break;
         }
         

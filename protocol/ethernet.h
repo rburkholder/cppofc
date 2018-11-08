@@ -20,9 +20,26 @@
 namespace ethernet {
   
 // https://en.wikipedia.org/wiki/Ethernet_frame
+// https://en.wikipedia.org/wiki/EtherType
 // https://en.wikipedia.org/wiki/IEEE_802.1Q
 
-enum Ethertype { ipv4=0x0800, arp=0x0806, ieee8021q=0x8100, ipv6=0x86dd, ieee8021ad=0x88ab };
+enum Ethertype { 
+    ipv4=0x0800
+  , arp=0x0806
+  , ieee8021q=0x8100 // vlan
+  , pause=0x8808 // ethernet flow control
+  , lacp=0x8809
+  , mpls_unicast=0x8847
+  , mpls_multicast=0x8848
+  , ieee8021ad=0x88ab // QinQ
+  , lldp=0x88cc
+  , ipv6=0x86dd
+  , ieee8021ah=0x88e7 // provider backbone bridges
+  , ieee1588=0x88f7 // precision time protocol
+  , ieee8021ag=0x8902 // Connectivity Fault Management
+  , ectp=0x9000 // Ethernet Configuration Testing Protocol
+  , vlan_double_tagged=0x9100
+};
 
 struct header_ {
   //uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in

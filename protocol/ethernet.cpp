@@ -46,5 +46,3 @@ std::ostream& operator<<( std::ostream& stream, const header& header ) {
 //  novell 802.3  <=1500      0xFFFF older frame type
 //  802.2 LLC     <=1500      other
 //  802.2 SNAP    <=1500      0xAAAA
-
-
