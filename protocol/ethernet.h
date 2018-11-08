@@ -10,7 +10,6 @@
 #define ETHERNET_H
 
 #include <cstdint>
-//#include <iomanip>
 
 #include <boost/endian/arithmetic.hpp>
 

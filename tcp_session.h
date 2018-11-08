@@ -39,7 +39,7 @@ public:
 
 private:
 
-  enum { max_length = 17000 };  // not sure where I got 17k from.
+  enum { max_length = 65540 };  // total header and data for ipv4 is 65535
 
 // need to use a function object instead so that the functions are embedded.
 // can be stack based function object or a heap based function object

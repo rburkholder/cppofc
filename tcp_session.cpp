@@ -25,6 +25,7 @@
 #include "protocol/ethernet.h"
 #include "protocol/arp.h"
 #include "protocol/vlan.h"
+#include "protocol/ipv4.h"
 
 #include "common.h"
 #include "hexdump.h"
@@ -248,9 +249,10 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             std::cout << vlan << ::std::endl;
             }
             break;
-          case ethernet::Ethertype::ieee8021ad: // QinQ
-            break;
-          case ethernet::Ethertype::ipv4:
+          case ethernet::Ethertype::ipv4: {
+            protocol::ipv4::Packet ipv4( ethernet.GetMessage() );
+            std::cout << ipv4 << ::std::endl;
+            }
             break;
           case ethernet::Ethertype::ipv6:
             break;

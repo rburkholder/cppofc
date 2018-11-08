@@ -14,7 +14,7 @@
  * http://www.danzig.jct.ac.il/tcp-ip-lab/ibm-tutorial/3376f41.gif
  */
 
-#include <iostream>
+#include <ostream>
 
 #include <boost/endian/arithmetic.hpp>
 
