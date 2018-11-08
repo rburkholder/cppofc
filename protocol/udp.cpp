@@ -1,15 +1,15 @@
 /* 
- * File:   ipv4.cpp
+ * File:   udp.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
  * 
- * Created on November 7, 2018, 7:57 PM
+ * Created on November 8, 2018, 1:26 PM
  */
 
-#include "ipv4.h"
+#include "udp.h"
 
 namespace protocol {
-namespace ipv4 {
+namespace udp {
 
 // ** Header
 
@@ -20,14 +20,10 @@ Header::~Header() {}
 
 std::ostream& Header::Emit( std::ostream& stream ) const {
   stream 
-    << "ihl=" << (uint16_t) ( m_header.ihl() ) // should be 5 (20 bytes without options)
-    << std::hex 
-    << ",src_ip=0x" << m_header.source_ip
-    << ",dst_ip=0x" << m_header.destination_ip
-    << ",qos=0x" << (uint16_t) m_header.qos
-    << std::dec
-    << ",ttl=" << (uint16_t) m_header.ttl
-    << ",protocol=" << (uint16_t) m_header.protocol
+    <<  "src_port=" << m_header.src_port
+    << ",dst_port=" << m_header.dst_port
+    << ",length="   << m_header.length
+    << ",checksum=" << m_header.checksum
     ;
   return stream;
 }
@@ -48,9 +44,9 @@ Packet::~Packet() {
 
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
   Header header( *packet.m_pHeader_ );
-  stream << "ipv4=" << header;
+  stream << "udp=" << header;
   return stream;
 }
 
-} // namespace ipv4
+} // namespace udp
 } // namespace protocol

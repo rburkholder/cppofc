@@ -28,6 +28,7 @@
       <itemPath>protocol/ipv4.h</itemPath>
       <itemPath>mac.h</itemPath>
       <itemPath>tcp_session.h</itemPath>
+      <itemPath>protocol/udp.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -58,6 +59,7 @@
       <itemPath>mac.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>tcp_session.cpp</itemPath>
+      <itemPath>protocol/udp.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -158,6 +160,10 @@
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/udp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/udp.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/vlan.h" ex="false" tool="3" flavor2="0">
@@ -246,6 +252,10 @@
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/udp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/udp.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>
