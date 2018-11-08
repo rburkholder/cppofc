@@ -60,3 +60,7 @@ ip netns exec right ping 172.16.1.1
 # Dump rules:
 
     ovs-appctl dpif/dump-flows ovsbr0
+
+# Show port assignments:
+
+    ovs-appctl dpctl/show
