@@ -239,20 +239,34 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         std::cout << ethernet << ::std::endl;
 
         // expand on this to enable routing, for now, is just random information
-        switch ( ethernet.GetEthertype() ) {
+        uint16_t idVlan( 0 ); // init to 0 if no 802.1q header found (will need to deal with QinQ at some point)
+        uint8_t* pMessage( nullptr ); // depending upon 802.1q shim, calculate message location
+        uint16_t idEtherType( 0 );
+        if ( ethernet::Ethertype::ieee8021q == ethernet.GetEthertype() ) {
+          ethernet::vlan vlan( ethernet.GetMessage() );
+          std::cout << vlan << ::std::endl;
+          idVlan = vlan.GetVID();
+          pMessage = &vlan.GetMessage();
+          idEtherType = vlan.GetEthertype();
+        }
+        else {
+          pMessage = &ethernet.GetMessage();
+          idEtherType = ethernet.GetEthertype();
+        }
+        switch ( idEtherType ) {
           case ethernet::Ethertype::arp: {
-            protocol::arp::Packet arp( ethernet.GetMessage() );
+            protocol::arp::Packet arp( *pMessage );
             std::cout << arp << ::std::endl;
             // maybe start a thread for other aux packet processing from above
             }
             break;
-          case ethernet::Ethertype::ieee8021q: {  // vlan
-            ethernet::vlan vlan( ethernet.GetMessage() );
+          case ethernet::Ethertype::ieee8021q: {  // 802.1q vlan (shouldn't be able to get here )
+            ethernet::vlan vlan( *pMessage );
             std::cout << vlan << ::std::endl;
             }
             break;
           case ethernet::Ethertype::ipv4: {
-            protocol::ipv4::Packet ipv4( ethernet.GetMessage() );
+            protocol::ipv4::Packet ipv4( *pMessage );
             std::cout << ipv4 << ::std::endl;
             
             switch ( ipv4.GetHeader().protocol ) {
@@ -270,6 +284,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             }
             break;
           case ethernet::Ethertype::ipv6:
+            std::cout << "ipv6: " << ::std::endl;
             break;
         }
         

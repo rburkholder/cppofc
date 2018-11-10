@@ -18,6 +18,7 @@ namespace ethernet {
 struct vlan_ {
   //boost::endian::big_uint16_t m_tpid; // consumed in the ethernet header
   boost::endian::big_uint16_t m_tci;
+  boost::endian::big_uint16_t m_ethertype;
   uint8_t m_data[0]; // placeholder for variable length content
 };
 
@@ -32,6 +33,10 @@ public:
   uint16_t GetPCP() const { return ( ((uint16_t)(m_pVlan->m_tci)) & 0xE000 ) >> 13; } // aka IEEE 802.1p class of service 
   uint16_t GetDEI() const { return ( ((uint16_t)(m_pVlan->m_tci)) & 0x1000 ) >> 12; } // drop eligible indicator
   uint16_t GetVID() const { return ( ((uint16_t)(m_pVlan->m_tci)) & 0x0FFF ); } // vlan identifier
+  
+  uint16_t GetEthertype() const {
+    return m_pVlan->m_ethertype;
+  }
   
   uint8_t& GetMessage() { 
     return (m_pVlan->m_data)[0];

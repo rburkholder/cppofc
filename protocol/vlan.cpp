@@ -27,6 +27,7 @@ std::ostream& vlan::Emit( std::ostream& stream ) const {
     << "pcp=" << GetPCP()
     << ",dei=" << GetDEI()
     << ",vid=" << GetVID()
+    << ".ethertype=0x" << std::hex << GetEthertype() << std::dec
   ;
   return stream;
 }
