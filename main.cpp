@@ -12,6 +12,11 @@
    ovs-vsctl set-controller ovsbr0 tcp:0.0.0.0:6633
    ip link set dev ovsbr0 up
    ip link set dev ovs-system up
+ * 
+ * other commands:
+    ovs-vsctl set-fail-mode ovsbr0 secure
+    ovs-vsctl del-fail-mode ovsbr0
+    ovs-vsctl get-fail-mode ovsbr0
  */
 
 #include <iostream>

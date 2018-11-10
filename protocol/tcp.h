@@ -100,7 +100,7 @@ private:
   //Content m_Content;
   
   std::ostream& Emit( std::ostream& stream ) const {
-    stream << "udp: " << *m_pHeader_;
+    stream << "tcp: " << *m_pHeader_;
     return stream;
   }
 

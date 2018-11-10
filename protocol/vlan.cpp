@@ -21,14 +21,18 @@ vlan::~vlan( ) {
 
 std::ostream& vlan::Emit( std::ostream& stream ) const {
   stream
+    //<< std::hex
+    //<< "tpid=0x" << GetTPid()
+    //<< std::dec
     << "pcp=" << GetPCP()
-    << "dei=" << GetDEI()
-    << "vid=" << GetVID()
+    << ",dei=" << GetDEI()
+    << ",vid=" << GetVID()
   ;
   return stream;
 }
 
 std::ostream& operator<<( std::ostream& stream, const vlan& vlan ) {
+  stream << "vlan: ";
   vlan.Emit( stream );
   return stream;
 }
