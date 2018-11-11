@@ -20,16 +20,17 @@
       <logicalFolder name="f1" displayName="protocol" projectFiles="true">
         <itemPath>protocol/arp.h</itemPath>
         <itemPath>protocol/ethernet.h</itemPath>
+        <itemPath>protocol/ipv4.h</itemPath>
+        <itemPath>protocol/ipv6.h</itemPath>
+        <itemPath>protocol/tcp.h</itemPath>
+        <itemPath>protocol/udp.h</itemPath>
         <itemPath>protocol/vlan.h</itemPath>
       </logicalFolder>
       <itemPath>bridge.h</itemPath>
       <itemPath>common.h</itemPath>
       <itemPath>hexdump.h</itemPath>
-      <itemPath>protocol/ipv4.h</itemPath>
       <itemPath>mac.h</itemPath>
-      <itemPath>protocol/tcp.h</itemPath>
       <itemPath>tcp_session.h</itemPath>
-      <itemPath>protocol/udp.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -53,15 +54,16 @@
       <logicalFolder name="f2" displayName="protocol" projectFiles="true">
         <itemPath>protocol/arp.cpp</itemPath>
         <itemPath>protocol/ethernet.cpp</itemPath>
+        <itemPath>protocol/ipv4.cpp</itemPath>
+        <itemPath>protocol/ipv6.cpp</itemPath>
+        <itemPath>protocol/tcp.cpp</itemPath>
+        <itemPath>protocol/udp.cpp</itemPath>
         <itemPath>protocol/vlan.cpp</itemPath>
       </logicalFolder>
       <itemPath>bridge.cpp</itemPath>
-      <itemPath>protocol/ipv4.cpp</itemPath>
       <itemPath>mac.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
-      <itemPath>protocol/tcp.cpp</itemPath>
       <itemPath>tcp_session.cpp</itemPath>
-      <itemPath>protocol/udp.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -99,6 +101,8 @@
           <linkerLibItems>
             <linkerLibLibItem>pthread</linkerLibLibItem>
             <linkerLibLibItem>boost_system-mt</linkerLibLibItem>
+            <linkerLibLibItem>zmqpp</linkerLibLibItem>
+            <linkerLibLibItem>zmq</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>
@@ -161,6 +165,10 @@
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/tcp.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -258,6 +266,10 @@
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/tcp.cpp" ex="false" tool="1" flavor2="0">
       </item>

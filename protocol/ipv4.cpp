@@ -48,7 +48,7 @@ Packet::~Packet() {
 
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
   Header header( *packet.m_pHeader_ );
-  stream << "ipv4=" << header;
+  stream << "ipv4: " << header;
   return stream;
 }
 

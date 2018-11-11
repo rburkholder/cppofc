@@ -28,6 +28,7 @@
 #include "protocol/ipv4.h"
 #include "protocol/udp.h"
 #include "protocol/tcp.h"
+#include "protocol/ipv6.h"
 
 #include "common.h"
 #include "hexdump.h"
@@ -283,8 +284,10 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               }
             }
             break;
-          case ethernet::Ethertype::ipv6:
-            std::cout << "ipv6: " << ::std::endl;
+          case ethernet::Ethertype::ipv6: {
+            protocol::ipv6::Packet ipv6( *pMessage );
+            std::cout << ipv6 << ::std::endl;
+            }
             break;
         }
         

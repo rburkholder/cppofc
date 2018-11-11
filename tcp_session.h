@@ -16,6 +16,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <zmqpp/zmqpp.hpp>
+
 #include "common.h"
 #include "bridge.h"
 
@@ -26,12 +28,16 @@ class tcp_session
 {
 public:
   tcp_session(ip::tcp::socket socket)
-    : m_socket(std::move(socket)), m_transmitting( 0 )
+    : m_socket(std::move(socket)), 
+      m_transmitting( 0 ),
+      m_zmqSocketRequest( m_zmqContext, zmqpp::socket_type::request )
   { 
       std::cout << "session construct" << std::endl;
+      m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
   }
     
     virtual ~tcp_session() {
+      m_zmqSocketRequest.close();
       std::cout << "session destruct" << std::endl;
     }
 
@@ -77,6 +83,9 @@ private:
   vByte_t m_vTxInWrite;
   
   Bridge m_bridge;
+  
+  zmqpp::context m_zmqContext;
+  zmqpp::socket m_zmqSocketRequest;
   
   void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
   

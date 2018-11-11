@@ -49,6 +49,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/protocol/arp.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
+	${OBJECTDIR}/protocol/ipv6.o \
 	${OBJECTDIR}/protocol/tcp.o \
 	${OBJECTDIR}/protocol/udp.o \
 	${OBJECTDIR}/protocol/vlan.o \
@@ -148,6 +149,11 @@ ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+
+${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
 
 ${OBJECTDIR}/protocol/tcp.o: protocol/tcp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
