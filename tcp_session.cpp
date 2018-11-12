@@ -358,6 +358,18 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
             nSrcPort = nSrcPort_;
             Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, macSrc.Value() );
+            if ( Bridge::MacStatus::Learned == statusSrcLookup ) {
+              
+              asio::post( m_ioContext, [macSrc, this](){
+                std::stringstream ss;
+                ss << HexDump<const uint8_t*>( &macSrc.Value()[0], &macSrc.Value()[5] );
+                m_zmqSocketRequest.send( ss.str() );
+                std::string sResponse;
+                m_zmqSocketRequest.receive( sResponse );
+                std::cout << "local control: mac " << sResponse << std::endl;
+              } );
+              
+            }
             
             nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
             

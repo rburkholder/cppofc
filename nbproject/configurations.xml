@@ -103,6 +103,7 @@
             <linkerLibLibItem>boost_system-mt</linkerLibLibItem>
             <linkerLibLibItem>zmqpp</linkerLibLibItem>
             <linkerLibLibItem>zmq</linkerLibLibItem>
+            <linkerLibLibItem>boost_thread-mt</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>

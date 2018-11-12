@@ -16,30 +16,45 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/thread/thread.hpp>
+
 #include <zmqpp/zmqpp.hpp>
 
 #include "common.h"
 #include "bridge.h"
 
 namespace ip = boost::asio::ip;
+namespace asio = boost::asio;
 
 class tcp_session
   : public std::enable_shared_from_this<tcp_session>
 {
 public:
+  
+  typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+  
   tcp_session(ip::tcp::socket socket)
     : m_socket(std::move(socket)), 
       m_transmitting( 0 ),
-      m_zmqSocketRequest( m_zmqContext, zmqpp::socket_type::request )
+      m_zmqSocketRequest( m_zmqContext, zmqpp::socket_type::request ),
+      m_ioWork( asio::make_work_guard( m_ioContext ) ),
+      m_ioThread( boost::bind( &asio::io_context::run, &m_ioContext ) )
   { 
-      std::cout << "session construct" << std::endl;
-      m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
+    
+    std::cout << "session construct" << std::endl;
+    m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
   }
     
-    virtual ~tcp_session() {
-      m_zmqSocketRequest.close();
-      std::cout << "session destruct" << std::endl;
-    }
+  virtual ~tcp_session() {
+    m_zmqSocketRequest.close();
+    std::cout << "session destruct" << std::endl;
+    
+    m_ioWork.reset();
+    m_ioThread.join();
+    
+  }
 
   void start();
 
@@ -83,6 +98,10 @@ private:
   vByte_t m_vTxInWrite;
   
   Bridge m_bridge;
+  
+  asio::io_context m_ioContext;
+  io_context_work m_ioWork;
+  boost::thread m_ioThread;
   
   zmqpp::context m_zmqContext;
   zmqpp::socket m_zmqSocketRequest;
