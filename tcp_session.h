@@ -18,6 +18,7 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/thread/thread.hpp>
 
 #include <zmq.hpp>
@@ -44,6 +45,7 @@ public:
       m_transmitting( 0 ),
       m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
       m_ioWork( asio::make_work_guard( m_ioContext ) ),
+      m_ioStrand( m_ioContext ),
       m_ioThread( boost::bind( &asio::io_context::run, &m_ioContext ) )
   { 
     std::cout << "session construct" << std::endl;
@@ -105,6 +107,7 @@ private:
   asio::io_context m_ioContext;
   io_context_work m_ioWork;
   boost::thread m_ioThread;
+  asio::io_context::strand m_ioStrand;
   
   zmq::context_t m_zmqContext;
   zmq::socket_t m_zmqSocketRequest;
