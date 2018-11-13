@@ -94,6 +94,7 @@
             <pElem>/usr/local/include</pElem>
           </incDir>
           <preprocessorList>
+            <Elem>BOOST_LOG_DYN_LINK</Elem>
             <Elem>_DEBUG</Elem>
           </preprocessorList>
         </ccTool>
@@ -104,6 +105,8 @@
             <linkerLibLibItem>zmqpp</linkerLibLibItem>
             <linkerLibLibItem>zmq</linkerLibLibItem>
             <linkerLibLibItem>boost_thread-mt</linkerLibLibItem>
+            <linkerLibLibItem>boost_log_setup-mt</linkerLibLibItem>
+            <linkerLibLibItem>boost_log-mt</linkerLibLibItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>

@@ -16,7 +16,6 @@
 typedef uint32_t nPort_t;  // switch port number
 typedef uint8_t mac_t[ 6 ];
 
-
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {
   template<> struct hash<const mac_t&> {

@@ -70,7 +70,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=-lpthread -lboost_system-mt -lzmqpp -lzmq -lboost_thread-mt
+LDLIBSOPTIONS=-lpthread -lboost_system-mt -lzmqpp -lzmq -lboost_thread-mt -lboost_log_setup-mt -lboost_log-mt
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
@@ -83,97 +83,97 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc: ${OBJECTFILES}
 ${OBJECTDIR}/bridge.o: bridge.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/bridge.o bridge.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/bridge.o bridge.cpp
 
 ${OBJECTDIR}/codecs/datapathid.o: codecs/datapathid.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/datapathid.o codecs/datapathid.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/datapathid.o codecs/datapathid.cpp
 
 ${OBJECTDIR}/codecs/ofp_async_config.o: codecs/ofp_async_config.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
 
 ${OBJECTDIR}/codecs/ofp_flow_mod.o: codecs/ofp_flow_mod.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
 
 ${OBJECTDIR}/codecs/ofp_header.o: codecs/ofp_header.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_header.o codecs/ofp_header.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_header.o codecs/ofp_header.cpp
 
 ${OBJECTDIR}/codecs/ofp_hello.o: codecs/ofp_hello.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
 
 ${OBJECTDIR}/codecs/ofp_packet_out.o: codecs/ofp_packet_out.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_packet_out.o codecs/ofp_packet_out.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_packet_out.o codecs/ofp_packet_out.cpp
 
 ${OBJECTDIR}/codecs/ofp_port_status.o: codecs/ofp_port_status.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_port_status.o codecs/ofp_port_status.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_port_status.o codecs/ofp_port_status.cpp
 
 ${OBJECTDIR}/codecs/ofp_switch_features.o: codecs/ofp_switch_features.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
 
 ${OBJECTDIR}/mac.o: mac.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
 
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/protocol/arp.o: protocol/arp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/arp.o protocol/arp.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/arp.o protocol/arp.cpp
 
 ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
 
 ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
 
 ${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
 
 ${OBJECTDIR}/protocol/tcp.o: protocol/tcp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/tcp.o protocol/tcp.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/tcp.o protocol/tcp.cpp
 
 ${OBJECTDIR}/protocol/udp.o: protocol/udp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/udp.o protocol/udp.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/udp.o protocol/udp.cpp
 
 ${OBJECTDIR}/protocol/vlan.o: protocol/vlan.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/vlan.o protocol/vlan.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/vlan.o protocol/vlan.cpp
 
 ${OBJECTDIR}/tcp_session.o: tcp_session.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/tcp_session.o tcp_session.cpp
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/tcp_session.o tcp_session.cpp
 
 # Subprojects
 .build-subprojects:

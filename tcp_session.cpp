@@ -361,12 +361,28 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             if ( Bridge::MacStatus::Learned == statusSrcLookup ) {
               
               asio::post( m_ioContext, [macSrc, this](){
-                std::stringstream ss;
-                ss << HexDump<const uint8_t*>( &macSrc.Value()[0], &macSrc.Value()[5] );
-                m_zmqSocketRequest.send( ss.str() );
-                std::string sResponse;
-                m_zmqSocketRequest.receive( sResponse );
-                std::cout << "local control: mac " << sResponse << std::endl;
+                zmq::multipart_t multipart;
+                
+                msg::header hdrSnd( 1, msg::type::eMac );
+                multipart.addtyp<msg::header>( hdrSnd );
+                
+                msg::mac_info msgMac( macSrc.Value() );
+                multipart.addtyp<msg::mac_info>( msgMac );
+                
+                multipart.send( m_zmqSocketRequest );
+                
+                assert( multipart.empty() );
+                
+                multipart.recv( m_zmqSocketRequest );
+                zmq::message_t msg;
+                msg = multipart.pop();
+                msg::header& hdrRcv( *msg.data<msg::header>() );
+                BOOST_LOG_TRIVIAL(trace) << "m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+                
+                msg = multipart.pop();
+                msg::ack& msgAck( *msg.data<msg::ack>() );
+                BOOST_LOG_TRIVIAL(trace) << "m_zmqSocketRequest resp2: " << msgAck.idCode;
+          
               } );
               
             }

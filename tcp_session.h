@@ -20,7 +20,11 @@
 #include <boost/asio/post.hpp>
 #include <boost/thread/thread.hpp>
 
-#include <zmqpp/zmqpp.hpp>
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+
+#include "../quadlii/lib/common/monitor_t.h"
+#include "../quadlii/lib/common/ZmqMessage.h"
 
 #include "common.h"
 #include "bridge.h"
@@ -38,11 +42,10 @@ public:
   tcp_session(ip::tcp::socket socket)
     : m_socket(std::move(socket)), 
       m_transmitting( 0 ),
-      m_zmqSocketRequest( m_zmqContext, zmqpp::socket_type::request ),
+      m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
       m_ioWork( asio::make_work_guard( m_ioContext ) ),
       m_ioThread( boost::bind( &asio::io_context::run, &m_ioContext ) )
   { 
-    
     std::cout << "session construct" << std::endl;
     m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
   }
@@ -103,8 +106,8 @@ private:
   io_context_work m_ioWork;
   boost::thread m_ioThread;
   
-  zmqpp::context m_zmqContext;
-  zmqpp::socket m_zmqSocketRequest;
+  zmq::context_t m_zmqContext;
+  zmq::socket_t m_zmqSocketRequest;
   
   void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
   
