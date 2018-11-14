@@ -30,6 +30,8 @@
 #include "protocol/tcp.h"
 #include "protocol/ipv6.h"
 
+#include "protocol/ipv4/dhcp.h"
+
 #include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
@@ -279,6 +281,10 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               case 17: {// udp
                 protocol::udp::Packet udp( ipv4.GetData() );
                 std::cout << udp << ::std::endl;
+                if ( 67 == udp.GetHeader().dst_port ) {
+                  protocol::ipv4::dhcp::Packet dhcp( udp.GetData() );
+                  std::cout << dhcp << ::std::endl;
+                }
                 }
                 break;
               }
@@ -539,7 +545,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         break;
       case ofp141::ofp_type::OFPT_PORT_STATUS: {
         // multiple messages stacked, so need to change code in this whole section 
-        //   to sequentially parse the inbound bytes
+        //   to sequentially parse the inbound bytes -- 2018/11/13 I think this is taken care of now
         const auto pStatus = new(pBegin) ofp141::ofp_port_status;
         codec::ofp_port_status status( *pStatus );
         }

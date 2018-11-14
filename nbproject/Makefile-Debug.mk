@@ -49,6 +49,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/protocol/arp.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
+	${OBJECTDIR}/protocol/ipv4/dhcp.o \
 	${OBJECTDIR}/protocol/ipv6.o \
 	${OBJECTDIR}/protocol/tcp.o \
 	${OBJECTDIR}/protocol/udp.o \
@@ -149,6 +150,11 @@ ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+
+${OBJECTDIR}/protocol/ipv4/dhcp.o: protocol/ipv4/dhcp.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/dhcp.o protocol/ipv4/dhcp.cpp
 
 ${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
