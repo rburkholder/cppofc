@@ -18,13 +18,10 @@
         <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="protocol" projectFiles="true">
-        <itemPath>protocol/arp.h</itemPath>
         <itemPath>protocol/ipv4/dhcp.h</itemPath>
         <itemPath>protocol/ethernet.h</itemPath>
         <itemPath>protocol/ipv4.h</itemPath>
         <itemPath>protocol/ipv6.h</itemPath>
-        <itemPath>protocol/tcp.h</itemPath>
-        <itemPath>protocol/udp.h</itemPath>
         <itemPath>protocol/vlan.h</itemPath>
       </logicalFolder>
       <itemPath>bridge.h</itemPath>
@@ -53,13 +50,10 @@
       <logicalFolder name="f3" displayName="openflow" projectFiles="true">
       </logicalFolder>
       <logicalFolder name="f2" displayName="protocol" projectFiles="true">
-        <itemPath>protocol/arp.cpp</itemPath>
         <itemPath>protocol/ipv4/dhcp.cpp</itemPath>
         <itemPath>protocol/ethernet.cpp</itemPath>
         <itemPath>protocol/ipv4.cpp</itemPath>
         <itemPath>protocol/ipv6.cpp</itemPath>
-        <itemPath>protocol/tcp.cpp</itemPath>
-        <itemPath>protocol/udp.cpp</itemPath>
         <itemPath>protocol/vlan.cpp</itemPath>
       </logicalFolder>
       <itemPath>bridge.cpp</itemPath>
@@ -79,6 +73,12 @@
       <itemPath>Makefile</itemPath>
       <itemPath>README.md</itemPath>
     </logicalFolder>
+    <itemPath>protocol/ipv4/arp.cpp</itemPath>
+    <itemPath>protocol/ipv4/arp.h</itemPath>
+    <itemPath>protocol/ipv4/tcp.cpp</itemPath>
+    <itemPath>protocol/ipv4/tcp.h</itemPath>
+    <itemPath>protocol/ipv4/udp.cpp</itemPath>
+    <itemPath>protocol/ipv4/udp.h</itemPath>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -160,10 +160,6 @@
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="protocol/arp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/arp.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
@@ -172,21 +168,25 @@
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ipv4/arp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/arp.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv4/dhcp.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4/dhcp.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ipv4/tcp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/tcp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/udp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/udp.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/tcp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/tcp.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/udp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/udp.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -265,10 +265,6 @@
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="protocol/arp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/arp.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
@@ -277,21 +273,25 @@
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ipv4/arp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/arp.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv4/dhcp.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4/dhcp.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ipv4/tcp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/tcp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/udp.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/udp.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/tcp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/tcp.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/udp.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/udp.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>

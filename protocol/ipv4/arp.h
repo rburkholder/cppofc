@@ -18,7 +18,7 @@
 
 #include <boost/endian/arithmetic.hpp>
 
-#include "../hexdump.h"
+#include "../../hexdump.h"
 
 namespace protocol {
 namespace arp {

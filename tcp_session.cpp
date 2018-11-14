@@ -23,11 +23,11 @@
 #include "codecs/ofp_packet_out.h"
 
 #include "protocol/ethernet.h"
-#include "protocol/arp.h"
 #include "protocol/vlan.h"
 #include "protocol/ipv4.h"
-#include "protocol/udp.h"
-#include "protocol/tcp.h"
+#include "protocol/ipv4/arp.h"
+#include "protocol/ipv4/udp.h"
+#include "protocol/ipv4/tcp.h"
 #include "protocol/ipv6.h"
 
 #include "protocol/ipv4/dhcp.h"

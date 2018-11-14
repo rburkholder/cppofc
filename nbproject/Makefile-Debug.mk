@@ -46,13 +46,13 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/mac.o \
 	${OBJECTDIR}/main.o \
-	${OBJECTDIR}/protocol/arp.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
+	${OBJECTDIR}/protocol/ipv4/arp.o \
 	${OBJECTDIR}/protocol/ipv4/dhcp.o \
+	${OBJECTDIR}/protocol/ipv4/tcp.o \
+	${OBJECTDIR}/protocol/ipv4/udp.o \
 	${OBJECTDIR}/protocol/ipv6.o \
-	${OBJECTDIR}/protocol/tcp.o \
-	${OBJECTDIR}/protocol/udp.o \
 	${OBJECTDIR}/protocol/vlan.o \
 	${OBJECTDIR}/tcp_session.o
 
@@ -136,11 +136,6 @@ ${OBJECTDIR}/main.o: main.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
-${OBJECTDIR}/protocol/arp.o: protocol/arp.cpp
-	${MKDIR} -p ${OBJECTDIR}/protocol
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/arp.o protocol/arp.cpp
-
 ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
@@ -151,25 +146,30 @@ ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
 
+${OBJECTDIR}/protocol/ipv4/arp.o: protocol/ipv4/arp.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/arp.o protocol/ipv4/arp.cpp
+
 ${OBJECTDIR}/protocol/ipv4/dhcp.o: protocol/ipv4/dhcp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/dhcp.o protocol/ipv4/dhcp.cpp
 
+${OBJECTDIR}/protocol/ipv4/tcp.o: protocol/ipv4/tcp.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/tcp.o protocol/ipv4/tcp.cpp
+
+${OBJECTDIR}/protocol/ipv4/udp.o: protocol/ipv4/udp.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/udp.o protocol/ipv4/udp.cpp
+
 ${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
-
-${OBJECTDIR}/protocol/tcp.o: protocol/tcp.cpp
-	${MKDIR} -p ${OBJECTDIR}/protocol
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/tcp.o protocol/tcp.cpp
-
-${OBJECTDIR}/protocol/udp.o: protocol/udp.cpp
-	${MKDIR} -p ${OBJECTDIR}/protocol
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/udp.o protocol/udp.cpp
 
 ${OBJECTDIR}/protocol/vlan.o: protocol/vlan.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
