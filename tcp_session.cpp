@@ -594,7 +594,7 @@ void tcp_session::do_write() {
   //std::cout << "do_write start: " << std::endl;
   asio::async_write(
     m_socket, boost::asio::buffer( m_vTxInWrite ),
-      [this, self](boost::system::error_code ec, std::size_t len )
+      [this, self]( boost::system::error_code ec, std::size_t len )
       {
         UnloadTxInWrite();
 //        std::cout << "do_write atomic: " << 

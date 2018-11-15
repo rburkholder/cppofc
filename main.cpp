@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 
     ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
-    server s( io_context, port );
+    //server s( io_context, port );
 
     io_context.run();
 

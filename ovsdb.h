@@ -15,9 +15,12 @@
 
 #include <boost/asio/local/stream_protocol.hpp>
 
+//#include <boost/asio/ip/tcp.hpp>
+
 #include "common.h"
 
-namespace asio=boost::asio;
+namespace asio = boost::asio;
+//namespace ip = boost::asio::ip;
 
 class ovsdb {
 public:
@@ -27,6 +30,9 @@ protected:
 private:
   
   enum { max_length = 65540 };  // total header and data for ipv4 is 65535
+  
+  //ip::tcp::endpoint m_ep;
+  //ip::tcp::socket m_socket;
   
   asio::local::stream_protocol::endpoint m_ep;
   asio::local::stream_protocol::socket m_socket;
