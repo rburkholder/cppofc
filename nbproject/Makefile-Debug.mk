@@ -72,7 +72,7 @@ FFLAGS=
 ASFLAGS=
 
 # Link Libraries and Options
-LDLIBSOPTIONS=-lpthread -lboost_system-mt -lzmqpp -lzmq -lboost_thread-mt -lboost_log_setup-mt -lboost_log-mt
+LDLIBSOPTIONS=-lpthread -lboost_system-mt -lzmq -lboost_thread-mt -lboost_log_setup-mt -lboost_log-mt
 
 # Build Targets
 .build-conf: ${BUILD_SUBPROJECTS}
