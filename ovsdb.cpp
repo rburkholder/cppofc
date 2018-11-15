@@ -84,6 +84,30 @@ ovsdb::ovsdb( asio::io_context& io_context )
     std::cout << "<<< ovsdb error 2: " << e.what() << std::endl;
   }
   
+  try {
+    std::string sCmd( 
+      "{\"method\":\"monitor\", "
+      "\"params\":[\"Open_vSwitch\",[\"stats\"],"
+        "{"
+          "\"Interface\":[{\"columns\":[\"admin_state\",\"link_state\",\"name\",\"ofport\",\"statistics\"]}]"
+        "}], "
+      "\"id\":3}" 
+    );
+    asio::async_write( 
+      m_socket, boost::asio::buffer( sCmd ), 
+      [this](boost::system::error_code ec, std::size_t cntWritten ){
+        if ( ec ) {
+          std::cout << "<<< ovsdb 3 write error: " << ec.message() << std::endl;
+        }
+        else {
+          std::cout << "<<< ovsdb 3 written: " << cntWritten << " bytes" << std::endl;
+        }
+      } );
+  }
+  catch ( std::exception& e ) {
+    std::cout << "<<< ovsdb error 3: " << e.what() << std::endl;
+  }
+  
   do_read(); // start up socket read 
   //(will need to start some commands, but examine what happens so far)
 }
