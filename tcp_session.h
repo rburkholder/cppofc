@@ -44,7 +44,7 @@ public:
     : m_socket(std::move(socket)), 
       m_transmitting( 0 ),
       m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
-      m_ioWork( asio::make_work_guard( m_ioContext ) ),
+      m_ioWork( asio::make_work_guard( m_ioContext ) ), // should this be in 'main' instead?
       m_ioStrand( m_ioContext ),
       m_ioThread( boost::bind( &asio::io_context::run, &m_ioContext ) )
   { 

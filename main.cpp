@@ -32,38 +32,38 @@ namespace ip = boost::asio::ip;
 
 class server {
 public:
-  server(asio::io_context& io_context, short port)
-    : acceptor_(io_context, ip::tcp::endpoint(ip::tcp::v4(), port)),
-      socket_(io_context)
+  server( asio::io_context& io_context, short port )
+    : m_acceptor( io_context, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
+      m_socket( io_context )
   {
     do_accept();
   }
 
 private:
-  void do_accept() {
-    acceptor_.async_accept(socket_,
-        [this](boost::system::error_code ec)
-        {
-          if (!ec) {
-            std::make_shared<tcp_session>(std::move(socket_))->start();
-          }
 
-          // once one port started, start another acceptance
-          // no recursion here as this is in a currently open session
-          //   and making allowance for another session
-          do_accept();
-        });
+  ip::tcp::acceptor m_acceptor;
+  ip::tcp::socket m_socket;
+
+  void do_accept() {
+    m_acceptor.async_accept(
+      m_socket,
+      [this](boost::system::error_code ec) {
+        if (!ec) {
+          std::make_shared<tcp_session>(std::move(m_socket))->start();
+        }
+
+        // once one port started, start another acceptance
+        // no recursion here as this is in a currently open session
+        //   and making allowance for another session
+      do_accept();
+      });
   }
 
-  ip::tcp::acceptor acceptor_;
-  ip::tcp::socket socket_;
 };
 
 int main(int argc, char* argv[]) {
-    
+
   int port( 6633 );
-    
-  asio::io_context io_context;
 
   try   {
     if (argc != 2) {
@@ -71,14 +71,17 @@ int main(int argc, char* argv[]) {
 //      return 1;
     }
     else {
-      port = std::atoi(argv[1]);
+      port = std::atoi( argv[1] );
     }
-    
-    server s(io_context, port);
-    
+
+    asio::io_context io_context;
+
     ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
+    server s( io_context, port );
+
     io_context.run();
+
   }
   catch (std::exception& e)   {
     std::cerr << "Exception: " << e.what() << "\n";
