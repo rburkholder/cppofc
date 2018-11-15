@@ -8,6 +8,8 @@
 
 // https://tools.ietf.org/html/rfc7047
 // http://www.openvswitch.org//ovs-vswitchd.conf.db.5.pdf
+// https://relaxdiego.com/2014/09/ovsdb.html
+// https://www.jsonrpc.org/specification_v1
 
 #include <iostream>
 #include <algorithm>
@@ -16,103 +18,75 @@
 
 #include "ovsdb.h"
 
+namespace {
+const char* szQuery[] = {
+  "{\"method\":\"list_dbs\", \"params\":[], \"id\":1}",
+// ==
+  "{\"method\":\"monitor\", "
+  "\"params\":[\"Open_vSwitch\",[\"bridge\"],"
+    "{"
+      "\"Open_vSwitch\":[{\"columns\":[\"bridges\",\"db_version\",\"ovs_version\",\"external_ids\"]}],"
+      "\"Bridge\":[{\"columns\":[\"datapath_id\",\"fail_mode\",\"name\",\"ports\",\"stp_enable\"]}]"
+    "}], "
+  "\"id\":2}" ,
+// ==
+  "{\"method\":\"monitor\", "
+  "\"params\":[\"Open_vSwitch\",[\"interface\"],"
+    "{"
+      "\"Interface\":[{\"columns\":[\"admin_state\",\"link_state\",\"name\",\"ofport\",\"ifindex\",\"mac_in_use\",\"type\",\"statistics\"]}]"
+    "}], "
+  "\"id\":3}", 
+// ==
+  "{\"method\":\"monitor\", "
+  "\"params\":[\"Open_vSwitch\",[\"port\"],"
+    "{"
+      "\"Port\":[{\"columns\":[\"interfaces\",\"name\",\"tag\",\"trunks\",\"vlan_mode\"]}]"
+    "}], "
+  "\"id\":4}"
+};
+}
+
 ovsdb::ovsdb( asio::io_context& io_context )
 :
   m_ep( "/var/run/openvswitch/db.sock" ),
   //m_ep( ip::tcp::v4(), 6640 ),
-  m_socket( io_context )
+  m_socket( io_context ),
+  m_state( start )
 {
   assert( BOOST_ASIO_HAS_LOCAL_SOCKETS );
   m_socket.connect( m_ep );
   
-  try {
-    std::string sCmd( "{\"method\":\"list_dbs\", \"params\":[], \"id\":1}" );
-    asio::async_write( 
-      m_socket, boost::asio::buffer( sCmd ), 
-      [this](boost::system::error_code ec, std::size_t cntWritten ){
-        if ( ec ) {
-          std::cout << "<<< ovsdb 1 write error: " << ec.message() << std::endl;
-        }
-        else {
-          std::cout << "<<< ovsdb 1 written " << cntWritten << std::endl;
-        }
-      } );
-  }
-  catch ( std::exception& e ) {
-    std::cout << "<<< ovsdb 1 error: " << e.what() << std::endl;
-  }
-  
-// from '# ovs-vsctl -vjsonrpc show':
-//  method="monitor_cond", 
-//    params=["Open_vSwitch",
-//      ["monid","Open_vSwitch"],
-//      {"Port": [{"columns":["interfaces","name","tag","trunks"]}],
-//       "Interface":[{"columns":["bfd_status","error","name","options","type"]}],
-//       "Controller":[{"columns":["is_connected","target"]}],
-//       "Manager":[{"columns":["is_connected","target"]}],
-//       "Bridge":[{"columns":["controller","fail_mode","name","ports"]}],
-//       "Open_vSwitch":[{"columns":["bridges","cur_cfg","manager_options","ovs_version"]}]}], 
-//       id=2
-  
+  // TODO: on read, confirm that the database is available, ensures validity of further queries
+  // to show some queries: '# ovs-vsctl -vjsonrpc show'
   // table values are '# ovsdb-client dump'
-  // TOOD: break the notify into sections.  port, interface 
   
-  try {
-    std::string sCmd( 
-      "{\"method\":\"monitor\", "
-      "\"params\":[\"Open_vSwitch\",[\"state\"],"
-        "{"
-          "\"Open_vSwitch\":[{\"columns\":[\"bridges\",\"db_version\",\"ovs_version\",\"external_ids\"]}],"
-          "\"Bridge\":[{\"columns\":[\"datapath_id\",\"fail_mode\",\"name\",\"ports\",\"stp_enable\"]}],"
-          "\"Interface\":[{\"columns\":[\"admin_state\",\"ifindex\",\"link_state\",\"mac_in_use\",\"name\",\"ofport\"]}],"
-          "\"Port\":[{\"columns\":[\"interfaces\",\"name\",\"tag\",\"trunks\",\"vlan_mode\"]}]"
-        "}], "
-      "\"id\":2}" 
-    );
-    asio::async_write( 
-      m_socket, boost::asio::buffer( sCmd ), 
-      [this](boost::system::error_code ec, std::size_t cntWritten ){
-        if ( ec ) {
-          std::cout << "<<< ovsdb 2 write error: " << ec.message() << std::endl;
-        }
-        else {
-          std::cout << "<<< ovsdb 2 written " << cntWritten << std::endl;
-        }
-      } );
-  }
-  catch ( std::exception& e ) {
-    std::cout << "<<< ovsdb error 2: " << e.what() << std::endl;
-  }
-  
-  try {
-    std::string sCmd( 
-      "{\"method\":\"monitor\", "
-      "\"params\":[\"Open_vSwitch\",[\"stats\"],"
-        "{"
-          "\"Interface\":[{\"columns\":[\"admin_state\",\"link_state\",\"name\",\"ofport\",\"statistics\"]}]"
-        "}], "
-      "\"id\":3}" 
-    );
-    asio::async_write( 
-      m_socket, boost::asio::buffer( sCmd ), 
-      [this](boost::system::error_code ec, std::size_t cntWritten ){
-        if ( ec ) {
-          std::cout << "<<< ovsdb 3 write error: " << ec.message() << std::endl;
-        }
-        else {
-          std::cout << "<<< ovsdb 3 written: " << cntWritten << " bytes" << std::endl;
-        }
-      } );
-  }
-  catch ( std::exception& e ) {
-    std::cout << "<<< ovsdb error 3: " << e.what() << std::endl;
-  }
   
   do_read(); // start up socket read 
-  //(will need to start some commands, but examine what happens so far)
+  
+  m_state = listdb;
+  send( szQuery[ 0 ] );
 }
 
 ovsdb::~ovsdb( ) {
+}
+
+void ovsdb::send( const char* sz ) {
+  try {
+    std::string sCmd( sz );
+    asio::async_write( 
+      m_socket, boost::asio::buffer( sCmd ), 
+      [this](boost::system::error_code ec, std::size_t cntWritten ){
+        if ( ec ) {
+          std::cout << "<<< ovsdb write error: " << ec.message() << std::endl;
+        }
+        else {
+          std::cout << "<<< ovsdb written: " << cntWritten << std::endl;
+        }
+      } );
+  }
+  catch ( std::exception& e ) {
+    std::cout << "<<< ovsdb error: " << e.what() << std::endl;
+  }
 }
 
 void ovsdb::do_read() {
@@ -130,6 +104,29 @@ void ovsdb::do_read() {
           });
           std::cout << std::endl;
           std::cout << ">>> ovsdb read end." << std::endl;
+        }
+        switch ( m_state ) {
+          case start:
+            m_state = listdb;
+            //send( szQuery[ 0 ] );
+            break;
+          case listdb:
+            m_state = monitorBridge;
+            send( szQuery[ 1 ] );
+            break;
+          case monitorBridge:
+            m_state = monitorInterface;
+            send( szQuery[ 2 ] );
+            break;
+          case monitorInterface:
+            m_state = monitorPort;
+            send( szQuery[ 3 ] );
+            break;
+          case monitorPort:
+            m_state = listen;
+            break;
+          case listen:
+            break;
         }
         do_read();
       });
