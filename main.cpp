@@ -25,6 +25,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include "tcp_session.h"
+#include "ovsdb.h"
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
@@ -72,8 +73,10 @@ int main(int argc, char* argv[]) {
     else {
       port = std::atoi(argv[1]);
     }
-
+    
     server s(io_context, port);
+    
+    ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
     io_context.run();
   }
