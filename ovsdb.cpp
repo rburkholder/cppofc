@@ -31,16 +31,57 @@ ovsdb::ovsdb( asio::io_context& io_context )
       m_socket, boost::asio::buffer( sCmd ), 
       [this](boost::system::error_code ec, std::size_t cntWritten ){
         if ( ec ) {
-          std::cout << "<<< ovsdb write error: " << ec.message() << std::endl;
+          std::cout << "<<< ovsdb 1 write error: " << ec.message() << std::endl;
         }
         else {
-          std::cout << "<<< ovsdb written " << cntWritten << std::endl;
+          std::cout << "<<< ovsdb 1 written " << cntWritten << std::endl;
         }
       } );
-    
   }
   catch ( std::exception& e ) {
-    std::cout << "<<< ovsdb error: " << e.what() << std::endl;
+    std::cout << "<<< ovsdb 1 error: " << e.what() << std::endl;
+  }
+  
+// from '# ovs-vsctl -vjsonrpc show':
+//  method="monitor_cond", 
+//    params=["Open_vSwitch",
+//      ["monid","Open_vSwitch"],
+//      {"Port": [{"columns":["interfaces","name","tag","trunks"]}],
+//       "Interface":[{"columns":["bfd_status","error","name","options","type"]}],
+//       "Controller":[{"columns":["is_connected","target"]}],
+//       "Manager":[{"columns":["is_connected","target"]}],
+//       "Bridge":[{"columns":["controller","fail_mode","name","ports"]}],
+//       "Open_vSwitch":[{"columns":["bridges","cur_cfg","manager_options","ovs_version"]}]}], 
+//       id=2
+  
+  // table values are '# ovsdb-client dump'
+  // TOOD: break the notify into sections.  port, interface 
+  
+  try {
+    std::string sCmd( 
+      "{\"method\":\"monitor\", "
+      "\"params\":[\"Open_vSwitch\",[\"state\"],"
+        "{"
+          "\"Open_vSwitch\":[{\"columns\":[\"bridges\",\"db_version\",\"ovs_version\",\"external_ids\"]}],"
+          "\"Bridge\":[{\"columns\":[\"datapath_id\",\"fail_mode\",\"name\",\"ports\",\"stp_enable\"]}],"
+          "\"Interface\":[{\"columns\":[\"admin_state\",\"ifindex\",\"link_state\",\"mac_in_use\",\"name\",\"ofport\"]}],"
+          "\"Port\":[{\"columns\":[\"interfaces\",\"name\",\"tag\",\"trunks\",\"vlan_mode\"]}]"
+        "}], "
+      "\"id\":2}" 
+    );
+    asio::async_write( 
+      m_socket, boost::asio::buffer( sCmd ), 
+      [this](boost::system::error_code ec, std::size_t cntWritten ){
+        if ( ec ) {
+          std::cout << "<<< ovsdb 2 write error: " << ec.message() << std::endl;
+        }
+        else {
+          std::cout << "<<< ovsdb 2 written " << cntWritten << std::endl;
+        }
+      } );
+  }
+  catch ( std::exception& e ) {
+    std::cout << "<<< ovsdb error 2: " << e.what() << std::endl;
   }
   
   do_read(); // start up socket read 

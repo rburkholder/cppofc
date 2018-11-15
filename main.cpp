@@ -9,7 +9,8 @@
  Sample setup
    ovs-vsctl add-br ovsbr0
    ovs-vsctl set-fail-mode ovsbr0 secure
-   ovs-vsctl set-controller ovsbr0 tcp:0.0.0.0:6633
+   #ovs-vsctl set-controller ovsbr0 tcp:0.0.0.0:6633
+ * ovs-vsctl set-controller ovsbr0 tcp:127.0.0.1:6633 # keep local
    ip link set dev ovsbr0 up
    ip link set dev ovs-system up
  * 
@@ -78,7 +79,7 @@ int main(int argc, char* argv[]) {
 
     ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
-    //server s( io_context, port );
+    server s( io_context, port );
 
     io_context.run();
 
