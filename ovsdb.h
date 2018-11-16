@@ -39,11 +39,11 @@ private:
   
   vByte_t m_vRx;
   
-  enum EState { start, listdb, monitorBridge, monitorInterface, monitorPort, listen };
+  enum EState { start, listdb, monitorBridge, monitorInterface, monitorPort, listen, stuck };
   
   EState m_state;
   
-  void send( const char* );
+  void send( const std::string& );
   void do_read();
 };
 
