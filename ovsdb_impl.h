@@ -38,7 +38,7 @@ private:
   
   vByte_t m_vRx;
   
-  enum EState { start, listdb, monitorBridge, monitorInterface, monitorPort, listen, stuck };
+  enum EState { start, listdb, startBridgeMonitor, startInterfaceMonitor, startPortMonitor, listen, stuck };
   
   EState m_state;
   

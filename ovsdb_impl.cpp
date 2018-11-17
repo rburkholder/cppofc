@@ -137,7 +137,7 @@ void ovsdb_impl::parse_listdb( json& j ) {
     //std::cout << *iter;
     if ( "Open_vSwitch" == *iter ) {
 
-      m_state = monitorBridge;
+      m_state = startBridgeMonitor;
       send_monitor_bridges();
 
     }
@@ -223,7 +223,7 @@ void ovsdb_impl::parse_bridge( json& j ) {
     }
   }
 
-  m_state = monitorPort;
+  m_state = startPortMonitor;
   send_monitor_ports();
 
 }
@@ -270,7 +270,7 @@ void ovsdb_impl::parse_port( json& j ) {
     }
   }
 
-  m_state = monitorInterface;
+  m_state = startInterfaceMonitor;
   send_monitor_interfaces();
 }
 
@@ -351,7 +351,7 @@ void ovsdb_impl::do_read() {
 
               }
               break;
-            case monitorBridge: {
+            case startBridgeMonitor: {
                 m_state = stuck;
 
                 assert( j["error"].is_null() );
@@ -362,7 +362,7 @@ void ovsdb_impl::do_read() {
 
               }
               break;
-            case monitorPort: {
+            case startPortMonitor: {
                 m_state = stuck;
 
                 assert( j["error"].is_null() );
@@ -373,7 +373,7 @@ void ovsdb_impl::do_read() {
 
               }
               break;
-            case monitorInterface: {
+            case startInterfaceMonitor: {
                 m_state = stuck;
               
                 assert( j["error"].is_null() );
