@@ -21,6 +21,8 @@
 // TODO: use std::for_each structure for processing rather than the for loop method.
 // TODO; use references when sub-dividing the json structures?
 
+// TODO: convert other iterators over to std::for_each
+
 #include <iostream>
 #include <algorithm>
 
@@ -134,13 +136,12 @@ void ovsdb_impl::send_monitor_interfaces() {
 bool ovsdb_impl::parse_listdb( json& j ) {
   bool bResult( false );
   //std::cout << "listdb entries: ";
-  for ( json::iterator iter = j.begin(); iter != j.end(); iter++ ) {
+  std::for_each( j.begin(), j.end(), [&bResult](auto& key) {
     //std::cout << *iter;
-    if ( "Open_vSwitch" == *iter ) {
+    if ( "Open_vSwitch" == key ) {
       bResult = true;
-
     }
-  }
+  });
   //std::cout << std::endl;
   return bResult;
 }
@@ -405,17 +406,17 @@ void ovsdb_impl::do_read() {
                 auto& items = *iterParams;
                 iterParams++;
                 assert( params.end() == iterParams );
-                for ( json::iterator iterList = list.begin(); list.end() != iterList; iterList++ ) {
-                  if ( "bridge" == *iterList ) {
+                std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
+                  if ( "bridge" == key ) {
                     parse_bridge( items );
                   }
-                  if ( "port" == *iterList ) {
+                  if ( "port" == key ) {
                     parse_port( items );
                   }
-                  if ( "interface" == *iterList ) {
+                  if ( "interface" == key ) {
                     parse_interface( items );
                   }
-                }
+                } );
               }
               break;
             case stuck:
