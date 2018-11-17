@@ -1,5 +1,5 @@
 /* 
- * File:   ovsdb.cpp
+ * File:   ovsdb_impl.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
  * 
@@ -32,7 +32,7 @@
 
 using json = nlohmann::json;
 
-ovsdb::ovsdb( asio::io_context& io_context )
+ovsdb_impl::ovsdb_impl( asio::io_context& io_context )
 :
   m_ep( "/var/run/openvswitch/db.sock" ),
   //m_ep( ip::tcp::v4(), 6640 ),
@@ -53,11 +53,11 @@ ovsdb::ovsdb( asio::io_context& io_context )
   
 }
 
-ovsdb::~ovsdb( ) {
+ovsdb_impl::~ovsdb_impl( ) {
 }
 
 // TODO: once all query strings converted over, then change this to a const std::string
-void ovsdb::send( const std::string& sCmd ) {
+void ovsdb_impl::send( const std::string& sCmd ) {
   try {
     asio::async_write( 
       m_socket, boost::asio::buffer( sCmd ), 
@@ -75,7 +75,7 @@ void ovsdb::send( const std::string& sCmd ) {
   }
 }
 
-void ovsdb::send_list_dbs() {
+void ovsdb_impl::send_list_dbs() {
   json j = {
     { "method", "list_dbs" },
     { "params", json::array() },
@@ -85,7 +85,7 @@ void ovsdb::send_list_dbs() {
   send( j.dump() );
 }
 
-void ovsdb::send_monitor_bridges() {
+void ovsdb_impl::send_monitor_bridges() {
   json colSwitch, colBridge;
   json keys = json::object();
 
@@ -103,7 +103,7 @@ void ovsdb::send_monitor_bridges() {
   send( j.dump() );
 }
 
-void ovsdb::send_monitor_ports() {
+void ovsdb_impl::send_monitor_ports() {
   json colPort;
   json keys = json::object();
 
@@ -119,7 +119,7 @@ void ovsdb::send_monitor_ports() {
   send( j.dump() );
 }
 
-void ovsdb::send_monitor_interfaces() {
+void ovsdb_impl::send_monitor_interfaces() {
   json colInterface;
   json keys = json::object();
 
@@ -135,7 +135,7 @@ void ovsdb::send_monitor_interfaces() {
   send( j.dump() );
 }
 
-void ovsdb::do_read() {
+void ovsdb_impl::do_read() {
   m_vRx.resize( max_length );
   m_socket.async_read_some( boost::asio::buffer(m_vRx),
       [this](boost::system::error_code ec, const std::size_t lenRead)

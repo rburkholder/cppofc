@@ -1,5 +1,5 @@
 /* 
- * File:   ovsdb.h
+ * File:   ovsdb_impl.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
  *
@@ -8,8 +8,8 @@
 
 // https://www.boost.org/doc/libs/1_68_0/doc/html/boost_asio/overview/posix/local.html
 
-#ifndef OVSDB_H
-#define OVSDB_H
+#ifndef OVSDB_IMPL_H
+#define OVSDB_IMPL_H
 
 #include <set>
 
@@ -21,10 +21,10 @@
 
 namespace asio = boost::asio;
 
-class ovsdb {
+class ovsdb_impl {
 public:
-  ovsdb( asio::io_context& io_context );
-  virtual ~ovsdb( );
+  ovsdb_impl( asio::io_context& io_context );
+  virtual ~ovsdb_impl( );
 protected:
 private:
   
