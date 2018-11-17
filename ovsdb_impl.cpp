@@ -28,7 +28,7 @@
 
 #include <json.hpp>
 
-#include "ovsdb.h"
+#include "ovsdb_impl.h"
 
 using json = nlohmann::json;
 

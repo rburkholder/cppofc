@@ -31,7 +31,7 @@
       <itemPath>common.h</itemPath>
       <itemPath>hexdump.h</itemPath>
       <itemPath>mac.h</itemPath>
-      <itemPath>ovsdb.h</itemPath>
+      <itemPath>ovsdb_impl.h</itemPath>
       <itemPath>tcp_session.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -66,7 +66,7 @@
       <itemPath>bridge.cpp</itemPath>
       <itemPath>mac.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
-      <itemPath>ovsdb.cpp</itemPath>
+      <itemPath>ovsdb_impl.cpp</itemPath>
       <itemPath>tcp_session.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
@@ -161,9 +161,9 @@
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="ovsdb.cpp" ex="false" tool="1" flavor2="0">
+      <item path="ovsdb_impl.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="ovsdb.h" ex="false" tool="3" flavor2="0">
+      <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -270,9 +270,9 @@
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="ovsdb.cpp" ex="false" tool="1" flavor2="0">
+      <item path="ovsdb_impl.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="ovsdb.h" ex="false" tool="3" flavor2="0">
+      <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>

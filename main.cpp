@@ -26,7 +26,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include "tcp_session.h"
-#include "ovsdb.h"
+#include "ovsdb_impl.h"
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
