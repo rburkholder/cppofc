@@ -108,6 +108,8 @@ void ovsdb::do_read() {
               break;
             case listdb: {
                 m_state = stuck;
+                
+                assert( j["error"].is_null() );
                 assert( 1 == j["id"] );
                 //std::cout << "listdb entries: ";
                 auto& result = j["result"];
@@ -144,6 +146,7 @@ void ovsdb::do_read() {
             case monitorBridge: {
                 m_state = stuck;
                 
+                assert( j["error"].is_null() );
                 assert( 2 == j["id"] );
                 auto& result = j["result"];
 
@@ -151,12 +154,11 @@ void ovsdb::do_read() {
                 auto& ovs = result["Open_vSwitch"];
                 for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
                   m_switch.uuid = iterOvs.key();
-                  auto& value = iterOvs.value();
-                  auto& new_ = value["new"];
-                  //std::cout << new_.dump(2) << std::endl;
-                  m_switch.db_version = new_["db_version"];
-                  m_switch.ovs_version = new_["ovs_version"];
-                  auto& external_ids = new_["external_ids"];
+                  auto& values = iterOvs.value()["new"];
+                  //std::cout << values.dump(2) << std::endl;
+                  m_switch.db_version = values["db_version"];
+                  m_switch.ovs_version = values["ovs_version"];
+                  auto& external_ids = values["external_ids"];
                   if ( external_ids.is_array() ) {
                     for ( json::iterator iterId = external_ids.begin(); iterId != external_ids.end(); iterId++ ) {
                       if ( "map" == *iterId ) {
@@ -181,7 +183,7 @@ void ovsdb::do_read() {
                     }
                   };
                   
-                  auto& bridges = new_["bridges"];
+                  auto& bridges = values["bridges"];
                   //size_t cntBridges = bridges.size();
                   for ( json::iterator iterBridge = bridges.begin(); bridges.end() != iterBridge; iterBridge++ ) {
                     if ( (*iterBridge).is_array() ) {
@@ -199,14 +201,14 @@ void ovsdb::do_read() {
                 auto& bridge = result["Bridge"];
                 for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
                   bridge_t& br( m_switch.mapBridge[ iterBridge.key() ] );
-                  auto& new_ = iterBridge.value()[ "new" ];
-                  //std::cout << new_.dump(2) << std::endl;
-                  br.datapath_id = new_[ "datapath_id" ];
-                  br.fail_mode = new_[ "fail_mode" ];
-                  br.name = new_[ "name" ];
-                  br.stp_enable = new_[ "stp_enable" ];
+                  auto& values = iterBridge.value()[ "new" ];
+                  //std::cout << values.dump(2) << std::endl;
+                  br.datapath_id = values[ "datapath_id" ];
+                  br.fail_mode = values[ "fail_mode" ];
+                  br.name = values[ "name" ];
+                  br.stp_enable = values[ "stp_enable" ];
                   
-                  auto& ports = new_[ "ports" ];
+                  auto& ports = values[ "ports" ];
                   for ( json::iterator iterElement = ports.begin(); ports.end() != iterElement; iterElement++ ) {
                     if ( "set" == (*iterElement) ) {
                       iterElement++;
@@ -246,6 +248,7 @@ void ovsdb::do_read() {
             case monitorPort: {
                 m_state = stuck;
                 
+                assert( j["error"].is_null() );
                 assert( 3 == j["id"] );
                 auto& result = j["result"];
                 
@@ -309,9 +312,11 @@ void ovsdb::do_read() {
               break;
             case monitorInterface: {
               
+                assert( j["error"].is_null() );
                 assert( 4 == j["id"] ); // will an update inter-leave here?  
                   // should we just do a big switch on in coming id's to be more flexible?
                   // then mark a vector of flags to indicate that it has been processed?
+                
                 auto& interfaces = j["result"]["Interface"];
 
                 for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
