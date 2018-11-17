@@ -338,13 +338,13 @@ void ovsdb::do_read() {
 
                   auto& interfaceJson = iterInterfaceJson.value()[ "new" ];
                   auto& interfaceMap( iterInterface->second );
-                  interfaceMap.name = interfaceJson[ "name" ];
-                  interfaceMap.admin_state = interfaceJson[ "admin_state" ];
-                  interfaceMap.ifindex = interfaceJson[ "ifindex" ];
-                  interfaceMap.link_state = interfaceJson[ "link_state" ];
-                  interfaceMap.mac_in_use = interfaceJson[ "mac_in_use" ];
-                  interfaceMap.ofport = interfaceJson[ "ofport" ];
-                  interfaceMap.ovs_type = interfaceJson[ "type" ];
+                  interfaceMap.ifindex     =            interfaceJson[ "ifindex" ];
+                  interfaceMap.ofport      =            interfaceJson[ "ofport" ];
+                  interfaceMap.name        = std::move( interfaceJson[ "name" ] );
+                  interfaceMap.admin_state = std::move( interfaceJson[ "admin_state" ] );
+                  interfaceMap.link_state  = std::move( interfaceJson[ "link_state" ] );
+                  interfaceMap.mac_in_use  = std::move( interfaceJson[ "mac_in_use" ] );
+                  interfaceMap.ovs_type    = std::move( interfaceJson[ "type" ] );
                   
                   auto elements = interfaceJson[ "statistics" ];
                   for ( json::iterator iterElements = elements.begin(); elements.end() != iterElements; iterElements++ ) {
