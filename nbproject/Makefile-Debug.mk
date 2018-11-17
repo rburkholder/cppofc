@@ -46,6 +46,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/mac.o \
 	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/ovsdb.o \
 	${OBJECTDIR}/ovsdb_impl.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
@@ -136,6 +137,11 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/ovsdb.o: ovsdb.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -D_DEBUG -DBOOST_LOG_DYN_LINK -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb.o ovsdb.cpp
 
 ${OBJECTDIR}/ovsdb_impl.o: ovsdb_impl.cpp
 	${MKDIR} -p ${OBJECTDIR}

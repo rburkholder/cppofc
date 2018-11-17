@@ -26,7 +26,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include "tcp_session.h"
-#include "ovsdb_impl.h"
+#include "ovsdb.h"
 
 namespace asio = boost::asio;
 namespace ip = boost::asio::ip;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 
     asio::io_context io_context;
 
-    ovsdb_impl ovsdb_( io_context ); // open stream to ovs database for port info
+    ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
     server s( io_context, port );
 
