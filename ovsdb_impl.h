@@ -17,9 +17,12 @@
 
 #include <boost/asio/local/stream_protocol.hpp>
 
+#include <json.hpp>
+
 #include "common.h"
 
 namespace asio = boost::asio;
+using json = nlohmann::json;
 
 class ovsdb_impl {
 public:
@@ -122,6 +125,11 @@ private:
   void send_monitor_ports();
   void send_monitor_interfaces();
   void do_read();
+
+  void parse_listdb( json& );
+  void parse_bridge( json& );
+  void parse_port( json& );
+  void parse_interface( json& );
 };
 
 #endif /* OVSDB_H */
