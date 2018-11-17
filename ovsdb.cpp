@@ -11,6 +11,11 @@
 // https://relaxdiego.com/2014/09/ovsdb.html
 // https://www.jsonrpc.org/specification_v1
 
+// TODO: connect via netlink to pull out raw interfaces and ports,
+//    then can use interface to add into and remove from ovs
+
+// TODO: use the 'set' ability to set mode for controller, rather than doing from command line
+
 #include <iostream>
 #include <algorithm>
 
@@ -39,7 +44,6 @@ ovsdb::ovsdb( asio::io_context& io_context )
   do_read(); // start up socket read 
 
   // send first query  
-  m_state = listdb;
   
   json j = {
     { "method", "list_dbs" },
@@ -47,6 +51,7 @@ ovsdb::ovsdb( asio::io_context& io_context )
     { "id", 1 }
   };
   //std::cout << "*** test output: " << j << std::endl;
+  m_state = listdb;
   send( j.dump() );
 }
 
@@ -93,7 +98,8 @@ void ovsdb::do_read() {
           // process read state
           switch ( m_state ) {
             case start:
-              m_state = listdb;
+              //m_state = listdb;
+              std::cout << "*** something arrived in state: start" << std::endl;
               break;
             case listdb: {
                 m_state = stuck;
@@ -105,42 +111,46 @@ void ovsdb::do_read() {
                     //std::cout << *iter;
                     if ( "Open_vSwitch" == *iter ) {
                       m_state = monitorBridge;
+
+                      // send next query
+                      json colSwitch, colBridge;
+                      json keys = json::object();
+
+                      colSwitch["columns"] = { "bridges", "db_version", "ovs_version", "external_ids" };
+                      keys["Open_vSwitch"] = json::array( { colSwitch } );
+
+                      colBridge["columns"] = { "datapath_id", "fail_mode", "name", "ports", "stp_enable" };
+                      keys["Bridge"]       = json::array( { colBridge } );
+
+                      json j = {
+                        { "id", 2 },
+                        { "method", "monitor" },
+                        { "params", { "Open_vSwitch", json::array( { "bridge" } ), keys } }
+                      };
+                      send( j.dump() );
+                      
                     }
                   }
                 }
                 //std::cout << std::endl;
                 
-                // send next query
-                json colSwitch, colBridge;
-                json keys = json::object();
-                
-                colSwitch["columns"] = { "bridges", "db_version", "ovs_version", "external_ids" };
-                keys["Open_vSwitch"] = json::array( { colSwitch } );
-                
-                colBridge["columns"] = { "datapath_id", "fail_mode", "name", "ports", "stp_enable" };
-                keys["Bridge"]       = json::array( { colBridge } );
-                
-                json j = {
-                  { "id", 2 },
-                  { "method", "monitor" },
-                  { "params", { "Open_vSwitch", json::array( { "bridge" } ), keys } }
-                };
-                send( j.dump() );
               }
               break;
             case monitorBridge: {
                 m_state = stuck;
-                std::cout << "*** processing bridge" << std::endl;
+                
                 assert( 2 == j["id"] );
                 auto result = j["result"];
+
+                // --
                 auto ovs = result["Open_vSwitch"];
                 for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
-                  std::string uuid = iterOvs.key();
+                  m_switch.uuid = iterOvs.key();
                   auto value = iterOvs.value();
                   auto new_ = value["new"];
                   //std::cout << new_.dump(2) << std::endl;
-                  std::string db_version = new_["db_version"];
-                  std::string ovs_version = new_["ovs_version"];
+                  m_switch.db_version = new_["db_version"];
+                  m_switch.ovs_version = new_["ovs_version"];
                   auto external_ids = new_["external_ids"];
                   if ( external_ids.is_array() ) {
                     for ( json::iterator iterId = external_ids.begin(); iterId != external_ids.end(); iterId++ ) {
@@ -151,27 +161,129 @@ void ovsdb::do_read() {
                         std::string hostname;
                         for ( json::iterator iterElement = elements.begin(); iterElement != elements.end(); iterElement++ ) {
                           if ( "hostname" == (*iterElement)[0] ) {
-                            hostname = (*iterElement)[1];
+                            m_switch.hostname = (*iterElement)[1];
                           } 
                         }
                       }
                     }
                   }
-                  auto bridges = new_["bridges"];
-                  size_t cntBridges = bridges.size();
-                  std::vector<std::string> vBridgeUuid;
-                  for ( json::iterator iterBridge = bridges.begin(); iterBridge != bridges.end(); iterBridge++ ) {
-                    if ( (*iterBridge).is_array() ) {
-                      assert( 0 );  // need to process multiple bridges
-                    }
-                    else {
+                  
+                  auto fAddBridge = [this](json& j){
+                    for ( json::iterator iterBridge = j.begin(); j.end() != iterBridge; iterBridge++ ) {
                       assert( "uuid" == (*iterBridge) );
                       iterBridge++;
-                      vBridgeUuid.push_back( (*iterBridge) );
+                      m_switch.mapBridge.insert( mapBridge_t::value_type( *iterBridge, bridge_t() ) );
+                    }
+                  };
+                  
+                  auto bridges = new_["bridges"];
+                  size_t cntBridges = bridges.size();
+                  for ( json::iterator iterBridge = bridges.begin(); bridges.end() != iterBridge; iterBridge++ ) {
+                    if ( (*iterBridge).is_array() ) {
+                      for ( json::iterator iterElements = (*iterBridge).begin(); (*iterBridge).end() != iterElements; iterElements++ ) {
+                        fAddBridge( *iterElements );
+                      }
+                    }
+                    else {
+                      fAddBridge( bridges );
+                    }
+                  }
+                }
+
+                // --
+                auto bridge = result["Bridge"];
+                for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
+                  bridge_t& br( m_switch.mapBridge[ iterBridge.key() ] );
+                  auto new_ = iterBridge.value()[ "new" ];
+                  //std::cout << new_.dump(2) << std::endl;
+                  br.datapath_id = new_[ "datapath_id" ];
+                  br.fail_mode = new_[ "fail_mode" ];
+                  br.name = new_[ "name" ];
+                  br.stp_enable = new_[ "stp_enable" ];
+                  
+                  auto ports = new_[ "ports" ];
+                  for ( json::iterator iterElement = ports.begin(); ports.end() != iterElement; iterElement++ ) {
+                    if ( "set" == (*iterElement) ) {
+                      iterElement++;
+                      assert( ports.end() != iterElement );
+                      auto set = *iterElement;
+                      for ( json::iterator iterPair = set.begin(); set.end() != iterPair; iterPair++ ) {
+                        auto pair = *iterPair;
+                        for ( json::iterator iterPort = pair.begin(); pair.end() != iterPort; iterPort++ ) {
+                          assert( "uuid" == (*iterPort) );
+                          iterPort++;
+                          m_mapPort.insert( mapPort_t::value_type( *iterPort, port_t() ) );
+                          br.setPorts.insert( setPort_t::value_type( *iterPort ) );
+                        }
+                      };
                     }
                   }
                 }
                 
+                // send next query
+                json colPort;
+                json keys = json::object();
+                
+                colPort["columns"] = { "interfaces", "name", "tag", "trunks", "vlan_mode" };
+                keys["Port"]       = json::array( { colPort } );
+                
+                json j = {
+                  { "id", 3 },
+                  { "method", "monitor" },
+                  { "params", { "Open_vSwitch", json::array( { "port" } ), keys } }
+                };
+                
+                m_state = monitorPort;
+                send( j.dump() );
+                
+              }
+              break;
+            case monitorPort: {
+                m_state = stuck;
+                
+                assert( 3 == j["id"] );
+                auto result = j["result"];
+                
+                auto ports = result[ "Port" ];
+                for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
+                  auto iterPort = m_mapPort.find( iterPortObject.key() );
+                  assert ( m_mapPort.end() != iterPort );
+                  auto values = iterPortObject.value()[ "new" ];
+                  iterPort->second.name = values[ "name" ];
+                  if ( values[ "tag" ].is_number() ) {
+                    iterPort->second.tag = values[ "tag" ];
+                  }
+                  
+                  auto trunks = values[ "trunks" ];
+                  for ( json::iterator iterElement = trunks.begin(); trunks.end() != iterElement; iterElement++ ) {
+                    assert( "set" == *iterElement );
+                    iterElement++;
+                    assert( trunks.end() != iterElement );
+                    assert( (*iterElement).is_array() );
+                    auto vlans = *iterElement;
+                    for ( json::iterator iterVlan = vlans.begin(); vlans.end() != iterVlan; iterVlan++ ) {
+                      iterPort->second.setTrunks.insert( std::set<uint16_t>::value_type( *iterVlan ) );
+                    }
+                  }
+                  
+                  auto interfaces = values[ "interfaces" ];
+                  for ( json::iterator iterInterface = interfaces.begin(); interfaces.end() != iterInterface; iterInterface++ ) {
+                    if ( (*iterInterface).is_array() ) {
+                      auto elements = *iterInterface;
+                      assert( 0 );  // need to fix this with bonding and such (use function lamda as above)
+                      for ( json::iterator iterElement = elements.begin(); elements.end() != iterElement; iterElement++ ) {
+                      }
+                    }
+                    else {
+                      assert( "uuid" == *iterInterface );
+                      iterInterface++;
+                      assert( (*iterInterface).is_string() );
+                      m_mapInterface.insert( mapInterface_t::value_type( *iterInterface, interface_t() ) );
+                      iterPort->second.setInterfaces.insert( setInterface_t::value_type( *iterInterface ) );
+                    }
+                  }
+                }
+              
                 // send next query
                 json colInterface;
                 json keys = json::object();
@@ -180,37 +292,58 @@ void ovsdb::do_read() {
                 keys["Interface"]       = json::array( { colInterface } );
                 
                 json j = {
-                  { "id", 3 },
+                  { "id", 4 },
                   { "method", "monitor" },
                   { "params", { "Open_vSwitch", json::array( { "interface" } ), keys } }
                 };
-                send( j.dump() );
                 
                 m_state = monitorInterface;
+                send( j.dump() );
+                
               }
               break;
             case monitorInterface: {
-                m_state = monitorPort;
               
-                // send next query
-                json idMonitor = json::array( { "port" } );
-                
-                json colPort;
-                json keys = json::object();
-                
-                colPort["columns"] = { "interfaces", "name", "tag", "trunks", "vlan_mode" };
-                keys["Port"]       = json::array( { colPort } );
-                
-                json j = {
-                  { "id", 4 },
-                  { "method", "monitor" },
-                  { "params", { "Open_vSwitch", idMonitor, keys } }
-                };
-                send( j.dump() );
+                assert( 4 == j["id"] ); // will an update inter-leave here?  
+                  // should we just do a big switch on in coming id's to be more flexible?
+                  // then mark a vector of flags to indicate that it has been processed?
+                auto interfaces = j["result"]["Interface"];
+
+                for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
+                  std::string uuid = iterInterfaceJson.key();
+                  mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
+                  assert( m_mapInterface.end() != iterInterface );
+
+                  auto interfaceJson = iterInterfaceJson.value()[ "new" ];
+                  auto interfaceMap( iterInterface->second );
+                  interfaceMap.name = interfaceJson[ "name" ];
+                  interfaceMap.admin_state = interfaceJson[ "admin_state" ];
+                  interfaceMap.ifindex = interfaceJson[ "ifindex" ];
+                  interfaceMap.link_state = interfaceJson[ "link_state" ];
+                  interfaceMap.mac_in_use = interfaceJson[ "mac_in_use" ];
+                  interfaceMap.ofport = interfaceJson[ "ofport" ];
+                  interfaceMap.ovs_type = interfaceJson[ "type" ];
+                  
+                  auto elements = interfaceJson[ "statistics" ];
+                  for ( json::iterator iterElements = elements.begin(); elements.end() != iterElements; iterElements++ ) {
+                    assert( "map" == *iterElements );
+                    iterElements++;
+                    assert( (*iterElements).is_array() );
+                    auto statistics = *iterElements;
+                    for ( json::iterator iterCombo = statistics.begin(); statistics.end() != iterCombo; iterCombo++ ) {
+                      for ( json::iterator iterStatistic = (*iterCombo).begin(); (*iterCombo).end() != iterStatistic; iterStatistic++ ) {
+                        std::string name( *iterStatistic );
+                        iterStatistic++;
+                        interfaceMap.mapStatistics[ name ] = *iterStatistic;
+                      }
+                    }
+                  }
+                }
+
+
+
+                m_state = listen;
               }
-              break;
-            case monitorPort:
-              m_state = listen;
               break;
             case listen:
               break;
