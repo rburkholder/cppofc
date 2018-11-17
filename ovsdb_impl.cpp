@@ -324,7 +324,7 @@ void ovsdb_impl::do_read() {
           }
           std::cout << std::endl;
           auto j = json::parse( m_vRx.begin(), m_vRx.begin() + lenRead );
-          std::cout << j.dump(2) << std::endl;
+          //std::cout << j.dump(2) << std::endl;
           std::cout << ">>> ovsdb read end." << std::endl;
 
           // process read state
@@ -392,8 +392,31 @@ void ovsdb_impl::do_read() {
                 m_state = listen;
               }
               break;
-            case listen:
-              // process the monitor/update message
+            case listen: {
+                // process the monitor/update message
+                assert( j["id"].is_null() );
+                assert( "update" == j["method"] );
+                auto& params = j["params"];
+                json::iterator iterParams = params.begin();
+                assert( (*iterParams).is_array() );
+                auto& list = *iterParams;
+                iterParams++;
+                assert( (*iterParams).is_object() );
+                auto& items = *iterParams;
+                iterParams++;
+                assert( params.end() == iterParams );
+                for ( json::iterator iterList = list.begin(); list.end() != iterList; iterList++ ) {
+                  if ( "bridge" == *iterList ) {
+                    parse_bridge( items );
+                  }
+                  if ( "port" == *iterList ) {
+                    parse_port( items );
+                  }
+                  if ( "interface" == *iterList ) {
+                    parse_interface( items );
+                  }
+                }
+              }
               break;
             case stuck:
               std::cout << "ovsdb arrived in stuck state" << std::endl;
