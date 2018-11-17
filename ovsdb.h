@@ -117,6 +117,10 @@ private:
   switch_t m_switch;
   
   void send( const std::string& );
+  void send_list_dbs();
+  void send_monitor_bridges();
+  void send_monitor_ports();
+  void send_monitor_interfaces();
   void do_read();
 };
 

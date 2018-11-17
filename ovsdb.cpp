@@ -48,16 +48,9 @@ ovsdb::ovsdb( asio::io_context& io_context )
   
   do_read(); // start up socket read 
 
-  // send first query  
-  
-  json j = {
-    { "method", "list_dbs" },
-    { "params", json::array() },
-    { "id", 1 }
-  };
-  //std::cout << "*** test output: " << j << std::endl;
   m_state = listdb;
-  send( j.dump() );
+  send_list_dbs();
+  
 }
 
 ovsdb::~ovsdb( ) {
@@ -80,6 +73,66 @@ void ovsdb::send( const std::string& sCmd ) {
   catch ( std::exception& e ) {
     std::cout << "<<< ovsdb error: " << e.what() << std::endl;
   }
+}
+
+void ovsdb::send_list_dbs() {
+  json j = {
+    { "method", "list_dbs" },
+    { "params", json::array() },
+    { "id", 1 }
+  };
+  //std::cout << "*** test output: " << j << std::endl;
+  send( j.dump() );
+}
+
+void ovsdb::send_monitor_bridges() {
+  json colSwitch, colBridge;
+  json keys = json::object();
+
+  colSwitch["columns"] = { "bridges", "db_version", "ovs_version", "external_ids" };
+  keys["Open_vSwitch"] = json::array( { colSwitch } );
+
+  colBridge["columns"] = { "datapath_id", "fail_mode", "name", "ports", "stp_enable" };
+  keys["Bridge"]       = json::array( { colBridge } );
+
+  json j = {
+    { "id", 2 },
+    { "method", "monitor" },
+    { "params", { "Open_vSwitch", json::array( { "bridge" } ), keys } }
+  };
+  send( j.dump() );
+}
+
+void ovsdb::send_monitor_ports() {
+  json colPort;
+  json keys = json::object();
+
+  colPort["columns"] = { "interfaces", "name", "tag", "trunks", "vlan_mode" };
+  keys["Port"]       = json::array( { colPort } );
+
+  json j = {
+    { "id", 3 },
+    { "method", "monitor" },
+    { "params", { "Open_vSwitch", json::array( { "port" } ), keys } }
+  };
+
+  send( j.dump() );
+}
+
+void ovsdb::send_monitor_interfaces() {
+  json colInterface;
+  json keys = json::object();
+
+  colInterface["columns"] = { "admin_state", "link_state", "name", "ofport", "ifindex","mac_in_use", "type", "statistics" };
+  keys["Interface"]       = json::array( { colInterface } );
+
+  json j = {
+    { "id", 4 },
+    { "method", "monitor" },
+    { "params", { "Open_vSwitch", json::array( { "interface" } ), keys } }
+  };
+
+  send( j.dump() );
 }
 
 void ovsdb::do_read() {
@@ -117,24 +170,9 @@ void ovsdb::do_read() {
                   for ( json::iterator iter = result.begin(); iter != result.end(); iter++ ) {
                     //std::cout << *iter;
                     if ( "Open_vSwitch" == *iter ) {
+                      
                       m_state = monitorBridge;
-
-                      // send next query
-                      json colSwitch, colBridge;
-                      json keys = json::object();
-
-                      colSwitch["columns"] = { "bridges", "db_version", "ovs_version", "external_ids" };
-                      keys["Open_vSwitch"] = json::array( { colSwitch } );
-
-                      colBridge["columns"] = { "datapath_id", "fail_mode", "name", "ports", "stp_enable" };
-                      keys["Bridge"]       = json::array( { colBridge } );
-
-                      json j = {
-                        { "id", 2 },
-                        { "method", "monitor" },
-                        { "params", { "Open_vSwitch", json::array( { "bridge" } ), keys } }
-                      };
-                      send( j.dump() );
+                      send_monitor_bridges();
                       
                     }
                   }
@@ -227,21 +265,8 @@ void ovsdb::do_read() {
                   }
                 }
                 
-                // send next query
-                json colPort;
-                json keys = json::object();
-                
-                colPort["columns"] = { "interfaces", "name", "tag", "trunks", "vlan_mode" };
-                keys["Port"]       = json::array( { colPort } );
-                
-                json j = {
-                  { "id", 3 },
-                  { "method", "monitor" },
-                  { "params", { "Open_vSwitch", json::array( { "port" } ), keys } }
-                };
-                
                 m_state = monitorPort;
-                send( j.dump() );
+                send_monitor_ports();
                 
               }
               break;
@@ -292,21 +317,8 @@ void ovsdb::do_read() {
                   }
                 }
               
-                // send next query
-                json colInterface;
-                json keys = json::object();
-                
-                colInterface["columns"] = { "admin_state", "link_state", "name", "ofport", "ifindex","mac_in_use", "type", "statistics" };
-                keys["Interface"]       = json::array( { colInterface } );
-                
-                json j = {
-                  { "id", 4 },
-                  { "method", "monitor" },
-                  { "params", { "Open_vSwitch", json::array( { "interface" } ), keys } }
-                };
-                
                 m_state = monitorInterface;
-                send( j.dump() );
+                send_monitor_interfaces();
                 
               }
               break;
@@ -354,6 +366,7 @@ void ovsdb::do_read() {
               }
               break;
             case listen:
+              // process the monitor/update message
               break;
             case stuck:
               std::cout << "arrived in stuck state" << std::endl;
