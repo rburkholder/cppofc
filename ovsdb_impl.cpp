@@ -131,21 +131,21 @@ void ovsdb_impl::send_monitor_interfaces() {
   send( j.dump() );
 }
 
-void ovsdb_impl::parse_listdb( json& j ) {
+bool ovsdb_impl::parse_listdb( json& j ) {
+  bool bResult( false );
   //std::cout << "listdb entries: ";
   for ( json::iterator iter = j.begin(); iter != j.end(); iter++ ) {
     //std::cout << *iter;
     if ( "Open_vSwitch" == *iter ) {
-
-      m_state = startBridgeMonitor;
-      send_monitor_bridges();
+      bResult = true;
 
     }
   }
   //std::cout << std::endl;
+  return bResult;
 }
 
-void ovsdb_impl::parse_bridge( json& j ) {
+bool ovsdb_impl::parse_bridge( json& j ) {
 
   auto& ovs = j["Open_vSwitch"];
   for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
@@ -223,12 +223,10 @@ void ovsdb_impl::parse_bridge( json& j ) {
     }
   }
 
-  m_state = startPortMonitor;
-  send_monitor_ports();
-
+  return true;
 }
 
-void ovsdb_impl::parse_port( json& j ) {
+bool ovsdb_impl::parse_port( json& j ) {
 
   auto& ports = j[ "Port" ];
   for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
@@ -270,11 +268,10 @@ void ovsdb_impl::parse_port( json& j ) {
     }
   }
 
-  m_state = startInterfaceMonitor;
-  send_monitor_interfaces();
+  return true;
 }
 
-void ovsdb_impl::parse_interface( json& j ) {
+bool ovsdb_impl::parse_interface( json& j ) {
 
   auto& interfaces = j["Interface"];
 
@@ -309,7 +306,7 @@ void ovsdb_impl::parse_interface( json& j ) {
     }
   }
 
-  m_state = listen;
+  return true;
 }
 
 void ovsdb_impl::do_read() {
@@ -344,6 +341,9 @@ void ovsdb_impl::do_read() {
                 auto& result = j["result"];
                 if ( result.is_array() ) {
                   parse_listdb( result );
+                  
+                  m_state = startBridgeMonitor;
+                  send_monitor_bridges();
                 }
                 else {
                   std::cout << "ovsdb stuck in listdb" << std::endl;
@@ -360,6 +360,9 @@ void ovsdb_impl::do_read() {
                 auto& result = j["result"];
                 parse_bridge( result );
 
+                m_state = startPortMonitor;
+                send_monitor_ports();
+
               }
               break;
             case startPortMonitor: {
@@ -371,6 +374,8 @@ void ovsdb_impl::do_read() {
                 auto& result = j["result"];
                 parse_port( result );
 
+                m_state = startInterfaceMonitor;
+                send_monitor_interfaces();
               }
               break;
             case startInterfaceMonitor: {
@@ -384,6 +389,7 @@ void ovsdb_impl::do_read() {
                 auto& result = j["result"];
                 parse_interface( result );
 
+                m_state = listen;
               }
               break;
             case listen:

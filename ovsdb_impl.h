@@ -126,10 +126,10 @@ private:
   void send_monitor_interfaces();
   void do_read();
 
-  void parse_listdb( json& );
-  void parse_bridge( json& );
-  void parse_port( json& );
-  void parse_interface( json& );
+  bool parse_listdb( json& );
+  bool parse_bridge( json& );
+  bool parse_port( json& );
+  bool parse_interface( json& );
 };
 
 #endif /* OVSDB_H */
