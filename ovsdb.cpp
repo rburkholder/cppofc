@@ -11,10 +11,15 @@
 // https://relaxdiego.com/2014/09/ovsdb.html
 // https://www.jsonrpc.org/specification_v1
 
+// json docs:  https://github.com/nlohmann/json
+
 // TODO: connect via netlink to pull out raw interfaces and ports,
 //    then can use interface to add into and remove from ovs
 
 // TODO: use the 'set' ability to set mode for controller, rather than doing from command line
+
+// TODO: use std::for_each structure for processing rather than the for loop method.
+// TODO; use references when sub-dividing the json structures?
 
 #include <iostream>
 #include <algorithm>
@@ -105,7 +110,7 @@ void ovsdb::do_read() {
                 m_state = stuck;
                 assert( 1 == j["id"] );
                 //std::cout << "listdb entries: ";
-                auto result = j["result"];
+                auto& result = j["result"];
                 if ( result.is_array() ) {
                   for ( json::iterator iter = result.begin(); iter != result.end(); iter++ ) {
                     //std::cout << *iter;
@@ -140,23 +145,23 @@ void ovsdb::do_read() {
                 m_state = stuck;
                 
                 assert( 2 == j["id"] );
-                auto result = j["result"];
+                auto& result = j["result"];
 
                 // --
-                auto ovs = result["Open_vSwitch"];
+                auto& ovs = result["Open_vSwitch"];
                 for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
                   m_switch.uuid = iterOvs.key();
-                  auto value = iterOvs.value();
-                  auto new_ = value["new"];
+                  auto& value = iterOvs.value();
+                  auto& new_ = value["new"];
                   //std::cout << new_.dump(2) << std::endl;
                   m_switch.db_version = new_["db_version"];
                   m_switch.ovs_version = new_["ovs_version"];
-                  auto external_ids = new_["external_ids"];
+                  auto& external_ids = new_["external_ids"];
                   if ( external_ids.is_array() ) {
                     for ( json::iterator iterId = external_ids.begin(); iterId != external_ids.end(); iterId++ ) {
                       if ( "map" == *iterId ) {
                         iterId++;
-                        auto elements = *iterId;
+                        auto& elements = *iterId;
                         size_t cnt = elements.size();
                         std::string hostname;
                         for ( json::iterator iterElement = elements.begin(); iterElement != elements.end(); iterElement++ ) {
@@ -176,8 +181,8 @@ void ovsdb::do_read() {
                     }
                   };
                   
-                  auto bridges = new_["bridges"];
-                  size_t cntBridges = bridges.size();
+                  auto& bridges = new_["bridges"];
+                  //size_t cntBridges = bridges.size();
                   for ( json::iterator iterBridge = bridges.begin(); bridges.end() != iterBridge; iterBridge++ ) {
                     if ( (*iterBridge).is_array() ) {
                       for ( json::iterator iterElements = (*iterBridge).begin(); (*iterBridge).end() != iterElements; iterElements++ ) {
@@ -191,24 +196,24 @@ void ovsdb::do_read() {
                 }
 
                 // --
-                auto bridge = result["Bridge"];
+                auto& bridge = result["Bridge"];
                 for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
                   bridge_t& br( m_switch.mapBridge[ iterBridge.key() ] );
-                  auto new_ = iterBridge.value()[ "new" ];
+                  auto& new_ = iterBridge.value()[ "new" ];
                   //std::cout << new_.dump(2) << std::endl;
                   br.datapath_id = new_[ "datapath_id" ];
                   br.fail_mode = new_[ "fail_mode" ];
                   br.name = new_[ "name" ];
                   br.stp_enable = new_[ "stp_enable" ];
                   
-                  auto ports = new_[ "ports" ];
+                  auto& ports = new_[ "ports" ];
                   for ( json::iterator iterElement = ports.begin(); ports.end() != iterElement; iterElement++ ) {
                     if ( "set" == (*iterElement) ) {
                       iterElement++;
                       assert( ports.end() != iterElement );
-                      auto set = *iterElement;
+                      auto& set = *iterElement;
                       for ( json::iterator iterPair = set.begin(); set.end() != iterPair; iterPair++ ) {
-                        auto pair = *iterPair;
+                        auto& pair = *iterPair;
                         for ( json::iterator iterPort = pair.begin(); pair.end() != iterPort; iterPort++ ) {
                           assert( "uuid" == (*iterPort) );
                           iterPort++;
@@ -242,34 +247,34 @@ void ovsdb::do_read() {
                 m_state = stuck;
                 
                 assert( 3 == j["id"] );
-                auto result = j["result"];
+                auto& result = j["result"];
                 
-                auto ports = result[ "Port" ];
+                auto& ports = result[ "Port" ];
                 for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
                   auto iterPort = m_mapPort.find( iterPortObject.key() );
                   assert ( m_mapPort.end() != iterPort );
-                  auto values = iterPortObject.value()[ "new" ];
+                  auto& values = iterPortObject.value()[ "new" ];
                   iterPort->second.name = values[ "name" ];
                   if ( values[ "tag" ].is_number() ) {
                     iterPort->second.tag = values[ "tag" ];
                   }
                   
-                  auto trunks = values[ "trunks" ];
+                  auto& trunks = values[ "trunks" ];
                   for ( json::iterator iterElement = trunks.begin(); trunks.end() != iterElement; iterElement++ ) {
                     assert( "set" == *iterElement );
                     iterElement++;
                     assert( trunks.end() != iterElement );
                     assert( (*iterElement).is_array() );
-                    auto vlans = *iterElement;
+                    auto& vlans = *iterElement;
                     for ( json::iterator iterVlan = vlans.begin(); vlans.end() != iterVlan; iterVlan++ ) {
                       iterPort->second.setTrunks.insert( std::set<uint16_t>::value_type( *iterVlan ) );
                     }
                   }
                   
-                  auto interfaces = values[ "interfaces" ];
+                  auto& interfaces = values[ "interfaces" ];
                   for ( json::iterator iterInterface = interfaces.begin(); interfaces.end() != iterInterface; iterInterface++ ) {
                     if ( (*iterInterface).is_array() ) {
-                      auto elements = *iterInterface;
+                      auto& elements = *iterInterface;
                       assert( 0 );  // need to fix this with bonding and such (use function lamda as above)
                       for ( json::iterator iterElement = elements.begin(); elements.end() != iterElement; iterElement++ ) {
                       }
@@ -307,15 +312,15 @@ void ovsdb::do_read() {
                 assert( 4 == j["id"] ); // will an update inter-leave here?  
                   // should we just do a big switch on in coming id's to be more flexible?
                   // then mark a vector of flags to indicate that it has been processed?
-                auto interfaces = j["result"]["Interface"];
+                auto& interfaces = j["result"]["Interface"];
 
                 for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
                   std::string uuid = iterInterfaceJson.key();
                   mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
                   assert( m_mapInterface.end() != iterInterface );
 
-                  auto interfaceJson = iterInterfaceJson.value()[ "new" ];
-                  auto interfaceMap( iterInterface->second );
+                  auto& interfaceJson = iterInterfaceJson.value()[ "new" ];
+                  auto& interfaceMap( iterInterface->second );
                   interfaceMap.name = interfaceJson[ "name" ];
                   interfaceMap.admin_state = interfaceJson[ "admin_state" ];
                   interfaceMap.ifindex = interfaceJson[ "ifindex" ];
@@ -329,7 +334,7 @@ void ovsdb::do_read() {
                     assert( "map" == *iterElements );
                     iterElements++;
                     assert( (*iterElements).is_array() );
-                    auto statistics = *iterElements;
+                    auto& statistics = *iterElements;
                     for ( json::iterator iterCombo = statistics.begin(); statistics.end() != iterCombo; iterCombo++ ) {
                       for ( json::iterator iterStatistic = (*iterCombo).begin(); (*iterCombo).end() != iterStatistic; iterStatistic++ ) {
                         std::string name( *iterStatistic );
@@ -339,8 +344,6 @@ void ovsdb::do_read() {
                     }
                   }
                 }
-
-
 
                 m_state = listen;
               }
