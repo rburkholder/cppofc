@@ -39,7 +39,7 @@ private:
   
   vByte_t m_vRx;
   
-  enum EState { start, listdb, startBridgeMonitor, startInterfaceMonitor, startPortMonitor, listen, stuck };
+  enum EState { start, listdb, startBridgeMonitor, startPortMonitor, startInterfaceMonitor, startStatisticsMonitor, listen, stuck };
   
   EState m_state;
   
@@ -54,12 +54,14 @@ private:
   void send_monitor_bridges();
   void send_monitor_ports();
   void send_monitor_interfaces();
+  void send_monitor_statistics();
   void do_read();
 
   bool parse_listdb( json& );
   bool parse_bridge( json& );
   bool parse_port( json& );
   bool parse_interface( json& );
+  bool parse_statistics( json& );
 };
 
 #endif /* OVSDB_H */

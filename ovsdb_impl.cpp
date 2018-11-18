@@ -25,6 +25,9 @@
 
 // TOOD: consider scanning inbound strings with boost::spirit
 
+// ovs-vsctl del-fail-mode ovsbr0
+// ovs-vsctl set-fail-mode ovsbr0 secure
+
 #include <iostream>
 #include <algorithm>
 
@@ -124,13 +127,29 @@ void ovsdb_impl::send_monitor_interfaces() {
   json colInterface;
   json keys = json::object();
 
-  colInterface["columns"] = { "admin_state", "link_state", "name", "ofport", "ifindex","mac_in_use", "type", "statistics" };
+  colInterface["columns"] = { "admin_state", "link_state", "name", "ofport", "ifindex","mac_in_use", "type" };
   keys["Interface"]       = json::array( { colInterface } );
 
   json j = {
     { "id", 4 },
     { "method", "monitor" },
     { "params", { "Open_vSwitch", json::array( { "interface" } ), keys } }
+  };
+
+  send( j.dump() );
+}
+
+void ovsdb_impl::send_monitor_statistics() {
+  json colInterface;
+  json keys = json::object();
+
+  colInterface["columns"] = { "statistics" };
+  keys["Interface"]       = json::array( { colInterface } );
+
+  json j = {
+    { "id", 5 },
+    { "method", "monitor" },
+    { "params", { "Open_vSwitch", json::array( { "statistics" } ), keys } }
   };
 
   send( j.dump() );
@@ -303,6 +322,30 @@ bool ovsdb_impl::parse_interface( json& j ) {
     interfaceMap.mac_in_use  = std::move( interfaceJson[ "mac_in_use" ] );
     interfaceMap.ovs_type    = std::move( interfaceJson[ "type" ] );
 
+  }
+  
+  if ( nullptr != m_ovsdb.m_fInterfaceUpdate ) {
+    m_ovsdb.m_fInterfaceUpdate( m_mapInterface );
+  }
+
+  return true;
+}
+
+bool ovsdb_impl::parse_statistics( json& j ) {
+
+  auto& interfaces = j["Interface"];
+
+  for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
+    std::string uuid = iterInterfaceJson.key();
+    ovsdb::mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
+    assert( m_mapInterface.end() != iterInterface );
+
+    // TODO: use boost::spirit to decode the json values into this structure
+    auto& interfaceJson = iterInterfaceJson.value()[ "new" ];
+    auto& interfaceMap( iterInterface->second );
+
+    // page 112 of openflow 1.4.1 spec shows how to get statistics via the controller channel
+    //   therefore, this may go away at some point
     auto elements = interfaceJson[ "statistics" ];
     for ( json::iterator iterElements = elements.begin(); elements.end() != iterElements; iterElements++ ) {
       assert( "map" == *iterElements );
@@ -319,8 +362,8 @@ bool ovsdb_impl::parse_interface( json& j ) {
     }
   }
   
-  if ( nullptr != m_ovsdb.m_fInterfaceUpdate ) {
-    m_ovsdb.m_fInterfaceUpdate( m_mapInterface );
+  if ( nullptr != m_ovsdb.m_fStatisticsUpdate ) {
+    m_ovsdb.m_fStatisticsUpdate( m_mapInterface );
   }
 
   return true;
@@ -341,7 +384,7 @@ void ovsdb_impl::do_read() {
           }
           std::cout << std::endl;
           auto j = json::parse( m_vRx.begin(), m_vRx.begin() + lenRead );
-          //std::cout << j.dump(2) << std::endl;
+          std::cout << j.dump(2) << std::endl;
           std::cout << ">>> ovsdb read end." << std::endl;
 
           // process read state
@@ -393,6 +436,7 @@ void ovsdb_impl::do_read() {
 
                 m_state = startInterfaceMonitor;
                 send_monitor_interfaces();
+                
               }
               break;
             case startInterfaceMonitor: {
@@ -405,6 +449,22 @@ void ovsdb_impl::do_read() {
                 
                 auto& result = j["result"];
                 parse_interface( result );
+
+                m_state = startStatisticsMonitor;
+                send_monitor_statistics();
+                
+              }
+              break;
+            case startStatisticsMonitor: {
+                m_state = stuck;
+              
+                assert( j["error"].is_null() );
+                assert( 5 == j["id"] ); // will an update inter-leave here?  
+                  // should we just do a big switch on in coming id's to be more flexible?
+                  // then mark a vector of flags to indicate that it has been processed?
+                
+                auto& result = j["result"];
+                parse_statistics( result );
 
                 m_state = listen;
               }

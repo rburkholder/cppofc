@@ -93,6 +93,7 @@ public:
   typedef std::function<void(const switch_t&)> fSwitchUpdate_t; // strings are movable
   typedef std::function<void(const mapPort_t&)> fPortUpdate_t;  // strings are movable
   typedef std::function<void(const mapInterface_t&)> fInterfaceUpdate_t; // strings are movable
+  typedef std::function<void(const mapInterface_t&)> fStatisticsUpdate_t; // strings are movable
 
   ovsdb( asio::io_context& io_context );
   virtual ~ovsdb( );
@@ -100,6 +101,7 @@ public:
   fSwitchUpdate_t m_fSwitchUpdate;
   fPortUpdate_t m_fPortUpdate;
   fInterfaceUpdate_t m_fInterfaceUpdate;
+  fStatisticsUpdate_t m_fStatisticsUpdate;
   
 protected:
 private:
