@@ -30,10 +30,11 @@
 
 #include "ovsdb_impl.h"
 
-ovsdb_impl::ovsdb_impl( asio::io_context& io_context )
+ovsdb_impl::ovsdb_impl( ovsdb& ovsdb_, asio::io_context& io_context )
 :
   m_ep( "/var/run/openvswitch/db.sock" ),
   //m_ep( ip::tcp::v4(), 6640 ),
+  m_ovsdb( ovsdb_ ),
   m_socket( io_context ),
   m_state( start )
 {
@@ -150,11 +151,11 @@ bool ovsdb_impl::parse_bridge( json& j ) {
 
   auto& ovs = j["Open_vSwitch"];
   for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
-    m_switch.uuid = iterOvs.key();
+    m_ovsdb.m_switch.uuid = iterOvs.key();
     auto& values = iterOvs.value()["new"];
     //std::cout << values.dump(2) << std::endl;
-    m_switch.db_version = values["db_version"];
-    m_switch.ovs_version = values["ovs_version"];
+    m_ovsdb.m_switch.db_version = values["db_version"];
+    m_ovsdb.m_switch.ovs_version = values["ovs_version"];
     auto& external_ids = values["external_ids"];
     if ( external_ids.is_array() ) {
       for ( json::iterator iterId = external_ids.begin(); iterId != external_ids.end(); iterId++ ) {
@@ -165,7 +166,7 @@ bool ovsdb_impl::parse_bridge( json& j ) {
           std::string hostname;
           for ( json::iterator iterElement = elements.begin(); iterElement != elements.end(); iterElement++ ) {
             if ( "hostname" == (*iterElement)[0] ) {
-              m_switch.hostname = (*iterElement)[1];
+              m_ovsdb.m_switch.hostname = (*iterElement)[1];
             }
           }
         }
@@ -176,7 +177,7 @@ bool ovsdb_impl::parse_bridge( json& j ) {
       for ( json::iterator iterBridge = j.begin(); j.end() != iterBridge; iterBridge++ ) {
         assert( "uuid" == (*iterBridge) );
         iterBridge++;
-        m_switch.mapBridge.insert( mapBridge_t::value_type( *iterBridge, bridge_t() ) );
+        m_ovsdb.m_switch.mapBridge.insert( ovsdb::mapBridge_t::value_type( *iterBridge, ovsdb::bridge_t() ) );
       }
     };
 
@@ -197,7 +198,7 @@ bool ovsdb_impl::parse_bridge( json& j ) {
   // --
   auto& bridge = j["Bridge"];
   for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
-    bridge_t& br( m_switch.mapBridge[ iterBridge.key() ] );
+    ovsdb::bridge_t& br( m_ovsdb.m_switch.mapBridge[ iterBridge.key() ] );
     auto& values = iterBridge.value()[ "new" ];
     //std::cout << values.dump(2) << std::endl;
     br.datapath_id = values[ "datapath_id" ];
@@ -216,8 +217,8 @@ bool ovsdb_impl::parse_bridge( json& j ) {
           for ( json::iterator iterPort = pair.begin(); pair.end() != iterPort; iterPort++ ) {
             assert( "uuid" == (*iterPort) );
             iterPort++;
-            m_mapPort.insert( mapPort_t::value_type( *iterPort, port_t() ) );
-            br.setPorts.insert( setPort_t::value_type( *iterPort ) );
+            m_ovsdb.m_mapPort.insert( ovsdb::mapPort_t::value_type( *iterPort, ovsdb::port_t() ) );
+            br.setPorts.insert( ovsdb::setPort_t::value_type( *iterPort ) );
           }
         };
       }
@@ -231,8 +232,8 @@ bool ovsdb_impl::parse_port( json& j ) {
 
   auto& ports = j[ "Port" ];
   for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
-    auto iterPort = m_mapPort.find( iterPortObject.key() );
-    assert ( m_mapPort.end() != iterPort );
+    auto iterPort = m_ovsdb.m_mapPort.find( iterPortObject.key() );
+    assert ( m_ovsdb.m_mapPort.end() != iterPort );
     auto& values = iterPortObject.value()[ "new" ];
     iterPort->second.name = values[ "name" ];
     if ( values[ "tag" ].is_number() ) {
@@ -263,8 +264,8 @@ bool ovsdb_impl::parse_port( json& j ) {
         assert( "uuid" == *iterInterface );
         iterInterface++;
         assert( (*iterInterface).is_string() );
-        m_mapInterface.insert( mapInterface_t::value_type( *iterInterface, interface_t() ) );
-        iterPort->second.setInterfaces.insert( setInterface_t::value_type( *iterInterface ) );
+        m_ovsdb.m_mapInterface.insert( ovsdb::mapInterface_t::value_type( *iterInterface, ovsdb::interface_t() ) );
+        iterPort->second.setInterfaces.insert( ovsdb::setInterface_t::value_type( *iterInterface ) );
       }
     }
   }
@@ -278,9 +279,10 @@ bool ovsdb_impl::parse_interface( json& j ) {
 
   for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
     std::string uuid = iterInterfaceJson.key();
-    mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
-    assert( m_mapInterface.end() != iterInterface );
+    ovsdb::mapInterface_t::iterator iterInterface = m_ovsdb.m_mapInterface.find( uuid );
+    assert( m_ovsdb.m_mapInterface.end() != iterInterface );
 
+    // TODO: use boost::spirit to decode the json values into this structure
     auto& interfaceJson = iterInterfaceJson.value()[ "new" ];
     auto& interfaceMap( iterInterface->second );
     interfaceMap.ifindex     =            interfaceJson[ "ifindex" ];
@@ -407,6 +409,7 @@ void ovsdb_impl::do_read() {
                 iterParams++;
                 assert( params.end() == iterParams );
                 std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
+                  // use spirit to parse the strings?
                   if ( "bridge" == key ) {
                     parse_bridge( items );
                   }

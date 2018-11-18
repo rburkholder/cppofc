@@ -10,7 +10,7 @@
 #include "ovsdb.h"
 
 ovsdb::ovsdb( asio::io_context& io_context ) {
-  m_ovsdb_impl = povsdb_impl_t( new ovsdb_impl( io_context ) );
+  m_ovsdb_impl = povsdb_impl_t( new ovsdb_impl( *this, io_context ) );
 }
 
 ovsdb::~ovsdb( ) {
