@@ -45,6 +45,10 @@ private:
   
   ovsdb& m_ovsdb;
   
+  ovsdb::switch_t m_switch;
+  ovsdb::mapPort_t m_mapPort;
+  ovsdb::mapInterface_t m_mapInterface;
+
   void send( const std::string& );
   void send_list_dbs();
   void send_monitor_bridges();
