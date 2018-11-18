@@ -384,7 +384,7 @@ void ovsdb_impl::do_read() {
           }
           std::cout << std::endl;
           auto j = json::parse( m_vRx.begin(), m_vRx.begin() + lenRead );
-          std::cout << j.dump(2) << std::endl;
+          //std::cout << j.dump(2) << std::endl;
           std::cout << ">>> ovsdb read end." << std::endl;
 
           // process read state
@@ -493,6 +493,9 @@ void ovsdb_impl::do_read() {
                   }
                   if ( "interface" == key ) {
                     parse_interface( items );
+                  }
+                  if ( "statistics" == key ) {
+                    parse_statistics( items );
                   }
                 } );
               }
