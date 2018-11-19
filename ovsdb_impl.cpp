@@ -60,7 +60,6 @@ ovsdb_impl::ovsdb_impl( ovsdb& ovsdb_, asio::io_context& io_context )
 ovsdb_impl::~ovsdb_impl( ) {
 }
 
-// TODO: once all query strings converted over, then change this to a const std::string
 void ovsdb_impl::send( const std::string& sCmd ) {
   try {
     asio::async_write( 

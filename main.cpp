@@ -79,13 +79,14 @@ int main(int argc, char* argv[]) {
 
     ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
 
+    // TODO:  may need to add threads and strands 
     server s( io_context, port );
 
     io_context.run();
 
   }
   catch (std::exception& e)   {
-    std::cerr << "Exception: " << e.what() << "\n";
+    std::cerr << "Exception (at main): " << e.what() << "\n";
   }
 
   return 0;

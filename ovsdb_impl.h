@@ -31,30 +31,32 @@ public:
   virtual ~ovsdb_impl( );
 protected:
 private:
-  
+
   enum { max_length = 65540 };  // total header and data for ipv4 is 65535
-  
+
   asio::local::stream_protocol::endpoint m_ep;
   asio::local::stream_protocol::socket m_socket;
-  
+
   vByte_t m_vRx;
-  
+
   enum EState { start, listdb, startBridgeMonitor, startPortMonitor, startInterfaceMonitor, startStatisticsMonitor, listen, stuck };
-  
+
   EState m_state;
-  
+
   ovsdb& m_ovsdb;
-  
+
   ovsdb::switch_t m_switch;
   ovsdb::mapPort_t m_mapPort;
   ovsdb::mapInterface_t m_mapInterface;
 
   void send( const std::string& );
+
   void send_list_dbs();
   void send_monitor_bridges();
   void send_monitor_ports();
   void send_monitor_interfaces();
   void send_monitor_statistics();
+
   void do_read();
 
   bool parse_listdb( json& );

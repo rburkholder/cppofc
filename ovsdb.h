@@ -87,7 +87,7 @@ public:
     std::string db_version;
     std::string ovs_version;
     std::string hostname;
-    mapBridge_t mapBridge;
+    mapBridge_t mapBridge; // by uuid
   };
   
   typedef std::function<void(const switch_t&)> fSwitchUpdate_t; // strings are movable
