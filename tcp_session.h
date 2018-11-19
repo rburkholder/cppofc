@@ -40,8 +40,9 @@ public:
   
   typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
   
-  tcp_session(ip::tcp::socket socket)
-    : m_socket(std::move(socket)), 
+  tcp_session(Bridge& bridge, ip::tcp::socket socket)
+    : m_bridge( bridge ),
+      m_socket(std::move(socket)), 
       m_transmitting( 0 ),
       m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
       m_ioWork( asio::make_work_guard( m_ioContext ) ), // should this be in 'main' instead?
@@ -102,7 +103,7 @@ private:
   qBuffers_t m_qTxBuffersToBeWritten;
   vByte_t m_vTxInWrite;
   
-  Bridge m_bridge;
+  Bridge& m_bridge;
   
   asio::io_context m_ioContext;
   io_context_work m_ioWork;

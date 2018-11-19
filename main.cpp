@@ -25,6 +25,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
+#include "bridge.h"
 #include "tcp_session.h"
 #include "ovsdb.h"
 
@@ -33,8 +34,9 @@ namespace ip = boost::asio::ip;
 
 class server {
 public:
-  server( asio::io_context& io_context, short port )
-    : m_acceptor( io_context, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
+  server( Bridge& bridge, asio::io_context& io_context, short port )
+    : m_bridge( bridge ),
+      m_acceptor( io_context, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
       m_socket( io_context )
   {
     do_accept();
@@ -42,6 +44,7 @@ public:
 
 private:
 
+  Bridge& m_bridge;
   ip::tcp::acceptor m_acceptor;
   ip::tcp::socket m_socket;
 
@@ -50,7 +53,7 @@ private:
       m_socket,
       [this](boost::system::error_code ec) {
         if (!ec) {
-          std::make_shared<tcp_session>(std::move(m_socket))->start();
+          std::make_shared<tcp_session>(m_bridge, std::move(m_socket))->start();
         }
 
         // once one port started, start another acceptance
@@ -76,11 +79,22 @@ int main(int argc, char* argv[]) {
     }
 
     asio::io_context io_context;
+    
+    // instantiate the bridge here so that it may obtain the ovsdb startup information
+    //   then pass the bridge, or function calls, into the server
+    Bridge m_bridge;
 
-    ovsdb ovsdb_( io_context ); // open stream to ovs database for port info
+    // open stream to ovs database for port info
+    ovsdb ovsdb_( 
+      io_context,
+      [](const ovsdb::switch_t&){},
+      [](const ovsdb::mapPort_t&){},
+      [](const ovsdb::mapInterface_t&){},
+      [](const ovsdb::mapInterface_t&){}
+    ); 
 
     // TODO:  may need to add threads and strands 
-    server s( io_context, port );
+    server s( m_bridge, io_context, port );
 
     io_context.run();
 

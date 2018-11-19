@@ -19,6 +19,7 @@ namespace asio = boost::asio;
 class ovsdb_impl;
 
 class ovsdb {
+  friend class ovsdb_impl;
 public:
 
   // structure not used yet, used once strings are processed by boost::spririt
@@ -94,20 +95,43 @@ public:
   typedef std::function<void(const mapPort_t&)> fPortUpdate_t;  // strings are movable
   typedef std::function<void(const mapInterface_t&)> fInterfaceUpdate_t; // strings are movable
   typedef std::function<void(const mapInterface_t&)> fStatisticsUpdate_t; // strings are movable
-
-  ovsdb( asio::io_context& io_context );
-  virtual ~ovsdb( );
   
-  fSwitchUpdate_t m_fSwitchUpdate;
-  fPortUpdate_t m_fPortUpdate;
-  fInterfaceUpdate_t m_fInterfaceUpdate;
-  fStatisticsUpdate_t m_fStatisticsUpdate;
+  ovsdb( 
+    asio::io_context&,
+    fSwitchUpdate_t,
+    fPortUpdate_t,
+    fInterfaceUpdate_t,
+    fStatisticsUpdate_t
+    );
+  virtual ~ovsdb( );
   
 protected:
 private:
   
   typedef std::shared_ptr<ovsdb_impl> povsdb_impl_t;
   povsdb_impl_t m_ovsdb_impl;
+
+  // TOOD: may keep a message queue of all messages (other than statistics)
+  //   allows late-comers to obtain state transitions to current state
+  //   provides message based mechanism for syncing, rather than locking the structure
+  //  or run a strand for presenting updates, and requesting state and updates
+
+  // TODO: these functions need to be assigned on construction
+  //   allows them to be called with initial settings
+
+  fSwitchUpdate_t m_fSwitchUpdate;
+  fPortUpdate_t m_fPortUpdate;
+  fInterfaceUpdate_t m_fInterfaceUpdate;
+  fStatisticsUpdate_t m_fStatisticsUpdate;
+
+  // TODO convert above functions to something more specific:
+  /*
+   * switch: add, update
+   * bridge: add, update, delete
+   * port: add update, delete
+   * interface: add, update, delete
+   * statistics: update
+   */
 
 };
 
