@@ -85,12 +85,9 @@ int main(int argc, char* argv[]) {
     Bridge m_bridge;
 
     // open stream to ovs database for port info
-    ovsdb ovsdb_( 
-      io_context,
-      [](const ovsdb::switch_t&){},
-      [](const ovsdb::mapPort_t&){},
-      [](const ovsdb::mapInterface_t&){},
-      [](const ovsdb::mapInterface_t&){}
+    ovsdb::f_t f;
+    ovsdb ovsdb_(
+      io_context, f
     ); 
 
     // TODO:  may need to add threads and strands 

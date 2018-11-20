@@ -170,34 +170,56 @@ bool ovsdb_impl::parse_listdb( json& j ) {
 bool ovsdb_impl::parse_bridge( json& j ) {
 
   auto& ovs = j["Open_vSwitch"];
-  for ( json::iterator iterOvs = ovs.begin(); iterOvs != ovs.end(); iterOvs++ ) {
-    m_switch.uuid = iterOvs.key();
+  //std::cout << j.dump(2) << std::endl;
+  for ( json::iterator iterOvs = ovs.begin(); ovs.end() != iterOvs; iterOvs++ ) {
+    
+    uuid_t uuidSwitch( iterOvs.key() );
+    mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
+    if ( m_mapSwitch.end() == iterSwitch ) {
+      iterSwitch = m_mapSwitch.insert( m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, switch_t() ) );
+      if ( nullptr != m_ovsdb.m_f.fSwitchAdd ) m_ovsdb.m_f.fSwitchAdd( uuidSwitch );
+    }
+    
     auto& values = iterOvs.value()["new"];
-    //std::cout << values.dump(2) << std::endl;
-    m_switch.db_version = values["db_version"];
-    m_switch.ovs_version = values["ovs_version"];
+    
+    switch_t& sw( iterSwitch->second );
+    
+    sw.db_version = values["db_version"];
+    sw.ovs_version = values["ovs_version"];
+    
     auto& external_ids = values["external_ids"];
     if ( external_ids.is_array() ) {
       for ( json::iterator iterId = external_ids.begin(); iterId != external_ids.end(); iterId++ ) {
         if ( "map" == *iterId ) {
           iterId++;
           auto& elements = *iterId;
-          size_t cnt = elements.size();
-          std::string hostname;
+          //size_t cnt = elements.size();
+          //std::string hostname;
           for ( json::iterator iterElement = elements.begin(); iterElement != elements.end(); iterElement++ ) {
             if ( "hostname" == (*iterElement)[0] ) {
-              m_switch.hostname = (*iterElement)[1];
+              sw.hostname = (*iterElement)[1];
             }
           }
         }
       }
     }
+    
+    if ( nullptr != m_ovsdb.m_f.fSwitchUpdate ) m_ovsdb.m_f.fSwitchUpdate( uuidSwitch, sw );
 
-    auto fAddBridge = [this](json& j){
-      for ( json::iterator iterBridge = j.begin(); j.end() != iterBridge; iterBridge++ ) {
-        assert( "uuid" == (*iterBridge) );
-        iterBridge++;
-        m_switch.mapBridge.insert( ovsdb::mapBridge_t::value_type( *iterBridge, ovsdb::bridge_t() ) );
+    // create a function as it the code is used in two different places
+    auto fAddBridge = [this, &sw](json& j){
+      for ( json::iterator iterBridgeJson = j.begin(); j.end() != iterBridgeJson; iterBridgeJson++ ) {
+        assert( "uuid" == (*iterBridgeJson) );
+        iterBridgeJson++;
+        uuid_t uuidBridge( *iterBridgeJson );
+        setBridge_t::iterator iterBridgeSet = sw.setBridge.find( uuidBridge );
+        if ( sw.setBridge.end() == iterBridgeSet ) {
+          mapBridge_t::iterator iterBridgeMap = m_mapBridge.find( uuidBridge );
+          assert( m_mapBridge.end() == iterBridgeMap );
+          iterBridgeMap = m_mapBridge.insert( m_mapBridge.begin(), mapBridge_t::value_type( uuidBridge, bridge_t() ) );
+          iterBridgeSet = sw.setBridge.insert( sw.setBridge.begin(), setBridge_t::value_type( uuidBridge ) );
+          if ( nullptr != m_ovsdb.m_f.fBridgeAdd ) m_ovsdb.m_f.fBridgeAdd( uuidBridge );
+        }
       }
     };
 
@@ -213,12 +235,13 @@ bool ovsdb_impl::parse_bridge( json& j ) {
         fAddBridge( bridges );
       }
     }
-  }
+  } // for iterOvs
 
   // --
   auto& bridge = j["Bridge"];
   for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
-    ovsdb::bridge_t& br( m_switch.mapBridge[ iterBridge.key() ] );
+    uuid_t uuidBridge( iterBridge.key() );
+    bridge_t& br( m_mapBridge[ uuidBridge ] );  // assumes already exists
     auto& values = iterBridge.value()[ "new" ];
     //std::cout << values.dump(2) << std::endl;
     br.datapath_id = values[ "datapath_id" ];
@@ -237,18 +260,19 @@ bool ovsdb_impl::parse_bridge( json& j ) {
           for ( json::iterator iterPort = pair.begin(); pair.end() != iterPort; iterPort++ ) {
             assert( "uuid" == (*iterPort) );
             iterPort++;
-            m_mapPort.insert( ovsdb::mapPort_t::value_type( *iterPort, ovsdb::port_t() ) );
-            br.setPorts.insert( ovsdb::setPort_t::value_type( *iterPort ) );
+            uuid_t uuidPort( *iterPort );
+            m_mapPort.insert( mapPort_t::value_type( uuidPort, port_t() ) );
+            br.setPort.insert( setPort_t::value_type( uuidPort ) );
+            if ( nullptr != m_ovsdb.m_f.fPortAdd ) m_ovsdb.m_f.fPortAdd( uuidPort );
           }
         };
       }
     }
+    
+    if ( nullptr != m_ovsdb.m_f.fBridgeUpdate) m_ovsdb.m_f.fBridgeUpdate( uuidBridge, br );
+    
   }
   
-  if ( nullptr != m_ovsdb.m_fSwitchUpdate ) {
-    m_ovsdb.m_fSwitchUpdate( m_switch );
-  }
-
   return true;
 }
 
@@ -256,12 +280,14 @@ bool ovsdb_impl::parse_port( json& j ) {
 
   auto& ports = j[ "Port" ];
   for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
-    auto iterPort = m_mapPort.find( iterPortObject.key() );
+    uuid_t uuidPort = iterPortObject.key();
+    auto iterPort = m_mapPort.find( uuidPort );
     assert ( m_mapPort.end() != iterPort );
+    auto& port( iterPort->second );
     auto& values = iterPortObject.value()[ "new" ];
-    iterPort->second.name = values[ "name" ];
+    port.name = values[ "name" ];
     if ( values[ "tag" ].is_number() ) {
-      iterPort->second.tag = values[ "tag" ];
+      port.tag = values[ "tag" ];
     }
 
     auto& trunks = values[ "trunks" ];
@@ -272,8 +298,12 @@ bool ovsdb_impl::parse_port( json& j ) {
       assert( (*iterElement).is_array() );
       auto& vlans = *iterElement;
       for ( json::iterator iterVlan = vlans.begin(); vlans.end() != iterVlan; iterVlan++ ) {
-        iterPort->second.setTrunks.insert( std::set<uint16_t>::value_type( *iterVlan ) );
+        port.setTrunk.insert( std::set<uint16_t>::value_type( *iterVlan ) );
       }
+    }
+
+    if ( nullptr != m_ovsdb.m_f.fPortUpdate ) {
+      m_ovsdb.m_f.fPortUpdate( uuidPort, port );
     }
 
     auto& interfaces = values[ "interfaces" ];
@@ -288,15 +318,15 @@ bool ovsdb_impl::parse_port( json& j ) {
         assert( "uuid" == *iterInterface );
         iterInterface++;
         assert( (*iterInterface).is_string() );
-        m_mapInterface.insert( ovsdb::mapInterface_t::value_type( *iterInterface, ovsdb::interface_t() ) );
-        iterPort->second.setInterfaces.insert( ovsdb::setInterface_t::value_type( *iterInterface ) );
+        uuid_t uuidInterface( *iterInterface );
+        m_mapInterface.insert( mapInterface_t::value_type( uuidInterface, interface_t() ) );
+        port.setInterface.insert( setInterface_t::value_type( uuidInterface ) );
+        if ( nullptr != m_ovsdb.m_f.fInterfaceAdd ) m_ovsdb.m_f.fInterfaceAdd( uuidInterface );
       }
     }
-  }
+
+  } // for iterPortObject
   
-  if ( nullptr != m_ovsdb.m_fPortUpdate ) {
-    m_ovsdb.m_fPortUpdate( m_mapPort );
-  }
 
   return true;
 }
@@ -306,8 +336,8 @@ bool ovsdb_impl::parse_interface( json& j ) {
   auto& interfaces = j["Interface"];
 
   for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
-    std::string uuid = iterInterfaceJson.key();
-    ovsdb::mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
+    uuid_t uuidInterface = iterInterfaceJson.key();
+    mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
     assert( m_mapInterface.end() != iterInterface );
 
     // TODO: use boost::spirit to decode the json values into this structure
@@ -321,12 +351,12 @@ bool ovsdb_impl::parse_interface( json& j ) {
     interfaceMap.mac_in_use  = std::move( interfaceJson[ "mac_in_use" ] );
     interfaceMap.ovs_type    = std::move( interfaceJson[ "type" ] );
 
+    if ( nullptr != m_ovsdb.m_f.fInterfaceUpdate ) {
+      m_ovsdb.m_f.fInterfaceUpdate( uuidInterface, interfaceMap );
+    }
+
   }
   
-  if ( nullptr != m_ovsdb.m_fInterfaceUpdate ) {
-    m_ovsdb.m_fInterfaceUpdate( m_mapInterface );
-  }
-
   return true;
 }
 
@@ -335,8 +365,8 @@ bool ovsdb_impl::parse_statistics( json& j ) {
   auto& interfaces = j["Interface"];
 
   for ( json::iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
-    std::string uuid = iterInterfaceJson.key();
-    ovsdb::mapInterface_t::iterator iterInterface = m_mapInterface.find( uuid );
+    uuid_t uuidInterface = iterInterfaceJson.key();
+    mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
     assert( m_mapInterface.end() != iterInterface );
 
     // TODO: use boost::spirit to decode the json values into this structure
@@ -359,10 +389,12 @@ bool ovsdb_impl::parse_statistics( json& j ) {
         }
       }
     }
-  }
-  
-  if ( nullptr != m_ovsdb.m_fStatisticsUpdate ) {
-    m_ovsdb.m_fStatisticsUpdate( m_mapInterface );
+    
+    if ( nullptr != m_ovsdb.m_f.fStatisticsUpdate ) {
+      // need to convert before calling this function
+      //m_ovsdb.m_f.fStatisticsUpdate( uuidInterface, mapStatistics );
+    }
+    
   }
 
   return true;

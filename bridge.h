@@ -14,6 +14,9 @@
 #include "common.h"
 #include "mac.h"
 
+// TODO: add io_context
+//   allows a strand to be added and used for syncing updates from ovsdb and requests from tcp_session
+
 class Bridge {
 public:
   
