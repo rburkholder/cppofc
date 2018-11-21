@@ -21,7 +21,7 @@ datapathid::~datapathid( ) {
 
 std::ostream& operator<<(std::ostream& os, const datapathid& id ) {
   uint64_t id_( id.m_datapathid );
-  static const char hex[] = "01234567890abcdef";
+  static const char hex[] = "0123456789abcdef";
   for ( int ix = 0; ix < 2*sizeof(id_); ix++ ) {
     char c = hex[(id_ & 0xf000000000000000)>>60];
     os << c;
