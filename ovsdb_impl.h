@@ -42,28 +42,28 @@ private:
   enum EState { start, listdb, startBridgeMonitor, startPortMonitor, startInterfaceMonitor, startStatisticsMonitor, listen, stuck };
 
   EState m_state;
-  
+
   typedef ovsdb::uuid_t uuid_t;
-  
+
   ovsdb& m_ovsdb;
-  
-  typedef std::map<std::string,size_t> mapStatistics_t;
+
+  typedef std::map<std::string,size_t&> mapStatistics_t;
   struct interface_t: public ovsdb::interface_t {
     mapStatistics_t mapStatistics;  // for now
     ovsdb::statistics_t statistics;  // for the future
   };
   typedef std::set<uuid_t> setInterface_t;
-  
+
   struct port_t: public ovsdb::port_t {
     setInterface_t setInterface;
   };
   typedef std::set<uuid_t> setPort_t;
-  
+
   struct bridge_t: public ovsdb::bridge_t {
     setPort_t setPort;
   };
   typedef std::set<uuid_t> setBridge_t;
-  
+
   struct switch_t: public ovsdb::switch_t {
     setBridge_t setBridge;
   };
@@ -72,8 +72,7 @@ private:
   typedef std::map<uuid_t,bridge_t> mapBridge_t;
   typedef std::map<uuid_t,port_t> mapPort_t;
   typedef std::map<uuid_t,interface_t> mapInterface_t;
-  
-  
+
   mapSwitch_t m_mapSwitch;
   mapBridge_t m_mapBridge;
   mapPort_t m_mapPort;
@@ -94,6 +93,7 @@ private:
   bool parse_port( json& );
   bool parse_interface( json& );
   bool parse_statistics( json& );
+
 };
 
 #endif /* OVSDB_H */

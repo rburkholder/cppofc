@@ -1,3 +1,101 @@
+2018/11/20
+
+* non-functioning, incomplete code.  may have some value in the future, 
+* extracted from ovsdb_impl.cpp
+* the issue is that input is statistics_t, but spirit doesn't seem to be able to easily parse
+  individual values into a structure.  the fusion adapted structure is 'ordered'. 
+
+namespace {
+
+namespace qi = boost::spirit::qi;
+namespace ascii = boost::spirit::ascii;
+namespace phoenix = boost::phoenix;
+
+// [["collisions",0],["rx_bytes",471685644],["rx_crc_err",0],["rx_dropped",0],["rx_errors",0],["rx_frame_err",0],["rx_over_err",0],["rx_packets",334856],["tx_bytes",49222594],["tx_dropped",0],["tx_errors",0],["tx_packets",229962]]
+
+
+template<typename Iterator>
+struct json_statistics_parser_t: qi::grammar<Iterator, ovsdb::statistics_t()> {
+  
+  json_statistics_parser_t(): json_statistics_parser_t::base_type( start ) {
+    
+    auto collisions   = phoenix::bind(&ovsdb::statistics_t::collisions,   qi::_val);
+    auto rx_bytes     = phoenix::bind(&ovsdb::statistics_t::rx_bytes,     qi::_val);
+    auto rx_crc_err   = phoenix::bind(&ovsdb::statistics_t::rx_crc_err,   qi::_val);
+    auto rx_dropped   = phoenix::bind(&ovsdb::statistics_t::rx_dropped,   qi::_val);
+    auto rx_errors    = phoenix::bind(&ovsdb::statistics_t::rx_errors,    qi::_val);
+    auto rx_frame_err = phoenix::bind(&ovsdb::statistics_t::rx_frame_err, qi::_val);
+    auto rx_over_err  = phoenix::bind(&ovsdb::statistics_t::rx_over_err,  qi::_val);
+    auto rx_packets   = phoenix::bind(&ovsdb::statistics_t::rx_packets,   qi::_val);
+    auto tx_bytes     = phoenix::bind(&ovsdb::statistics_t::tx_bytes,     qi::_val);
+    auto tx_dropped   = phoenix::bind(&ovsdb::statistics_t::tx_dropped,   qi::_val);
+    auto tx_errors    = phoenix::bind(&ovsdb::statistics_t::tx_errors,    qi::_val);
+    auto tx_packets   = phoenix::bind(&ovsdb::statistics_t::tx_packets,   qi::_val);
+
+    rValue = qi::lexeme[ qi::ulong_long ];
+    r01 %= qi::lit( '[' ) >> qi::lit( '"' ) >> "collisions" >> qi::lit( '"' ) >> qi::lit( ',' ) >> qi::ulong_long[ collisions = qi::_1 ] >> qi::lit( ']');
+    r02 %= qi::lit( '[' ) >> qi::lit( '"' ) >> "rx_bytes"   >> qi::lit( '"' ) >> qi::lit( ',' ) >> qi::ulong_long[ rx_bytes   = qi::_1 ] >> qi::lit( ']');
+    start = 
+         qi::lit( '[' ) 
+      >> r01
+      >> qi::lit( ']' );
+  
+// code snippet for obtaining quoted string    
+//    quoted_string
+//        %=  qi::lexeme['"' > *( ascii::char_ - '"' ) > '"'] 
+    
+  }
+
+  qi::rule<Iterator, std::string()> rIdentifier;
+  qi::rule<Iterator, boost::uint64_t()> rValue;
+  qi::rule<Iterator, boost::uint64_t()> r01;
+  qi::rule<Iterator, boost::uint64_t()> r02;
+  qi::rule<Iterator, boost::uint64_t()> r03;
+  qi::rule<Iterator, boost::uint64_t()> r04;
+  qi::rule<Iterator, boost::uint64_t()> r05;
+  qi::rule<Iterator, boost::uint64_t()> r06;
+  qi::rule<Iterator, boost::uint64_t()> r07;
+  qi::rule<Iterator, boost::uint64_t()> r08;
+  qi::rule<Iterator, boost::uint64_t()> r09;
+  qi::rule<Iterator, boost::uint64_t()> r10;
+  qi::rule<Iterator, boost::uint64_t()> r11;
+  qi::rule<Iterator, boost::uint64_t()> r12;
+  qi::rule<Iterator, ovsdb::statistics_t()> start;
+
+};
+}
+
+bool ovsdb_impl::pull_statistics( const std::string& s, ovsdb::statistics_t& statistics ) {
+  typedef std::string::const_iterator iterator_type;
+  typedef json_statistics_parser_t<iterator_type> json_statistics_parser_string_t;
+  json_statistics_parser_string_t parser;
+  std::string::const_iterator iter = s.begin();
+  std::string::const_iterator end = s.end();
+  return qi::parse( iter, end, parser, statistics );
+}
+
+Some additional pointers:
+Boost Spirit: “Semantic actions are evil”? https://stackoverflow.com/questions/8259440/boost-spirit-semantic-actions-are-evil
+http://boost-spirit.com/home/2011/06/12/ast-construction-with-the-universal-tree/
+which may provide a clue as to how to deal with the above situation
+
+an example which gets part way there but not all the way:
+https://stackoverflow.com/questions/38877702/boostspirit-parsing-into-structure-and-reusing-parts-of-it
+
+Some additional background to ponder:
+http://boost-spirit.com/home/articles/attribute_handling/the-magical-power-of-attributes-in-spirit-operators/
+
+Another link, not quite relevant, but bookmarked anyway
+http://boost-spirit.com/home/2011/02/28/dispatching-on-expectation-point-failures/comment-page-1/
+
+Looking at the code may lead to enlightenment:
+https://www.codeproject.com/Articles/20027/JSON-Spirit-A-C-JSON-Parser-Generator-Implemented
+
+needs heavy pondering as it talks about out of order parsing:
+https://stackoverflow.com/questions/45673378/boost-spirit-x3-parse-into-structs?rq=1
+https://stackoverflow.com/questions/52750720/boost-spirit-x3-parse-into-struct-with-skipping-member-if-it-empty
+
+
 2017/10/29
 
 From an email on 2017/10/19 on the ovs-discuss list:

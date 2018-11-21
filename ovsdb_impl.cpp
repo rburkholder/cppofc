@@ -376,23 +376,42 @@ bool ovsdb_impl::parse_statistics( json& j ) {
     // page 112 of openflow 1.4.1 spec shows how to get statistics via the controller channel
     //   therefore, this may go away at some point
     auto elements = interfaceJson[ "statistics" ];
+    
     for ( json::iterator iterElements = elements.begin(); elements.end() != iterElements; iterElements++ ) {
       assert( "map" == *iterElements );
       iterElements++;
       assert( (*iterElements).is_array() );
       auto& statistics = *iterElements;
+      //std::cout << "===" << statistics.dump() << std::endl;
       for ( json::iterator iterCombo = statistics.begin(); statistics.end() != iterCombo; iterCombo++ ) {
+        mapStatistics_t& map( interfaceMap.mapStatistics );
         for ( json::iterator iterStatistic = (*iterCombo).begin(); (*iterCombo).end() != iterStatistic; iterStatistic++ ) {
           std::string name( *iterStatistic );
           iterStatistic++;
-          interfaceMap.mapStatistics[ name ] = *iterStatistic;
+          mapStatistics_t::iterator iter = map.find( name );
+          if ( map.end() == iter ) { 
+            bool bFound( false );
+            if ( "collisions"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.collisions ) ); bFound = true;
+            if ( "rx_bytes"     == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_bytes ) ); bFound = true;
+            if ( "rx_crc_err"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_crc_err ) ); bFound = true;
+            if ( "rx_dropped"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_dropped ) ); bFound = true;
+            if ( "rx_errors"    == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_errors ) ); bFound = true;
+            if ( "rx_frame_err" == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_frame_err ) ); bFound = true;
+            if ( "rx_over_err"  == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_over_err ) ); bFound = true;
+            if ( "rx_packets"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.rx_packets ) ); bFound = true;
+            if ( "tx_bytes"     == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.tx_bytes ) ); bFound = true;
+            if ( "tx_dropped"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.tx_dropped ) ); bFound = true;
+            if ( "tx_errors"    == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.tx_errors ) ); bFound = true;
+            if ( "tx_packets"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics.tx_packets ) ); bFound = true;
+            if ( !bFound ) std::cout << "ovsdb_impl::parse_statistics did not find " << name << std::endl;
+          }
+          iter->second = *iterStatistic; // place into statistics_t via reference in map
         }
       }
     }
     
     if ( nullptr != m_ovsdb.m_f.fStatisticsUpdate ) {
-      // need to convert before calling this function
-      //m_ovsdb.m_f.fStatisticsUpdate( uuidInterface, mapStatistics );
+      m_ovsdb.m_f.fStatisticsUpdate( uuidInterface, interfaceMap.statistics );
     }
     
   }
