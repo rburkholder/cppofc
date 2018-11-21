@@ -226,18 +226,33 @@ bool ovsdb_impl::parse_bridge( json& j ) {
     auto& bridges = values["bridges"];
     //size_t cntBridges = bridges.size();
     for ( json::iterator iterBridge = bridges.begin(); bridges.end() != iterBridge; iterBridge++ ) {
-      if ( (*iterBridge).is_array() ) {
-        for ( json::iterator iterElements = (*iterBridge).begin(); (*iterBridge).end() != iterElements; iterElements++ ) {
-          fAddBridge( *iterElements );
-        }
-      }
-      else {
+      if ( "uuid" == *iterBridge ) {
         fAddBridge( bridges );
+      }
+      if ( "set" == *iterBridge ) {
+        iterBridge++;
+        auto& list = *iterBridge;
+        for ( json::iterator iterList = list.begin(); list.end() != iterList; iterList++ ) {
+          fAddBridge( *iterList );
+        }
       }
     }
   } // for iterOvs
 
   // --
+
+  auto fAddPort = [this](json& j, bridge_t& br){
+    //auto& pair = *iterPair;
+    for ( json::iterator iterPort = j.begin(); j.end() != iterPort; iterPort++ ) {
+      assert( "uuid" == (*iterPort) );
+      iterPort++;
+      uuid_t uuidPort( *iterPort );
+      m_mapPort.insert( mapPort_t::value_type( uuidPort, port_t() ) );
+      br.setPort.insert( setPort_t::value_type( uuidPort ) );
+      if ( nullptr != m_ovsdb.m_f.fPortAdd ) m_ovsdb.m_f.fPortAdd( uuidPort );
+    }
+  };
+
   auto& bridge = j["Bridge"];
   for ( json::iterator iterBridge = bridge.begin(); bridge.end() != iterBridge; iterBridge++ ) {
     uuid_t uuidBridge( iterBridge.key() );
@@ -245,32 +260,29 @@ bool ovsdb_impl::parse_bridge( json& j ) {
     auto& values = iterBridge.value()[ "new" ];
     //std::cout << values.dump(2) << std::endl;
     br.datapath_id = values[ "datapath_id" ];
-    br.fail_mode = values[ "fail_mode" ];
+    if ( values[ "fail_mode" ].is_string() ) {
+      br.fail_mode = values[ "fail_mode" ];
+    }
     br.name = values[ "name" ];
     br.stp_enable = values[ "stp_enable" ];
 
     auto& ports = values[ "ports" ];
     for ( json::iterator iterElement = ports.begin(); ports.end() != iterElement; iterElement++ ) {
+      if ( "uuid" == *iterElement ) {
+        fAddPort( ports, br );
+      }
       if ( "set" == (*iterElement) ) {
         iterElement++;
         assert( ports.end() != iterElement );
         auto& set = *iterElement;
         for ( json::iterator iterPair = set.begin(); set.end() != iterPair; iterPair++ ) {
-          auto& pair = *iterPair;
-          for ( json::iterator iterPort = pair.begin(); pair.end() != iterPort; iterPort++ ) {
-            assert( "uuid" == (*iterPort) );
-            iterPort++;
-            uuid_t uuidPort( *iterPort );
-            m_mapPort.insert( mapPort_t::value_type( uuidPort, port_t() ) );
-            br.setPort.insert( setPort_t::value_type( uuidPort ) );
-            if ( nullptr != m_ovsdb.m_f.fPortAdd ) m_ovsdb.m_f.fPortAdd( uuidPort );
-          }
+          fAddPort( *iterPair, br );
         };
       }
     }
-    
+
     if ( nullptr != m_ovsdb.m_f.fBridgeUpdate) m_ovsdb.m_f.fBridgeUpdate( uuidBridge, br );
-    
+
   }
   
   return true;
@@ -279,6 +291,7 @@ bool ovsdb_impl::parse_bridge( json& j ) {
 bool ovsdb_impl::parse_port( json& j ) {
 
   auto& ports = j[ "Port" ];
+  std::cout << ports.dump(2) << std::endl;
   for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
     uuid_t uuidPort = iterPortObject.key();
     auto iterPort = m_mapPort.find( uuidPort );
