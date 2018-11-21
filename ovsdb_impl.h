@@ -50,7 +50,9 @@ private:
   typedef std::map<std::string,size_t&> mapStatistics_t;
   struct interface_t: public ovsdb::interface_t {
     mapStatistics_t mapStatistics;  // for now
-    ovsdb::statistics_t statistics;  // for the future
+    ovsdb::statistics_t* statistics;  // for the future
+    interface_t(): statistics( new ovsdb::statistics_t ) {}
+    virtual ~interface_t() { delete statistics; }
   };
   typedef std::set<uuid_t> setInterface_t;
 
