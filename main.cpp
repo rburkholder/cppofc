@@ -21,6 +21,7 @@
  */
 
 #include <iostream>
+#include <memory>
 
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/io_context.hpp>
@@ -81,6 +82,7 @@ private:
 int main(int argc, char* argv[]) {
 
   typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+  typedef std::shared_ptr<zmq::multipart_t> pMultipart_t;
 
   int port( 6633 );
 
@@ -137,35 +139,30 @@ int main(int argc, char* argv[]) {
 
     f.fSwitchAdd = [&strand_zmq_request, &zmqSocketRequest](const ovsdb::uuid_t& uuid){
       // ovs -> local (via request):
-      zmq::multipart_t* pmultipart;
-      pmultipart = new zmq::multipart_t;
+      pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
       msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
-      pmultipart->addtyp<msg::header>( hdrSnd );
+      pMultipart->addtyp<msg::header>( hdrSnd );
 
-      pmultipart->addstr( uuid );
+      pMultipart->addstr( uuid );
 
-      asio::post( strand_zmq_request, [pmultipart, &zmqSocketRequest](){
+      asio::post( strand_zmq_request, [pMultipart, &zmqSocketRequest](){
 
-        pmultipart->send( zmqSocketRequest );
+        pMultipart->send( zmqSocketRequest );
 
-        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest pmultipart is " << pmultipart->empty();
-        delete pmultipart;
+        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest pmultipart is " << pMultipart->empty();
 
-        zmq::multipart_t multipart;
-
-        multipart.recv( zmqSocketRequest );
+        pMultipart->recv( zmqSocketRequest );
         zmq::message_t msg;
-        msg = multipart.pop();
+        msg = pMultipart->pop();
         msg::header& hdrRcv( *msg.data<msg::header>() );
         BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
 
-        msg = multipart.pop();
+        msg = pMultipart->pop();
         msg::ack& msgAck( *msg.data<msg::ack>() );
         BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp2: " << msgAck.idCode;
 
       } );
-
     };
 
     ovsdb ovsdb_(
