@@ -291,7 +291,7 @@ bool ovsdb_impl::parse_bridge( json& j ) {
 bool ovsdb_impl::parse_port( json& j ) {
 
   auto& ports = j[ "Port" ];
-  std::cout << ports.dump(2) << std::endl;
+  //std::cout << ports.dump(2) << std::endl;
   for ( json::iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
     uuid_t uuidPort = iterPortObject.key();
     auto iterPort = m_mapPort.find( uuidPort );

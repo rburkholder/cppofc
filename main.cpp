@@ -22,15 +22,28 @@
 
 #include <iostream>
 
+#include <boost/asio/signal_set.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/strand.hpp>
+
+#include <boost/thread/thread.hpp>
+
+#include <boost/log/trivial.hpp>
+
+#include <zmq.hpp>
+#include <zmq_addon.hpp>
+
+#include "../quadlii/lib/common/monitor_t.h"
+#include "../quadlii/lib/common/ZmqMessage.h"
 
 #include "bridge.h"
 #include "tcp_session.h"
 #include "ovsdb.h"
 
 namespace asio = boost::asio;
-namespace ip = boost::asio::ip;
+namespace ip = asio::ip;
 
 class server {
 public:
@@ -67,6 +80,8 @@ private:
 
 int main(int argc, char* argv[]) {
 
+  typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+
   int port( 6633 );
 
   try   {
@@ -79,21 +94,91 @@ int main(int argc, char* argv[]) {
     }
 
     asio::io_context io_context;
+    io_context_work io_work( asio::make_work_guard( io_context ) );
+
+    boost::thread_group threads;
+    for ( std::size_t ix = 0; ix < 3; ix++ ) { // TODO: how many threads required?
+      threads.create_thread( boost::bind( &asio::io_context::run, &io_context ) ); // add handlers
+    }
+
+    //asio::io_context::strand strand_ovs( io_context ); // strand for transmitting ovs messages
+    asio::io_context::strand strand_zmq_request( io_context );  // strand for cppof->local messages
+
+    // https://www.boost.org/doc/libs/1_68_0/doc/html/boost_asio/overview/signals.html
+    boost::asio::signal_set signals( io_context, SIGINT, SIGTERM );
+    signals.async_wait( [&io_work]( const boost::system::error_code& error, int signal_number ){
+      if ( !error ) {
+        BOOST_LOG_TRIVIAL(trace) << "signal " << signal_number << " received.";
+        // TODO: need to work on close-down process here
+        io_work.reset();
+        // plus other stuff (closing the sockets, for instance)
+      }
+    } );
+
+    zmq::context_t zmqContext;
+    zmq::socket_t zmqSocketRequest( zmqContext, zmq::socket_type::req );  // TODO construct this in which strand?
     
+    asio::post( strand_zmq_request, [&zmqSocketRequest](){
+      BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest opening ...";
+      zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
+      BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest opened.";
+    } );
+
     // instantiate the bridge here so that it may obtain the ovsdb startup information
     //   then pass the bridge, or function calls, into the server
+    // TODO: need a map of bridges, to be build from the ovs messages.
+    //    start up tcp_session as the ovs messages come, one tcp_session for each bridge
+    //    set for fail secure, and push out the configuration (at some point)
+    //    for now, only the ones which have fail=secure set
     Bridge m_bridge;
 
     // open stream to ovs database for port info
     ovsdb::f_t f;
+
+    f.fSwitchAdd = [&strand_zmq_request, &zmqSocketRequest](const ovsdb::uuid_t& uuid){
+      // ovs -> local (via request):
+      zmq::multipart_t* pmultipart;
+      pmultipart = new zmq::multipart_t;
+
+      msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
+      pmultipart->addtyp<msg::header>( hdrSnd );
+
+      pmultipart->addstr( uuid );
+
+      asio::post( strand_zmq_request, [pmultipart, &zmqSocketRequest](){
+
+        pmultipart->send( zmqSocketRequest );
+
+        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest pmultipart is " << pmultipart->empty();
+        delete pmultipart;
+
+        zmq::multipart_t multipart;
+
+        multipart.recv( zmqSocketRequest );
+        zmq::message_t msg;
+        msg = multipart.pop();
+        msg::header& hdrRcv( *msg.data<msg::header>() );
+        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+
+        msg = multipart.pop();
+        msg::ack& msgAck( *msg.data<msg::ack>() );
+        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp2: " << msgAck.idCode;
+
+      } );
+
+    };
+
     ovsdb ovsdb_(
       io_context, f
     ); 
 
-    // TODO:  may need to add threads and strands 
     server s( m_bridge, io_context, port );
 
+    // TODO:  may need to add threads and strands 
     io_context.run();
+    
+    zmqSocketRequest.close();
+    threads.join_all();
 
   }
   catch (std::exception& e)   {

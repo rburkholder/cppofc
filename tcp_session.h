@@ -16,49 +16,49 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/strand.hpp>
-#include <boost/thread/thread.hpp>
+//#include <boost/asio/io_context.hpp>
+//#include <boost/asio/post.hpp>
+//#include <boost/asio/strand.hpp>
+//#include <boost/thread/thread.hpp>
 
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
+//#include <zmq.hpp>
+//#include <zmq_addon.hpp>
 
-#include "../quadlii/lib/common/monitor_t.h"
-#include "../quadlii/lib/common/ZmqMessage.h"
+//#include "../quadlii/lib/common/monitor_t.h"
+//#include "../quadlii/lib/common/ZmqMessage.h"
 
 #include "common.h"
 #include "bridge.h"
 
-namespace ip = boost::asio::ip;
 namespace asio = boost::asio;
+namespace ip = asio::ip;
 
 class tcp_session
   : public std::enable_shared_from_this<tcp_session>
 {
 public:
   
-  typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+  //typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
   
-  tcp_session(Bridge& bridge, ip::tcp::socket socket)
+  tcp_session( Bridge& bridge, ip::tcp::socket socket)
     : m_bridge( bridge ),
-      m_socket(std::move(socket)), 
-      m_transmitting( 0 ),
-      m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
-      m_ioWork( asio::make_work_guard( m_ioContext ) ), // should this be in 'main' instead?
-      m_ioStrand( m_ioContext ),
-      m_ioThread( boost::bind( &asio::io_context::run, &m_ioContext ) )
+      m_socket( std::move( socket ) ), 
+      m_transmitting( 0 )
+      //m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),
+      //m_ioWork( asio::make_work_guard( m_ioContext ) ), // should this be in 'main' instead?
+      //m_ioStrand( io_context )
+      //m_ioThread( boost::bind( &asio::io_context::run, &io_context ) )
   { 
     std::cout << "session construct" << std::endl;
-    m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
+    //m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
   }
     
   virtual ~tcp_session() {
-    m_zmqSocketRequest.close();
+    //m_zmqSocketRequest.close();
     std::cout << "session destruct" << std::endl;
     
-    m_ioWork.reset();
-    m_ioThread.join();
+    //m_ioWork.reset();
+    //m_ioThread.join();
     
   }
 
@@ -96,6 +96,7 @@ private:
   
   typedef std::queue<vByte_t> qBuffers_t; 
   
+  // TODO: run stuff using these constructs through a strand instead
   std::mutex m_mutex;
   std::atomic<uint32_t> m_transmitting;
   
@@ -105,13 +106,13 @@ private:
   
   Bridge& m_bridge;
   
-  asio::io_context m_ioContext;
-  io_context_work m_ioWork;
-  boost::thread m_ioThread;
-  asio::io_context::strand m_ioStrand;
+  //asio::io_context m_ioContext;
+  //io_context_work m_ioWork;
+  //boost::thread m_ioThread;
+  //asio::io_context::strand m_ioStrand;
   
-  zmq::context_t m_zmqContext;
-  zmq::socket_t m_zmqSocketRequest;
+  //zmq::context_t m_zmqContext;
+  //zmq::socket_t m_zmqSocketRequest;
   
   void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
   

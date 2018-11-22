@@ -364,38 +364,6 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
             nSrcPort = nSrcPort_;
             Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, macSrc.Value() );
-            if ( Bridge::MacStatus::Learned == statusSrcLookup ) {
-              zmq::multipart_t* pmultipart;
-              pmultipart = new zmq::multipart_t;
-
-              msg::header hdrSnd( 1, msg::type::eMac );
-              pmultipart->addtyp<msg::header>( hdrSnd );
-
-              msg::mac_info msgMac( macSrc.Value() );
-              pmultipart->addtyp<msg::mac_info>( msgMac );
-
-              asio::post( m_ioStrand, [pmultipart, this](){
-                
-                pmultipart->send( m_zmqSocketRequest );
-                
-                BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pmultipart->empty();
-                delete pmultipart;
-
-                zmq::multipart_t multipart;
-                
-                multipart.recv( m_zmqSocketRequest );
-                zmq::message_t msg;
-                msg = multipart.pop();
-                msg::header& hdrRcv( *msg.data<msg::header>() );
-                BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
-                
-                msg = multipart.pop();
-                msg::ack& msgAck( *msg.data<msg::ack>() );
-                BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
-          
-              } );
-              
-            }
             
             nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
             

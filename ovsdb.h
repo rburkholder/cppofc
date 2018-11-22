@@ -26,16 +26,17 @@ public:
 
   // ----
   struct switch_t {
-    std::string db_version;
-    std::string ovs_version;
     std::string hostname;
+    std::string ovs_version;
+    std::string db_version;
   };
   
   struct bridge_t {
+    std::string name;
     std::string datapath_id;
     std::string fail_mode;
-    std::string name;
     bool stp_enable;
+    bridge_t(): stp_enable( false ) {}
   };
 
   struct port_t { // ports from a range of bridges
@@ -43,14 +44,15 @@ public:
     uint16_t tag; // port access vlan
     std::set<uint16_t> setTrunk; // a set of vlan numbers
     std::set<uint16_t> setVlanMode;  // not sure content of this yet
+    port_t(): tag {} {}
   };
 
   struct interface_t { // interfaces from a range of ports
     std::string name;
+    std::string ovs_type;
     std::string admin_state;
     std::string link_state;
     std::string mac_in_use;
-    std::string ovs_type;
     size_t ifindex;
     size_t ofport;
     interface_t(): ifindex {}, ofport {} {}
@@ -136,15 +138,6 @@ private:
   //   allows them to be called with initial settings
   
   f_t m_f;
-
-  // TODO convert above functions to something more specific:
-  /*
-   * switch: add, update
-   * bridge: add, update, delete
-   * port: add update, delete
-   * interface: add, update, delete
-   * statistics: update
-   */
 
 };
 
