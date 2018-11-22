@@ -157,10 +157,14 @@ int main(int argc, char* argv[]) {
         msg = pMultipart->pop();
         msg::header& hdrRcv( *msg.data<msg::header>() );
         BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+        
+        assert( msg::type::eAck == hdrRcv.id() );
 
         msg = pMultipart->pop();
         msg::ack& msgAck( *msg.data<msg::ack>() );
         BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp2: " << msgAck.idCode;
+        
+        assert( msg::ack::code::ok == msgAck.idCode );
 
       } );
     };
