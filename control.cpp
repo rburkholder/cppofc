@@ -1,5 +1,5 @@
 /* 
- * File:   main.cpp
+ * File:   control.cpp (renamed from main.cpp 2018/11/22)
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
  * Created on May 12, 2017, 9:15 PM
@@ -20,124 +20,71 @@
     ovs-vsctl get-fail-mode ovsbr0
  */
 
-#include <iostream>
 #include <memory>
 
-#include <boost/asio/signal_set.hpp>
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/post.hpp>
-#include <boost/asio/strand.hpp>
-
-#include <boost/thread/thread.hpp>
 
 #include <boost/log/trivial.hpp>
-
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
 
 #include "../quadlii/lib/common/monitor_t.h"
 #include "../quadlii/lib/common/ZmqMessage.h"
 
-#include "bridge.h"
 #include "tcp_session.h"
-#include "ovsdb.h"
 
-namespace asio = boost::asio;
-namespace ip = asio::ip;
+#include "control.h"
 
-class server {
-public:
-  server( Bridge& bridge, asio::io_context& io_context, short port )
-    : m_bridge( bridge ),
-      m_acceptor( io_context, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
-      m_socket( io_context )
-  {
-    do_accept();
-  }
+Control::Control( int port )
+: 
+  m_port( port ),
+  m_signals( m_ioContext, SIGINT, SIGTERM ),
+  m_strandZmqRequest( m_ioContext ),
+  m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),  // TODO construct this in which strand?
+  m_ovsdb( m_ioContext, m_f ),
+  m_socket( m_ioContext ),
+  m_acceptor( m_ioContext, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
+  m_ioWork( asio::make_work_guard( m_ioContext ) )
+{
+}
 
-private:
+Control::~Control() {
+  m_ioWork.reset();
+  m_zmqSocketRequest.close();
+  m_threads.join_all();
+}
 
-  Bridge& m_bridge;
-  ip::tcp::acceptor m_acceptor;
-  ip::tcp::socket m_socket;
-
-  void do_accept() {
-    m_acceptor.async_accept(
-      m_socket,
-      [this](boost::system::error_code ec) {
-        if (!ec) {
-          std::make_shared<tcp_session>(m_bridge, std::move(m_socket))->start();
-        }
-
-        // once one port started, start another acceptance
-        // no recursion here as this is in a currently open session
-        //   and making allowance for another session
-      do_accept();
-      });
-  }
-
-};
-
-int main(int argc, char* argv[]) {
-
-  typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+void Control::Start() {
+  
   typedef std::shared_ptr<zmq::multipart_t> pMultipart_t;
 
-  int port( 6633 );
-
   try   {
-    if (argc != 2) {
-      std::cerr << "Usage: async_tcp_echo_server <port> (using " << port << ")\n";
-//      return 1;
-    }
-    else {
-      port = std::atoi( argv[1] );
-    }
-
-    asio::io_context io_context;
-    io_context_work io_work( asio::make_work_guard( io_context ) );
-
-    boost::thread_group threads;
+    
     for ( std::size_t ix = 0; ix < 3; ix++ ) { // TODO: how many threads required?
-      threads.create_thread( boost::bind( &asio::io_context::run, &io_context ) ); // add handlers
+      m_threads.create_thread( boost::bind( &asio::io_context::run, &m_ioContext ) ); // add handlers
     }
-
-    //asio::io_context::strand strand_ovs( io_context ); // strand for transmitting ovs messages
-    asio::io_context::strand strand_zmq_request( io_context );  // strand for cppof->local messages
 
     // https://www.boost.org/doc/libs/1_68_0/doc/html/boost_asio/overview/signals.html
-    boost::asio::signal_set signals( io_context, SIGINT, SIGTERM );
-    signals.async_wait( [&io_work]( const boost::system::error_code& error, int signal_number ){
+    m_signals.async_wait( [this]( const boost::system::error_code& error, int signal_number ){
       if ( !error ) {
         BOOST_LOG_TRIVIAL(trace) << "signal " << signal_number << " received.";
         // TODO: need to work on close-down process here
-        io_work.reset();
+        m_ioWork.reset();
         // plus other stuff (closing the sockets, for instance)
       }
     } );
-
-    zmq::context_t zmqContext;
-    zmq::socket_t zmqSocketRequest( zmqContext, zmq::socket_type::req );  // TODO construct this in which strand?
     
-    asio::post( strand_zmq_request, [&zmqSocketRequest](){
-      BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest opening ...";
-      zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
-      BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest opened.";
+    asio::post( m_strandZmqRequest, [this](){
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opening ...";
+      m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opened.";
     } );
 
-    // instantiate the bridge here so that it may obtain the ovsdb startup information
-    //   then pass the bridge, or function calls, into the server
     // TODO: need a map of bridges, to be build from the ovs messages.
     //    start up tcp_session as the ovs messages come, one tcp_session for each bridge
     //    set for fail secure, and push out the configuration (at some point)
     //    for now, only the ones which have fail=secure set
-    Bridge m_bridge;
 
-    // open stream to ovs database for port info
-    ovsdb::f_t f;
 
-    f.fSwitchAdd = [&strand_zmq_request, &zmqSocketRequest](const ovsdb::uuid_t& uuid){
+    m_f.fSwitchAdd = [this](const ovsdb::uuid_t& uuid){
       // ovs -> local (via request):
       pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
@@ -146,45 +93,51 @@ int main(int argc, char* argv[]) {
 
       pMultipart->addstr( uuid );
 
-      asio::post( strand_zmq_request, [pMultipart, &zmqSocketRequest](){
+      asio::post( m_strandZmqRequest, [this, pMultipart](){
 
-        pMultipart->send( zmqSocketRequest );
+        pMultipart->send( m_zmqSocketRequest );
 
-        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest pmultipart is " << pMultipart->empty();
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart->empty();
 
-        pMultipart->recv( zmqSocketRequest );
+        pMultipart->recv( m_zmqSocketRequest );
         zmq::message_t msg;
         msg = pMultipart->pop();
         msg::header& hdrRcv( *msg.data<msg::header>() );
-        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
         
         assert( msg::type::eAck == hdrRcv.id() );
 
         msg = pMultipart->pop();
         msg::ack& msgAck( *msg.data<msg::ack>() );
-        BOOST_LOG_TRIVIAL(trace) << "**** zmqSocketRequest resp2: " << msgAck.idCode;
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
         
         assert( msg::ack::code::ok == msgAck.idCode );
 
       } );
     };
 
-    ovsdb ovsdb_(
-      io_context, f
-    ); 
-
-    server s( m_bridge, io_context, port );
-
-    // TODO:  may need to add threads and strands 
-    io_context.run();
+    AcceptControlConnections();
     
-    zmqSocketRequest.close();
-    threads.join_all();
+    m_ioContext.run();
 
   }
   catch (std::exception& e)   {
-    std::cerr << "Exception (at main): " << e.what() << "\n";
+    BOOST_LOG_TRIVIAL(trace) << "Exception (at main): " << e.what() << "\n";
   }
+  
+}
 
-  return 0;
+void Control::AcceptControlConnections() {
+  m_acceptor.async_accept(
+    m_socket,
+    [this](boost::system::error_code ec) {
+      if (!ec) {
+        std::make_shared<tcp_session>(m_bridge, std::move(m_socket))->start();
+      }
+
+      // once one port started, start another acceptance
+      // no recursion here as this is in a currently open session
+      //   and making allowance for another session
+    AcceptControlConnections();
+    });
 }

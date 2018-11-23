@@ -44,6 +44,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_packet_out.o \
 	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
+	${OBJECTDIR}/control.o \
 	${OBJECTDIR}/mac.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/ovsdb.o \
@@ -127,6 +128,11 @@ ${OBJECTDIR}/codecs/ofp_switch_features.o: codecs/ofp_switch_features.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
+
+${OBJECTDIR}/control.o: control.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/control.o control.cpp
 
 ${OBJECTDIR}/mac.o: mac.cpp
 	${MKDIR} -p ${OBJECTDIR}

@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <cstring>
 
+#include <boost/log/trivial.hpp>
+
 #include <boost/asio/write.hpp>
 
 #include "codecs/ofp_header.h"
@@ -43,15 +45,25 @@ namespace asio = boost::asio;
 
 // 2017/09/28 - test port up/down/add/delete messages
 
+  tcp_session::tcp_session( Bridge& bridge, ip::tcp::socket socket)
+    : m_bridge( bridge ),
+      m_socket( std::move( socket ) ), 
+      m_transmitting( 0 )
+  { 
+    BOOST_LOG_TRIVIAL(trace) << "tcp_session construction";
+  }
+    
+  tcp_session::~tcp_session() {
+    BOOST_LOG_TRIVIAL(trace) << "tcp_session destruction";
+  }
+
 void tcp_session::start() {
-  std::cout << "start begin: " << std::endl;
   try {
     do_read();
   }
   catch(...) {
-    std::cout << "do_read issues" << std::endl;
+    BOOST_LOG_TRIVIAL(trace) << "tcp_session::do_read issues";
   }
-  std::cout << "start end: " << std::endl;
 }
 
 void tcp_session::do_read() {
