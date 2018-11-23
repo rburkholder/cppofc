@@ -30,7 +30,7 @@ public:
     std::string ovs_version;
     std::string db_version;
   };
-  
+
   struct bridge_t {
     std::string name;
     std::string datapath_id;
@@ -79,41 +79,46 @@ public:
       {}
   };
 
-  typedef std::function<void(const uuid_t&)> fSwitchAdd_t;
-  typedef std::function<void(const uuid_t&,const switch_t&)> fSwitchUpdate_t;
-  typedef std::function<void(const uuid_t&)> fSwitchDelete_t;  // to be implemented
+  typedef uuid_t uuidSwitch_t;
+  typedef uuid_t uuidBridge_t;
+  typedef uuid_t uuidPort_t;
+  typedef uuid_t uuidInterface_t;
 
-  typedef std::function<void(const uuid_t&)> fBridgeAdd_t;
-  typedef std::function<void(const uuid_t&,const bridge_t&)> fBridgeUpdate_t;
-  typedef std::function<void(const uuid_t&)> fBridgeDelete_t;  // to be implemented
+  typedef std::function<void(const uuidSwitch_t&)> fSwitchAdd_t;
+  typedef std::function<void(const uuidSwitch_t&,const switch_t&)> fSwitchUpdate_t;
+  typedef std::function<void(const uuidSwitch_t&)> fSwitchDelete_t;  // to be implemented
 
-  typedef std::function<void(const uuid_t&)> fPortAdd_t;
-  typedef std::function<void(const uuid_t&,const port_t&)> fPortUpdate_t;
-  typedef std::function<void(const uuid_t&)> fPortDelete_t;  // to be implemented
+  typedef std::function<void(const uuidSwitch_t&, const uuidBridge_t&)> fBridgeAdd_t;
+  typedef std::function<void(const uuidBridge_t&,const bridge_t&)> fBridgeUpdate_t;
+  typedef std::function<void(const uuidBridge_t&)> fBridgeDelete_t;  // to be implemented
 
-  typedef std::function<void(const uuid_t&)> fInterfaceAdd_t;
-  typedef std::function<void(const uuid_t&,const interface_t&)> fInterfaceUpdate_t;
-  typedef std::function<void(const uuid_t&)> fInterfaceDelete_t;  // to be implemented
-  
-  typedef std::function<void(const uuid_t&,const statistics_t&)> fStatisticsUpdate_t;
-  
+  typedef std::function<void(const uuidBridge_t&, const uuidPort_t&)> fPortAdd_t;
+  typedef std::function<void(const uuidPort_t&,const port_t&)> fPortUpdate_t;
+  typedef std::function<void(const uuidPort_t&)> fPortDelete_t;  // to be implemented
+
+  typedef std::function<void(const uuidPort_t&, const uuidInterface_t&)> fInterfaceAdd_t;
+  typedef std::function<void(const uuidInterface_t&,const interface_t&)> fInterfaceUpdate_t;
+  typedef std::function<void(const uuidInterface_t&)> fInterfaceDelete_t;  // to be implemented
+
+  typedef std::function<void(const uuidInterface_t&,const statistics_t&)> fStatisticsUpdate_t;
+
   struct f_t {
     fSwitchAdd_t        fSwitchAdd;
     fSwitchUpdate_t     fSwitchUpdate;
     fSwitchDelete_t     fSwitchDelete;
-    
+
     fBridgeAdd_t        fBridgeAdd;
     fBridgeUpdate_t     fBridgeUpdate;
     fBridgeDelete_t     fBridgeDelete;
-    
+
     fPortAdd_t          fPortAdd;
     fPortUpdate_t       fPortUpdate;
     fPortDelete_t       fPortDelete;
-    
+
     fInterfaceAdd_t     fInterfaceAdd;
     fInterfaceUpdate_t  fInterfaceUpdate;
     fInterfaceDelete_t  fInterfaceDelete;
-    
+
     fStatisticsUpdate_t fStatisticsUpdate;
   };
 
@@ -122,10 +127,10 @@ public:
     f_t& f // will move the functions
     );
   virtual ~ovsdb( );
-  
+
 protected:
 private:
-  
+
   typedef std::shared_ptr<ovsdb_impl> povsdb_impl_t;
   povsdb_impl_t m_ovsdb_impl;
 
@@ -136,7 +141,7 @@ private:
 
   // TODO: these functions need to be assigned on construction
   //   allows them to be called with initial settings
-  
+
   f_t m_f;
 
 };

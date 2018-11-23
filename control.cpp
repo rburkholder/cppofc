@@ -71,9 +71,9 @@ void Control::Start() {
     } );
 
     asio::post( m_strandZmqRequest, [this](){
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opening ...";
+      //BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opening ...";
       m_zmqSocketRequest.connect( "tcp://127.0.0.1:7411" );
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opened.";
+      //BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest opened.";
     } );
 
     // TODO: need a map of bridges, to be build from the ovs messages.
@@ -89,15 +89,15 @@ void Control::Start() {
     f.fSwitchUpdate = std::bind( &Control::HandleSwitchUpdate, this, ph::_1, ph::_2 );
     f.fSwitchDelete = std::bind( &Control::HandleSwitchDelete, this, ph::_1 );
 
-    f.fBridgeAdd    = std::bind( &Control::HandleBridgeAdd, this, ph::_1 );
+    f.fBridgeAdd    = std::bind( &Control::HandleBridgeAdd, this, ph::_1, ph::_2 );
     f.fBridgeUpdate = std::bind( &Control::HandleBridgeUpdate, this, ph::_1, ph::_2 );
     f.fBridgeDelete = std::bind( &Control::HandleBridgeDelete, this, ph::_1 );
 
-    f.fPortAdd    = std::bind( &Control::HandlePortAdd, this, ph::_1 );
+    f.fPortAdd    = std::bind( &Control::HandlePortAdd, this, ph::_1, ph::_2 );
     f.fPortUpdate = std::bind( &Control::HandlePortUpdate, this, ph::_1, ph::_2 );
     f.fPortDelete = std::bind( &Control::HandlePortDelete, this, ph::_1 );
 
-    f.fInterfaceAdd    = std::bind( &Control::HandleInterfaceAdd, this, ph::_1 );
+    f.fInterfaceAdd    = std::bind( &Control::HandleInterfaceAdd, this, ph::_1, ph::_2 );
     f.fInterfaceUpdate = std::bind( &Control::HandleInterfaceUpdate, this, ph::_1, ph::_2 );
     f.fInterfaceDelete = std::bind( &Control::HandleInterfaceDelete, this, ph::_1 );
 
@@ -132,49 +132,56 @@ void Control::AcceptControlConnections() {
 }
 
 void Control::PostToZmqRequest( pMultipart_t pMultipart ) {
-  asio::post( m_strandZmqRequest, [this, pMultipart](){
+  try {
+    asio::post( m_strandZmqRequest, [this, pMultipart](){
 
-    pMultipart->send( m_zmqSocketRequest );
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest sending ...";
 
-    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart->empty();
+      pMultipart->send( m_zmqSocketRequest );
 
-    pMultipart->recv( m_zmqSocketRequest );
-    zmq::message_t msg;
-    msg = pMultipart->pop();
-    msg::header& hdrRcv( *msg.data<msg::header>() );
-    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart->empty();
 
-    assert( msg::type::eAck == hdrRcv.id() );
+      pMultipart->recv( m_zmqSocketRequest );
+      zmq::message_t msg;
+      msg = pMultipart->pop();
+      msg::header& hdrRcv( *msg.data<msg::header>() );
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
 
-    msg = pMultipart->pop();
-    msg::ack& msgAck( *msg.data<msg::ack>() );
-    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
+      assert( msg::type::eAck == hdrRcv.id() );
 
-    assert( msg::ack::code::ok == msgAck.idCode );
+      msg = pMultipart->pop();
+      msg::ack& msgAck( *msg.data<msg::ack>() );
+      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
 
-  } );
+      assert( msg::ack::code::ok == msgAck.idCode );
+
+    } );
+  }
+  catch (...) {
+    BOOST_LOG_TRIVIAL(trace) << "Control::PostToZmqRequest problems";
+  }
 }
 
-void Control::HandleSwitchAdd( const ovsdb::uuid_t& uuid ) {
+void Control::HandleSwitchAdd( const ovsdb::uuidSwitch_t& uuidSwitch ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidSwitch );
 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchUpdate( const ovsdb::uuid_t& uuid, const ovsdb::switch_t& sw ) {
+void Control::HandleSwitchUpdate( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::switch_t& sw ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidSwitch );
   pMultipart->addstr( sw.hostname );
   pMultipart->addstr( sw.ovs_version );
   pMultipart->addstr( sw.db_version );
@@ -182,59 +189,60 @@ void Control::HandleSwitchUpdate( const ovsdb::uuid_t& uuid, const ovsdb::switch
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchDelete( const ovsdb::uuid_t& uuid ) {
+void Control::HandleSwitchDelete( const ovsdb::uuidSwitch_t& uuidSwitch ) {
 }
 
-void Control::HandleBridgeAdd( const ovsdb::uuid_t& uuid ) {
+void Control::HandleBridgeAdd( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::uuid_t& uuidBridge ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidSwitch );
+  pMultipart->addstr( uuidBridge );
 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeUpdate( const ovsdb::uuid_t& uuid, const ovsdb::bridge_t& br ) {
+void Control::HandleBridgeUpdate( const ovsdb::uuidBridge_t& uuidBridge, const ovsdb::bridge_t& br ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidBridge );
   pMultipart->addstr( br.name );
   pMultipart->addstr( br.datapath_id );
 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeDelete( const ovsdb::uuid_t& uuid ) {
+void Control::HandleBridgeDelete( const ovsdb::uuidBridge_t& uuidBridge ) {
 }
 
-void Control::HandlePortAdd( const ovsdb::uuid_t& uuid ) {
+void Control::HandlePortAdd( const ovsdb::uuid_t& uuidBridge, const ovsdb::uuidPort_t& uuidPort ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidBridge );
+  pMultipart->addstr( uuidPort );
 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortUpdate( const ovsdb::uuid_t& uuid, const ovsdb::port_t& port ) {
+void Control::HandlePortUpdate( const ovsdb::uuidPort_t& uuidPort, const ovsdb::port_t& port ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidPort );
   pMultipart->addtyp<uint16_t>( port.tag );
   pMultipart->addtyp<uint16_t>( port.setTrunk.size() );
   for ( auto item: port.setTrunk ) {
@@ -244,29 +252,30 @@ void Control::HandlePortUpdate( const ovsdb::uuid_t& uuid, const ovsdb::port_t& 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortDelete( const ovsdb::uuid_t& uuid ) {
+void Control::HandlePortDelete( const ovsdb::uuidPort_t& uuidPort ) {
 }
 
-void Control::HandleInterfaceAdd( const ovsdb::uuid_t& uuid ) {
+void Control::HandleInterfaceAdd( const ovsdb::uuidPort_t& uuidPort, const ovsdb::uuidInterface_t& uuidInterface ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidPort );
+  pMultipart->addstr( uuidInterface );
 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceUpdate( const ovsdb::uuid_t& uuid, const ovsdb::interface_t& interface) {
+void Control::HandleInterfaceUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::interface_t& interface) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidInterface );
   pMultipart->addstr( interface.name );
   pMultipart->addstr( interface.ovs_type );
   pMultipart->addstr( interface.admin_state );
@@ -276,17 +285,17 @@ void Control::HandleInterfaceUpdate( const ovsdb::uuid_t& uuid, const ovsdb::int
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceDelete( const ovsdb::uuid_t& uuid ) {
+void Control::HandleInterfaceDelete( const ovsdb::uuidInterface_t& uuidInterface ) {
 }
 
-void Control::HandleStatisticsUpdate( const ovsdb::uuid_t& uuid, const ovsdb::statistics_t& stats ) {
+void Control::HandleStatisticsUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::statistics_t& stats ) {
   // ovs -> local (via request):
   pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceStatistics );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
-  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuidInterface );
   pMultipart->addtyp<size_t>( stats.collisions );
   pMultipart->addtyp<size_t>( stats.rx_bytes );
   pMultipart->addtyp<size_t>( stats.rx_crc_err );

@@ -58,23 +58,23 @@ private:
 
   void PostToZmqRequest( pMultipart_t );
 
-  void HandleSwitchAdd( const ovsdb::uuid_t& uuid );
-  void HandleSwitchUpdate( const ovsdb::uuid_t& uuid, const ovsdb::switch_t& );
-  void HandleSwitchDelete( const ovsdb::uuid_t& uuid );
+  void    HandleSwitchAdd( const ovsdb::uuidSwitch_t& );
+  void HandleSwitchUpdate( const ovsdb::uuidSwitch_t&, const ovsdb::switch_t& );
+  void HandleSwitchDelete( const ovsdb::uuidSwitch_t& );
 
-  void HandleBridgeAdd( const ovsdb::uuid_t& uuid );
-  void HandleBridgeUpdate( const ovsdb::uuid_t& uuid, const ovsdb::bridge_t& );
-  void HandleBridgeDelete( const ovsdb::uuid_t& uuid );
+  void    HandleBridgeAdd( const ovsdb::uuidSwitch_t&, const ovsdb::uuidBridge_t& );
+  void HandleBridgeUpdate( const ovsdb::uuidBridge_t&, const ovsdb::bridge_t& );
+  void HandleBridgeDelete( const ovsdb::uuidBridge_t& );
 
-  void HandlePortAdd( const ovsdb::uuid_t& uuid );
-  void HandlePortUpdate( const ovsdb::uuid_t& uuid, const ovsdb::port_t& );
-  void HandlePortDelete( const ovsdb::uuid_t& uuid );
+  void    HandlePortAdd( const ovsdb::uuidBridge_t&, const ovsdb::uuidPort_t& );
+  void HandlePortUpdate( const ovsdb::uuidPort_t&, const ovsdb::port_t& );
+  void HandlePortDelete( const ovsdb::uuidPort_t& );
 
-  void HandleInterfaceAdd( const ovsdb::uuid_t& uuid );
-  void HandleInterfaceUpdate( const ovsdb::uuid_t& uuid, const ovsdb::interface_t& );
-  void HandleInterfaceDelete( const ovsdb::uuid_t& uuid );
+  void    HandleInterfaceAdd( const ovsdb::uuidPort_t&, const ovsdb::uuidInterface_t& );
+  void HandleInterfaceUpdate( const ovsdb::uuidInterface_t&, const ovsdb::interface_t& );
+  void HandleInterfaceDelete( const ovsdb::uuidInterface_t& );
 
-  void HandleStatisticsUpdate( const ovsdb::uuid_t& uuid, const ovsdb::statistics_t& );
+  void HandleStatisticsUpdate( const ovsdb::uuidInterface_t&, const ovsdb::statistics_t& );
 
 };
 
