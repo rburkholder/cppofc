@@ -80,11 +80,30 @@ void Control::Start() {
     //    start up tcp_session as the ovs messages come, one tcp_session for each bridge
     //    set for fail secure, and push out the configuration (at some point)
     //    for now, only the ones which have fail=secure set
-    
+
     namespace ph = std::placeholders;
 
-    m_f.fSwitchAdd = std::bind( &Control::HandleSwitchAdd, this, ph::_1 );
-    ovsdb m_ovsdb( m_ioContext, m_f );
+    ovsdb::f_t f;
+
+    f.fSwitchAdd    = std::bind( &Control::HandleSwitchAdd, this, ph::_1 );
+    f.fSwitchUpdate = std::bind( &Control::HandleSwitchUpdate, this, ph::_1, ph::_2 );
+    f.fSwitchDelete = std::bind( &Control::HandleSwitchDelete, this, ph::_1 );
+
+    f.fBridgeAdd    = std::bind( &Control::HandleBridgeAdd, this, ph::_1 );
+    f.fBridgeUpdate = std::bind( &Control::HandleBridgeUpdate, this, ph::_1, ph::_2 );
+    f.fBridgeDelete = std::bind( &Control::HandleBridgeDelete, this, ph::_1 );
+
+    f.fPortAdd    = std::bind( &Control::HandlePortAdd, this, ph::_1 );
+    f.fPortUpdate = std::bind( &Control::HandlePortUpdate, this, ph::_1, ph::_2 );
+    f.fPortDelete = std::bind( &Control::HandlePortDelete, this, ph::_1 );
+
+    f.fInterfaceAdd    = std::bind( &Control::HandleInterfaceAdd, this, ph::_1 );
+    f.fInterfaceUpdate = std::bind( &Control::HandleInterfaceUpdate, this, ph::_1, ph::_2 );
+    f.fInterfaceDelete = std::bind( &Control::HandleInterfaceDelete, this, ph::_1 );
+
+    f.fStatisticsUpdate = std::bind( &Control::HandleStatisticsUpdate, this, ph::_1, ph::_2 );
+
+    ovsdb m_ovsdb( m_ioContext, f );
 
     AcceptControlConnections();
 
@@ -144,6 +163,142 @@ void Control::HandleSwitchAdd( const ovsdb::uuid_t& uuid ) {
   pMultipart->addtyp<msg::header>( hdrSnd );
 
   pMultipart->addstr( uuid );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleSwitchUpdate( const ovsdb::uuid_t& uuid, const ovsdb::switch_t& sw ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsSwitchUpdate );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+  pMultipart->addstr( sw.hostname );
+  pMultipart->addstr( sw.ovs_version );
+  pMultipart->addstr( sw.db_version );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleSwitchDelete( const ovsdb::uuid_t& uuid ) {
+}
+
+void Control::HandleBridgeAdd( const ovsdb::uuid_t& uuid ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsBridgeAdd );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleBridgeUpdate( const ovsdb::uuid_t& uuid, const ovsdb::bridge_t& br ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsBridgeUpdate );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+  pMultipart->addstr( br.name );
+  pMultipart->addstr( br.datapath_id );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleBridgeDelete( const ovsdb::uuid_t& uuid ) {
+}
+
+void Control::HandlePortAdd( const ovsdb::uuid_t& uuid ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsPortAdd );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandlePortUpdate( const ovsdb::uuid_t& uuid, const ovsdb::port_t& port ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsPortUpdate );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+  pMultipart->addstr( uuid );
+  pMultipart->addtyp<uint16_t>( port.tag );
+  pMultipart->addtyp<uint16_t>( port.setTrunk.size() );
+  for ( auto item: port.setTrunk ) {
+    pMultipart->addtyp<uint16_t>( item );
+  }
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandlePortDelete( const ovsdb::uuid_t& uuid ) {
+}
+
+void Control::HandleInterfaceAdd( const ovsdb::uuid_t& uuid ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsInterfaceAdd );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleInterfaceUpdate( const ovsdb::uuid_t& uuid, const ovsdb::interface_t& interface) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsInterfaceUpdate );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+  pMultipart->addstr( interface.name );
+  pMultipart->addstr( interface.ovs_type );
+  pMultipart->addstr( interface.admin_state );
+  pMultipart->addstr( interface.link_state );
+  pMultipart->addstr( interface.mac_in_use );
+
+  PostToZmqRequest( pMultipart );
+}
+
+void Control::HandleInterfaceDelete( const ovsdb::uuid_t& uuid ) {
+}
+
+void Control::HandleStatisticsUpdate( const ovsdb::uuid_t& uuid, const ovsdb::statistics_t& stats ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsInterfaceStatistics );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+  pMultipart->addtyp<size_t>( stats.collisions );
+  pMultipart->addtyp<size_t>( stats.rx_bytes );
+  pMultipart->addtyp<size_t>( stats.rx_crc_err );
+  pMultipart->addtyp<size_t>( stats.rx_dropped );
+  pMultipart->addtyp<size_t>( stats.rx_errors );
+  pMultipart->addtyp<size_t>( stats.rx_frame_err );
+  pMultipart->addtyp<size_t>( stats.rx_over_err );
+  pMultipart->addtyp<size_t>( stats.rx_packets );
+  pMultipart->addtyp<size_t>( stats.tx_bytes );
+  pMultipart->addtyp<size_t>( stats.tx_dropped );
+  pMultipart->addtyp<size_t>( stats.tx_errors );
+  pMultipart->addtyp<size_t>( stats.collisions );
 
   PostToZmqRequest( pMultipart );
 }

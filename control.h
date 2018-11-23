@@ -54,15 +54,28 @@ private:
 
   Bridge m_bridge;
 
-  ovsdb::f_t m_f;
-
-  //ovsdb m_ovsdb;
-
   void AcceptControlConnections();
-  
+
   void PostToZmqRequest( pMultipart_t );
-  
+
   void HandleSwitchAdd( const ovsdb::uuid_t& uuid );
+  void HandleSwitchUpdate( const ovsdb::uuid_t& uuid, const ovsdb::switch_t& );
+  void HandleSwitchDelete( const ovsdb::uuid_t& uuid );
+
+  void HandleBridgeAdd( const ovsdb::uuid_t& uuid );
+  void HandleBridgeUpdate( const ovsdb::uuid_t& uuid, const ovsdb::bridge_t& );
+  void HandleBridgeDelete( const ovsdb::uuid_t& uuid );
+
+  void HandlePortAdd( const ovsdb::uuid_t& uuid );
+  void HandlePortUpdate( const ovsdb::uuid_t& uuid, const ovsdb::port_t& );
+  void HandlePortDelete( const ovsdb::uuid_t& uuid );
+
+  void HandleInterfaceAdd( const ovsdb::uuid_t& uuid );
+  void HandleInterfaceUpdate( const ovsdb::uuid_t& uuid, const ovsdb::interface_t& );
+  void HandleInterfaceDelete( const ovsdb::uuid_t& uuid );
+
+  void HandleStatisticsUpdate( const ovsdb::uuid_t& uuid, const ovsdb::statistics_t& );
+
 };
 
 #endif /* CONTROL_H */
