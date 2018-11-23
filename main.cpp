@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   main.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
@@ -11,12 +11,11 @@
 #include "control.h"
 
 int main( int argc, char** argv ) {
-  
+
   int port( 6633 );
 
   if (argc != 2) {
     std::cout << "Usage: async_tcp_echo_server <port> (using " << port << ")\n";
-
   }
   else {
     port = std::atoi( argv[1] );

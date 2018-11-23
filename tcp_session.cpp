@@ -47,12 +47,12 @@ namespace asio = boost::asio;
 
   tcp_session::tcp_session( Bridge& bridge, ip::tcp::socket socket)
     : m_bridge( bridge ),
-      m_socket( std::move( socket ) ), 
+      m_socket( std::move( socket ) ),
       m_transmitting( 0 )
-  { 
+  {
     BOOST_LOG_TRIVIAL(trace) << "tcp_session construction";
   }
-    
+
   tcp_session::~tcp_session() {
     BOOST_LOG_TRIVIAL(trace) << "tcp_session destruction";
   }

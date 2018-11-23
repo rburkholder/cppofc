@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   control.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
@@ -32,33 +32,32 @@ public:
   void Start();
 protected:
 private:
-  
+
   typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
-  
+
   int m_port;
-  
+
   asio::io_context m_ioContext;
   asio::io_context::strand m_strandZmqRequest;  // strand for cppof->local messages
   boost::asio::signal_set m_signals;
-  
+
   io_context_work m_ioWork;
-  
+
   boost::thread_group m_threads;
-  
+
   ip::tcp::acceptor m_acceptor;
   ip::tcp::socket m_socket;
-  
+
   zmq::context_t m_zmqContext;
   zmq::socket_t m_zmqSocketRequest;
-  
+
   Bridge m_bridge;
-  
+
   ovsdb::f_t m_f;
-  
+
   ovsdb m_ovsdb;
-  
+
   void AcceptControlConnections();
 };
 
 #endif /* CONTROL_H */
-
