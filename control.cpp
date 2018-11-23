@@ -39,7 +39,7 @@ Control::Control( int port )
   m_signals( m_ioContext, SIGINT, SIGTERM ),
   m_strandZmqRequest( m_ioContext ),
   m_zmqSocketRequest( m_zmqContext, zmq::socket_type::req ),  // TODO construct this in which strand?
-  m_ovsdb( m_ioContext, m_f ),
+  //m_ovsdb( m_ioContext, m_f ),
   m_socket( m_ioContext ),
   m_acceptor( m_ioContext, ip::tcp::endpoint( ip::tcp::v4(), port ) ),
   m_ioWork( asio::make_work_guard( m_ioContext ) )
@@ -53,8 +53,6 @@ Control::~Control() {
 }
 
 void Control::Start() {
-
-  typedef std::shared_ptr<zmq::multipart_t> pMultipart_t;
 
   try   {
 
@@ -82,38 +80,11 @@ void Control::Start() {
     //    start up tcp_session as the ovs messages come, one tcp_session for each bridge
     //    set for fail secure, and push out the configuration (at some point)
     //    for now, only the ones which have fail=secure set
+    
+    namespace ph = std::placeholders;
 
-    m_f.fSwitchAdd = [this](const ovsdb::uuid_t& uuid){
-      // ovs -> local (via request):
-      pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
-
-      msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
-      pMultipart->addtyp<msg::header>( hdrSnd );
-
-      pMultipart->addstr( uuid );
-
-      asio::post( m_strandZmqRequest, [this, pMultipart](){
-
-        pMultipart->send( m_zmqSocketRequest );
-
-        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart->empty();
-
-        pMultipart->recv( m_zmqSocketRequest );
-        zmq::message_t msg;
-        msg = pMultipart->pop();
-        msg::header& hdrRcv( *msg.data<msg::header>() );
-        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
-
-        assert( msg::type::eAck == hdrRcv.id() );
-
-        msg = pMultipart->pop();
-        msg::ack& msgAck( *msg.data<msg::ack>() );
-        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
-
-        assert( msg::ack::code::ok == msgAck.idCode );
-
-      } );
-    };
+    m_f.fSwitchAdd = std::bind( &Control::HandleSwitchAdd, this, ph::_1 );
+    ovsdb m_ovsdb( m_ioContext, m_f );
 
     AcceptControlConnections();
 
@@ -139,4 +110,40 @@ void Control::AcceptControlConnections() {
       //   and making allowance for another session
     AcceptControlConnections();
     });
+}
+
+void Control::PostToZmqRequest( pMultipart_t pMultipart ) {
+  asio::post( m_strandZmqRequest, [this, pMultipart](){
+
+    pMultipart->send( m_zmqSocketRequest );
+
+    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart->empty();
+
+    pMultipart->recv( m_zmqSocketRequest );
+    zmq::message_t msg;
+    msg = pMultipart->pop();
+    msg::header& hdrRcv( *msg.data<msg::header>() );
+    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+
+    assert( msg::type::eAck == hdrRcv.id() );
+
+    msg = pMultipart->pop();
+    msg::ack& msgAck( *msg.data<msg::ack>() );
+    BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
+
+    assert( msg::ack::code::ok == msgAck.idCode );
+
+  } );
+}
+
+void Control::HandleSwitchAdd( const ovsdb::uuid_t& uuid ) {
+  // ovs -> local (via request):
+  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+
+  msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
+  pMultipart->addtyp<msg::header>( hdrSnd );
+
+  pMultipart->addstr( uuid );
+
+  PostToZmqRequest( pMultipart );
 }

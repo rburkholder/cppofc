@@ -34,6 +34,7 @@ protected:
 private:
 
   typedef asio::executor_work_guard<asio::io_context::executor_type> io_context_work;
+  typedef std::shared_ptr<zmq::multipart_t> pMultipart_t;
 
   int m_port;
 
@@ -55,9 +56,13 @@ private:
 
   ovsdb::f_t m_f;
 
-  ovsdb m_ovsdb;
+  //ovsdb m_ovsdb;
 
   void AcceptControlConnections();
+  
+  void PostToZmqRequest( pMultipart_t );
+  
+  void HandleSwitchAdd( const ovsdb::uuid_t& uuid );
 };
 
 #endif /* CONTROL_H */
