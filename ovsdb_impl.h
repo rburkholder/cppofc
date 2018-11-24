@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ovsdb_impl.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
@@ -90,11 +90,11 @@ private:
 
   void do_read();
 
-  bool parse_listdb( json& );
-  bool parse_bridge( json& );
-  bool parse_port( json& );
-  bool parse_interface( json& );
-  bool parse_statistics( json& );
+  bool parse_listdb( const json& );
+  bool parse_bridge( const json& );
+  bool parse_port( const json& );
+  bool parse_interface( const json& );
+  bool parse_statistics( const json& );
 
 };
 
