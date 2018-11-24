@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   control.cpp (renamed from main.cpp 2018/11/22)
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
@@ -13,7 +13,7 @@
  * ovs-vsctl set-controller ovsbr0 tcp:127.0.0.1:6633 # keep local
    ip link set dev ovsbr0 up
    ip link set dev ovs-system up
- * 
+ *
  * other commands:
     ovs-vsctl set-fail-mode ovsbr0 secure
     ovs-vsctl del-fail-mode ovsbr0
@@ -166,7 +166,7 @@ void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
 
 void Control::HandleSwitchAdd( const ovsdb::uuidSwitch_t& uuidSwitch ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -178,7 +178,7 @@ void Control::HandleSwitchAdd( const ovsdb::uuidSwitch_t& uuidSwitch ) {
 
 void Control::HandleSwitchUpdate( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::switch_t& sw ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -196,7 +196,7 @@ void Control::HandleSwitchDelete( const ovsdb::uuidSwitch_t& uuidSwitch ) {
 
 void Control::HandleBridgeAdd( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::uuid_t& uuidBridge ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -209,7 +209,7 @@ void Control::HandleBridgeAdd( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsd
 
 void Control::HandleBridgeUpdate( const ovsdb::uuidBridge_t& uuidBridge, const ovsdb::bridge_t& br ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -226,7 +226,7 @@ void Control::HandleBridgeDelete( const ovsdb::uuidBridge_t& uuidBridge ) {
 
 void Control::HandlePortAdd( const ovsdb::uuid_t& uuidBridge, const ovsdb::uuidPort_t& uuidPort ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -239,7 +239,7 @@ void Control::HandlePortAdd( const ovsdb::uuid_t& uuidBridge, const ovsdb::uuidP
 
 void Control::HandlePortUpdate( const ovsdb::uuidPort_t& uuidPort, const ovsdb::port_t& port ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -259,7 +259,7 @@ void Control::HandlePortDelete( const ovsdb::uuidPort_t& uuidPort ) {
 
 void Control::HandleInterfaceAdd( const ovsdb::uuidPort_t& uuidPort, const ovsdb::uuidInterface_t& uuidInterface ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceAdd );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -272,7 +272,7 @@ void Control::HandleInterfaceAdd( const ovsdb::uuidPort_t& uuidPort, const ovsdb
 
 void Control::HandleInterfaceUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::interface_t& interface) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceUpdate );
   pMultipart->addtyp<msg::header>( hdrSnd );
@@ -292,7 +292,7 @@ void Control::HandleInterfaceDelete( const ovsdb::uuidInterface_t& uuidInterface
 
 void Control::HandleStatisticsUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::statistics_t& stats ) {
   // ovs -> local (via request):
-  pMultipart_t pMultipart( new zmq::multipart_t );  // TODO: use a pool?
+  auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceStatistics );
   pMultipart->addtyp<msg::header>( hdrSnd );
