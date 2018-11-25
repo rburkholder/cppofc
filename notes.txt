@@ -1,3 +1,27 @@
+2018/11/24
+https://nanomsg.org/documentation-zeromq.html - Differences between nanomsg and ZeroMQ
+https://nanomsg.org/documentation-zeromq.html - notice about draw backs of zeromq for req/rep model in the threading model
+https://nanomsg.org/ - nanomsg is deprecated, refers to https://github.com/nanomsg/nng (nano msg next generation)
+
+Should look at zerotier, is an sdn wan solution with an open source component:
+https://www.zerotier.com/
+
+be aware of https://tls.mbed.org/ - (formerly known as PolarSSL) makes it trivially easy for developers to include cryptographic and SSL/TLS capabilities in their (embedded) products, facilitating this functionality with a minimal coding footprint.
+
+https://google.github.io/flatbuffers/ - represents hierarchical data in a flat binary buffer in such a way that it can still be accessed directly without parsing/unpacking, while also still supporting data structure evolution (forwards/backwards compatibility).
+
+https://bravenewgeek.com/category/algorithms/ trie algorithms
+
+https://github.com/cwzx/nngpp - cpp wrapper around nng
+
+
+2018/11/24
+
+https://stackoverflow.com/questions/15406446/how-to-list-handlers-registered-in-boostasioio-service-under-debugger
+Boost 1.47 introduced handler tracking. Simply define BOOST_ASIO_ENABLE_HANDLER_TRACKING and Boost.Asio will write debug output, including timestamps, to the standard error stream. 
+--> has details on using gdb with asio library
+
+
 2018/11/20
 
 * non-functioning, incomplete code.  may have some value in the future, 
