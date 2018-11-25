@@ -136,27 +136,30 @@ void Control::AcceptControlConnections() {
 void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
   try {
     asio::post( m_strandZmqRequest, [this, pMultipart_ = std::move( pMultipart)](){
+      try {
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest sending ...";
 
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest sending ...";
+        pMultipart_->send( m_zmqSocketRequest );
 
-      pMultipart_->send( m_zmqSocketRequest );
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart_->empty();
 
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest pmultipart is " << pMultipart_->empty();
+        pMultipart_->recv( m_zmqSocketRequest );
+        zmq::message_t msg;
+        msg = pMultipart_->pop();
+        msg::header& hdrRcv( *msg.data<msg::header>() );
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
 
-      pMultipart_->recv( m_zmqSocketRequest );
-      zmq::message_t msg;
-      msg = pMultipart_->pop();
-      msg::header& hdrRcv( *msg.data<msg::header>() );
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp1: " << hdrRcv.idVersion << "," << hdrRcv.idMessage;
+        assert( msg::type::eAck == hdrRcv.id() );
 
-      assert( msg::type::eAck == hdrRcv.id() );
+        msg = pMultipart_->pop();
+        msg::ack& msgAck( *msg.data<msg::ack>() );
+        BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
 
-      msg = pMultipart_->pop();
-      msg::ack& msgAck( *msg.data<msg::ack>() );
-      BOOST_LOG_TRIVIAL(trace) << "**** m_zmqSocketRequest resp2: " << msgAck.idCode;
-
-      assert( msg::ack::code::ok == msgAck.idCode );
-
+        assert( msg::ack::code::ok == msgAck.idCode );
+      }
+      catch (...) {
+        BOOST_LOG_TRIVIAL(trace) << "Control::PostToZmqRequest asio::post problems";
+      }
     } );
   }
   catch (...) {
