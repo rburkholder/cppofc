@@ -87,117 +87,117 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc: ${OBJECTFILES}
 ${OBJECTDIR}/bridge.o: bridge.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/bridge.o bridge.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/bridge.o bridge.cpp
 
 ${OBJECTDIR}/codecs/datapathid.o: codecs/datapathid.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/datapathid.o codecs/datapathid.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/datapathid.o codecs/datapathid.cpp
 
 ${OBJECTDIR}/codecs/ofp_async_config.o: codecs/ofp_async_config.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
 
 ${OBJECTDIR}/codecs/ofp_flow_mod.o: codecs/ofp_flow_mod.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
 
 ${OBJECTDIR}/codecs/ofp_header.o: codecs/ofp_header.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_header.o codecs/ofp_header.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_header.o codecs/ofp_header.cpp
 
 ${OBJECTDIR}/codecs/ofp_hello.o: codecs/ofp_hello.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_hello.o codecs/ofp_hello.cpp
 
 ${OBJECTDIR}/codecs/ofp_packet_out.o: codecs/ofp_packet_out.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_packet_out.o codecs/ofp_packet_out.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_packet_out.o codecs/ofp_packet_out.cpp
 
 ${OBJECTDIR}/codecs/ofp_port_status.o: codecs/ofp_port_status.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_port_status.o codecs/ofp_port_status.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_port_status.o codecs/ofp_port_status.cpp
 
 ${OBJECTDIR}/codecs/ofp_switch_features.o: codecs/ofp_switch_features.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_switch_features.o codecs/ofp_switch_features.cpp
 
 ${OBJECTDIR}/control.o: control.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/control.o control.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/control.o control.cpp
 
 ${OBJECTDIR}/mac.o: mac.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
 
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/ovsdb.o: ovsdb.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb.o ovsdb.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb.o ovsdb.cpp
 
 ${OBJECTDIR}/ovsdb_impl.o: ovsdb_impl.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb_impl.o ovsdb_impl.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb_impl.o ovsdb_impl.cpp
 
 ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
 
 ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
 
 ${OBJECTDIR}/protocol/ipv4/arp.o: protocol/ipv4/arp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/arp.o protocol/ipv4/arp.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/arp.o protocol/ipv4/arp.cpp
 
 ${OBJECTDIR}/protocol/ipv4/dhcp.o: protocol/ipv4/dhcp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/dhcp.o protocol/ipv4/dhcp.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/dhcp.o protocol/ipv4/dhcp.cpp
 
 ${OBJECTDIR}/protocol/ipv4/tcp.o: protocol/ipv4/tcp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/tcp.o protocol/ipv4/tcp.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/tcp.o protocol/ipv4/tcp.cpp
 
 ${OBJECTDIR}/protocol/ipv4/udp.o: protocol/ipv4/udp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/udp.o protocol/ipv4/udp.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/udp.o protocol/ipv4/udp.cpp
 
 ${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
 
 ${OBJECTDIR}/protocol/vlan.o: protocol/vlan.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/vlan.o protocol/vlan.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/vlan.o protocol/vlan.cpp
 
 ${OBJECTDIR}/tcp_session.o: tcp_session.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/tcp_session.o tcp_session.cpp
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/tcp_session.o tcp_session.cpp
 
 # Subprojects
 .build-subprojects:

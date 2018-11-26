@@ -83,7 +83,7 @@ void Control::Start() {
 
     namespace ph = std::placeholders;
 
-    ovsdb::f_t f;
+    ovsdb::structures::f_t f;
 
     f.fSwitchAdd    = std::bind( &Control::HandleSwitchAdd, this, ph::_1 );
     f.fSwitchUpdate = std::bind( &Control::HandleSwitchUpdate, this, ph::_1, ph::_2 );
@@ -103,7 +103,7 @@ void Control::Start() {
 
     f.fStatisticsUpdate = std::bind( &Control::HandleStatisticsUpdate, this, ph::_1, ph::_2 );
 
-    ovsdb m_ovsdb( m_ioContext, f );
+    ovsdb::ovsdb m_ovsdb( m_ioContext, f );
 
     AcceptControlConnections();
 
@@ -167,7 +167,7 @@ void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
   }
 }
 
-void Control::HandleSwitchAdd( const ovsdb::uuidSwitch_t& uuidSwitch ) {
+void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -179,7 +179,7 @@ void Control::HandleSwitchAdd( const ovsdb::uuidSwitch_t& uuidSwitch ) {
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchUpdate( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::switch_t& sw ) {
+void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t& sw ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -194,10 +194,10 @@ void Control::HandleSwitchUpdate( const ovsdb::uuidSwitch_t& uuidSwitch, const o
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchDelete( const ovsdb::uuidSwitch_t& uuidSwitch ) {
+void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
 }
 
-void Control::HandleBridgeAdd( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsdb::uuid_t& uuidBridge ) {
+void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuid_t& uuidBridge ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -210,7 +210,7 @@ void Control::HandleBridgeAdd( const ovsdb::uuidSwitch_t& uuidSwitch, const ovsd
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeUpdate( const ovsdb::uuidBridge_t& uuidBridge, const ovsdb::bridge_t& br ) {
+void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -224,10 +224,10 @@ void Control::HandleBridgeUpdate( const ovsdb::uuidBridge_t& uuidBridge, const o
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeDelete( const ovsdb::uuidBridge_t& uuidBridge ) {
+void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
 }
 
-void Control::HandlePortAdd( const ovsdb::uuid_t& uuidBridge, const ovsdb::uuidPort_t& uuidPort ) {
+void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -240,7 +240,7 @@ void Control::HandlePortAdd( const ovsdb::uuid_t& uuidBridge, const ovsdb::uuidP
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortUpdate( const ovsdb::uuidPort_t& uuidPort, const ovsdb::port_t& port ) {
+void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -257,10 +257,10 @@ void Control::HandlePortUpdate( const ovsdb::uuidPort_t& uuidPort, const ovsdb::
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortDelete( const ovsdb::uuidPort_t& uuidPort ) {
+void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) {
 }
 
-void Control::HandleInterfaceAdd( const ovsdb::uuidPort_t& uuidPort, const ovsdb::uuidInterface_t& uuidInterface ) {
+void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -273,7 +273,7 @@ void Control::HandleInterfaceAdd( const ovsdb::uuidPort_t& uuidPort, const ovsdb
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::interface_t& interface) {
+void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -290,10 +290,10 @@ void Control::HandleInterfaceUpdate( const ovsdb::uuidInterface_t& uuidInterface
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceDelete( const ovsdb::uuidInterface_t& uuidInterface ) {
+void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
 }
 
-void Control::HandleStatisticsUpdate( const ovsdb::uuidInterface_t& uuidInterface, const ovsdb::statistics_t& stats ) {
+void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
   // ovs -> local (via request):
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 

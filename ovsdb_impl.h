@@ -25,6 +25,8 @@
 namespace asio = boost::asio;
 using json = nlohmann::json;
 
+namespace ovsdb {
+
 class ovsdb_impl {
 public:
   ovsdb_impl( ovsdb&, asio::io_context& io_context );
@@ -43,30 +45,30 @@ private:
 
   EState m_state;
 
-  typedef ovsdb::uuid_t uuid_t;
+  typedef structures::uuid_t uuid_t;
 
   ovsdb& m_ovsdb;
 
   typedef std::map<std::string,size_t&> mapStatistics_t;
-  struct interface_t: public ovsdb::interface_t {
+  struct interface_t: public structures::interface_t {
     mapStatistics_t mapStatistics;  // for now
-    ovsdb::statistics_t* statistics;  // for the future
-    interface_t(): statistics( new ovsdb::statistics_t ) {}
+    structures::statistics_t* statistics;  // for the future
+    interface_t(): statistics( new structures::statistics_t ) {}
     virtual ~interface_t() { delete statistics; }
   };
   typedef std::set<uuid_t> setInterface_t;
 
-  struct port_t: public ovsdb::port_t {
+  struct port_t: public structures::port_t {
     setInterface_t setInterface;
   };
   typedef std::set<uuid_t> setPort_t;
 
-  struct bridge_t: public ovsdb::bridge_t {
+  struct bridge_t: public structures::bridge_t {
     setPort_t setPort;
   };
   typedef std::set<uuid_t> setBridge_t;
 
-  struct switch_t: public ovsdb::switch_t {
+  struct switch_t: public structures::switch_t {
     setBridge_t setBridge;
   };
 
@@ -97,6 +99,8 @@ private:
   bool parse_statistics( const json& );
 
 };
+
+} // namespace ovsdb
 
 #endif /* OVSDB_H */
 

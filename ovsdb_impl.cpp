@@ -35,6 +35,8 @@
 
 #include "ovsdb_impl.h"
 
+namespace ovsdb {
+
 ovsdb_impl::ovsdb_impl( ovsdb& ovsdb_, asio::io_context& io_context )
 :
   m_ep( "/var/run/openvswitch/db.sock" ),
@@ -574,3 +576,5 @@ void ovsdb_impl::do_read() {
         do_read();
       });
 }
+
+} // namespace ovsdb

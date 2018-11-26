@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ovsdb.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net *
@@ -16,13 +16,16 @@
 
 namespace asio = boost::asio;
 
-class ovsdb_impl;
 
-class ovsdb {
-  friend class ovsdb_impl;
-public:
+namespace ovsdb {
+namespace structures {
 
   typedef std::string uuid_t;
+
+  typedef uuid_t uuidSwitch_t;
+  typedef uuid_t uuidBridge_t;
+  typedef uuid_t uuidPort_t;
+  typedef uuid_t uuidInterface_t;
 
   // ----
   struct switch_t {
@@ -72,17 +75,12 @@ public:
     size_t tx_dropped;
     size_t tx_errors;
     size_t tx_packets;
-    statistics_t(): 
-      collisions {}, 
-      rx_bytes {}, rx_packets {}, rx_dropped {}, rx_errors {}, rx_crc_err {}, rx_frame_err {}, rx_over_err {}, 
+    statistics_t():
+      collisions {},
+      rx_bytes {}, rx_packets {}, rx_dropped {}, rx_errors {}, rx_crc_err {}, rx_frame_err {}, rx_over_err {},
       tx_bytes {}, tx_packets {}, tx_dropped {}, tx_errors {}
       {}
   };
-
-  typedef uuid_t uuidSwitch_t;
-  typedef uuid_t uuidBridge_t;
-  typedef uuid_t uuidPort_t;
-  typedef uuid_t uuidInterface_t;
 
   typedef std::function<void(const uuidSwitch_t&)> fSwitchAdd_t;
   typedef std::function<void(const uuidSwitch_t&,const switch_t&)> fSwitchUpdate_t;
@@ -122,16 +120,24 @@ public:
     fStatisticsUpdate_t fStatisticsUpdate;
   };
 
-  ovsdb( 
+} // namespace structures
+
+class ovsdb_impl;
+
+class ovsdb {
+  friend class ovsdb_impl;
+public:
+
+  ovsdb(
     asio::io_context&,
-    f_t& f // will move the functions
+    structures::f_t& f // will move the functions
     );
   virtual ~ovsdb( );
 
 protected:
 private:
 
-  typedef std::shared_ptr<ovsdb_impl> povsdb_impl_t;
+  typedef std::unique_ptr<ovsdb_impl> povsdb_impl_t;
   povsdb_impl_t m_ovsdb_impl;
 
   // TOOD: may keep a message queue of all messages (other than statistics)
@@ -142,9 +148,11 @@ private:
   // TODO: these functions need to be assigned on construction
   //   allows them to be called with initial settings
 
-  f_t m_f;
+  structures::f_t m_f;
 
 };
+
+} // namespace ovsdb
 
 #endif /* OVSDB_H */
 

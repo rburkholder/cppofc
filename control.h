@@ -58,23 +58,23 @@ private:
 
   void PostToZmqRequest( pMultipart_t& );
 
-  void    HandleSwitchAdd( const ovsdb::uuidSwitch_t& );
-  void HandleSwitchUpdate( const ovsdb::uuidSwitch_t&, const ovsdb::switch_t& );
-  void HandleSwitchDelete( const ovsdb::uuidSwitch_t& );
+  void    HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& );
+  void HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t&, const ovsdb::structures::switch_t& );
+  void HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& );
 
-  void    HandleBridgeAdd( const ovsdb::uuidSwitch_t&, const ovsdb::uuidBridge_t& );
-  void HandleBridgeUpdate( const ovsdb::uuidBridge_t&, const ovsdb::bridge_t& );
-  void HandleBridgeDelete( const ovsdb::uuidBridge_t& );
+  void    HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t&, const ovsdb::structures::uuidBridge_t& );
+  void HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t&, const ovsdb::structures::bridge_t& );
+  void HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& );
 
-  void    HandlePortAdd( const ovsdb::uuidBridge_t&, const ovsdb::uuidPort_t& );
-  void HandlePortUpdate( const ovsdb::uuidPort_t&, const ovsdb::port_t& );
-  void HandlePortDelete( const ovsdb::uuidPort_t& );
+  void    HandlePortAdd( const ovsdb::structures::uuidBridge_t&, const ovsdb::structures::uuidPort_t& );
+  void HandlePortUpdate( const ovsdb::structures::uuidPort_t&, const ovsdb::structures::port_t& );
+  void HandlePortDelete( const ovsdb::structures::uuidPort_t& );
 
-  void    HandleInterfaceAdd( const ovsdb::uuidPort_t&, const ovsdb::uuidInterface_t& );
-  void HandleInterfaceUpdate( const ovsdb::uuidInterface_t&, const ovsdb::interface_t& );
-  void HandleInterfaceDelete( const ovsdb::uuidInterface_t& );
+  void    HandleInterfaceAdd( const ovsdb::structures::uuidPort_t&, const ovsdb::structures::uuidInterface_t& );
+  void HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t&, const ovsdb::structures::interface_t& );
+  void HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& );
 
-  void HandleStatisticsUpdate( const ovsdb::uuidInterface_t&, const ovsdb::statistics_t& );
+  void HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t&, const ovsdb::structures::statistics_t& );
 
 };
 
