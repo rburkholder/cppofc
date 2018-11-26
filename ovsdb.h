@@ -14,29 +14,29 @@
 
 #include <boost/asio/io_context.hpp>
 
-#include "../quadlii/lib/common/ovsdb.h"
+#include "ovsdb_structures.h"
 
 namespace asio = boost::asio;
 
 namespace ovsdb {
 
-class ovsdb_impl;
+class decode_impl;
 
-class ovsdb {
-  friend class ovsdb_impl;
+class decode {
+  friend class decode_impl;
 public:
 
-  ovsdb(
+  decode(
     asio::io_context&,
     structures::f_t& f // will move the functions
     );
-  virtual ~ovsdb( );
+  virtual ~decode( );
 
 protected:
 private:
 
-  typedef std::unique_ptr<ovsdb_impl> povsdb_impl_t;
-  povsdb_impl_t m_ovsdb_impl;
+  typedef std::unique_ptr<decode_impl> pdecode_impl_t;
+  pdecode_impl_t m_decode_impl;
 
   // TOOD: may keep a message queue of all messages (other than statistics)
   //   allows late-comers to obtain state transitions to current state

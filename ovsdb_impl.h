@@ -27,10 +27,10 @@ using json = nlohmann::json;
 
 namespace ovsdb {
 
-class ovsdb_impl {
+class decode_impl {
 public:
-  ovsdb_impl( ovsdb&, asio::io_context& io_context );
-  virtual ~ovsdb_impl( );
+  decode_impl( decode&, asio::io_context& io_context );
+  virtual ~decode_impl( );
 protected:
 private:
 
@@ -47,7 +47,7 @@ private:
 
   typedef structures::uuid_t uuid_t;
 
-  ovsdb& m_ovsdb;
+  decode& m_ovsdb;
 
   typedef std::map<std::string,size_t&> mapStatistics_t;
   struct interface_t: public structures::interface_t {

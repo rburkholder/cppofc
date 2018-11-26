@@ -103,7 +103,7 @@ void Control::Start() {
 
     f.fStatisticsUpdate = std::bind( &Control::HandleStatisticsUpdate, this, ph::_1, ph::_2 );
 
-    ovsdb::ovsdb m_ovsdb( m_ioContext, f );
+    ovsdb::decode m_ovsdb( m_ioContext, f );
 
     AcceptControlConnections();
 

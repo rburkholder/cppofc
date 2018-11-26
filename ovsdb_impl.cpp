@@ -37,7 +37,7 @@
 
 namespace ovsdb {
 
-ovsdb_impl::ovsdb_impl( ovsdb& ovsdb_, asio::io_context& io_context )
+decode_impl::decode_impl( decode& ovsdb_, asio::io_context& io_context )
 :
   m_ep( "/var/run/openvswitch/db.sock" ),
   //m_ep( ip::tcp::v4(), 6640 ),
@@ -59,10 +59,10 @@ ovsdb_impl::ovsdb_impl( ovsdb& ovsdb_, asio::io_context& io_context )
 
 }
 
-ovsdb_impl::~ovsdb_impl( ) {
+decode_impl::~decode_impl( ) {
 }
 
-void ovsdb_impl::send( const std::string& sCmd ) {
+void decode_impl::send( const std::string& sCmd ) {
   try {
     asio::async_write(
       m_socket, boost::asio::buffer( sCmd ),
@@ -80,7 +80,7 @@ void ovsdb_impl::send( const std::string& sCmd ) {
   }
 }
 
-void ovsdb_impl::send_list_dbs() {
+void decode_impl::send_list_dbs() {
   json j = {
     { "method", "list_dbs" },
     { "params", json::array() },
@@ -90,7 +90,7 @@ void ovsdb_impl::send_list_dbs() {
   send( j.dump() );
 }
 
-void ovsdb_impl::send_monitor_bridges() {
+void decode_impl::send_monitor_bridges() {
   json colSwitch, colBridge;
   json keys = json::object();
 
@@ -108,7 +108,7 @@ void ovsdb_impl::send_monitor_bridges() {
   send( j.dump() );
 }
 
-void ovsdb_impl::send_monitor_ports() {
+void decode_impl::send_monitor_ports() {
   json colPort;
   json keys = json::object();
 
@@ -124,7 +124,7 @@ void ovsdb_impl::send_monitor_ports() {
   send( j.dump() );
 }
 
-void ovsdb_impl::send_monitor_interfaces() {
+void decode_impl::send_monitor_interfaces() {
   json colInterface;
   json keys = json::object();
 
@@ -140,7 +140,7 @@ void ovsdb_impl::send_monitor_interfaces() {
   send( j.dump() );
 }
 
-void ovsdb_impl::send_monitor_statistics() {
+void decode_impl::send_monitor_statistics() {
   json colInterface;
   json keys = json::object();
 
@@ -156,7 +156,7 @@ void ovsdb_impl::send_monitor_statistics() {
   send( j.dump() );
 }
 
-bool ovsdb_impl::parse_listdb( const json& j ) {
+bool decode_impl::parse_listdb( const json& j ) {
   bool bResult( false );
   //std::cout << "listdb entries: ";
   std::for_each( j.begin(), j.end(), [&bResult](auto& key) {
@@ -169,7 +169,7 @@ bool ovsdb_impl::parse_listdb( const json& j ) {
   return bResult;
 }
 
-bool ovsdb_impl::parse_bridge( const json& j ) {
+bool decode_impl::parse_bridge( const json& j ) {
 
   auto& ovs = j["Open_vSwitch"];
   //std::cout << j.dump(2) << std::endl;
@@ -290,7 +290,7 @@ bool ovsdb_impl::parse_bridge( const json& j ) {
   return true;
 }
 
-bool ovsdb_impl::parse_port( const json& j ) {
+bool decode_impl::parse_port( const json& j ) {
 
   auto& ports = j[ "Port" ];
   //std::cout << ports.dump(2) << std::endl;
@@ -346,7 +346,7 @@ bool ovsdb_impl::parse_port( const json& j ) {
   return true;
 }
 
-bool ovsdb_impl::parse_interface( const json& j ) {
+bool decode_impl::parse_interface( const json& j ) {
 
   auto& interfaces = j["Interface"];
 
@@ -376,7 +376,7 @@ bool ovsdb_impl::parse_interface( const json& j ) {
 }
 
 // TODO: may consider sending collection of statistics in one large message
-bool ovsdb_impl::parse_statistics( const json& j ) {
+bool decode_impl::parse_statistics( const json& j ) {
 
   auto& interfaces = j["Interface"];
 
@@ -437,7 +437,7 @@ bool ovsdb_impl::parse_statistics( const json& j ) {
   return true;
 }
 
-void ovsdb_impl::do_read() {
+void decode_impl::do_read() {
   m_vRx.resize( max_length );
   m_socket.async_read_some( boost::asio::buffer(m_vRx),
       [this](boost::system::error_code ec, const std::size_t lenRead)

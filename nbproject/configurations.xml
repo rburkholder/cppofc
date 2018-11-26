@@ -34,6 +34,7 @@
       <itemPath>mac.h</itemPath>
       <itemPath>ovsdb.h</itemPath>
       <itemPath>ovsdb_impl.h</itemPath>
+      <itemPath>ovsdb_structures.h</itemPath>
       <itemPath>tcp_session.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
@@ -178,6 +179,8 @@
       </item>
       <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="ovsdb_structures.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
@@ -294,6 +297,8 @@
       <item path="ovsdb_impl.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ovsdb_structures.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>

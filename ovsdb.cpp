@@ -13,16 +13,16 @@
 
 namespace ovsdb {
 
-ovsdb::ovsdb( asio::io_context& io_context,
+decode::decode( asio::io_context& io_context,
   structures::f_t& f
   )
 :
   m_f( f )
 {
-  m_ovsdb_impl = std::make_unique<ovsdb_impl>( std::ref( *this ), std::ref( io_context ) );
+  m_decode_impl = std::make_unique<decode_impl>( std::ref( *this ), std::ref( io_context ) );
 }
 
-ovsdb::~ovsdb( ) {
+decode::~decode( ) {
 }
 
 } // namespace ovsdb
