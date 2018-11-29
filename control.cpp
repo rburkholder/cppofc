@@ -29,8 +29,8 @@
 #include "../quadlii/lib/common/monitor_t.h"
 #include "../quadlii/lib/common/ZmqMessage.h"
 
+#include "ovsdb.h"
 #include "tcp_session.h"
-
 #include "control.h"
 
 Control::Control( int port )
@@ -167,11 +167,16 @@ void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
   }
 }
 
+// TODO: put these structures into a database?  or just run live from the updates obtained during startup?
+// TOOD: maybe auto-push like ovsdb does on new connections?  but this won't work unless there is a message from the subscribe queue
+//   this then allows refactoring the below to message passing, local storage, and mesasge generation from existing structures
+
 void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
 
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
-    iterSwitch = m_mapSwitch.insert( m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, switch_t() ) );
+    iterSwitch = m_mapSwitch.insert(
+      m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, ovsdb::structures::switch_composite_t() ) );
   }
 
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
@@ -188,10 +193,10 @@ void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwi
 
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
-    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchUpdate " << uuidSwitch << " does not exist";
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchUpdate switch " << uuidSwitch << " does not exist";
   }
   else {
-    switch_t& switch_( iterSwitch->second );
+    ovsdb::structures::switch_composite_t& switch_( iterSwitch->second );
     switch_.sw = sw;
   }
 
@@ -212,15 +217,28 @@ void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwi
 
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
-    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchDelete " << uuidSwitch << " does not exist";
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchDelete switch " << uuidSwitch << " does not exist";
   }
   else {
     m_mapSwitch.erase( iterSwitch );
-    BOOST_LOG_TRIVIAL(info) << "Control::HandleSwitchDelete " << uuidSwitch << " deleted";
+    BOOST_LOG_TRIVIAL(info) << "Control::HandleSwitchDelete switch " << uuidSwitch << " deleted";
   }
 }
 
 void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuid_t& uuidBridge ) {
+
+  mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
+  if ( m_mapSwitch.end() == iterSwitch ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeAdd switch " << uuidSwitch << " does not exist";
+  }
+  else {
+    ovsdb::structures::switch_composite_t switch_( iterSwitch->second );
+    ovsdb::structures::setSwitch_t::iterator iterSetSwitch = switch_.setBridge.find( uuidBridge );
+    if ( switch_.setBridge.end() == iterSetSwitch ) {
+      switch_.setBridge.insert( ovsdb::structures::setBridge_t::value_type( uuidBridge ) );
+      m_mapBridge.insert( m_mapBridge.begin(), ovsdb::structures::mapBridge_t::value_type( uuidBridge, ovsdb::structures::bridge_composite_t() ) );
+    }
+  }
 
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
@@ -234,7 +252,16 @@ void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
 }
 
 void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br ) {
-  // ovs -> local (via request):
+
+  mapBridge_t::iterator iterBridge = m_mapBridge.find( uuidBridge );
+  if ( m_mapBridge.end() == iterBridge ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeUpdate bridge " << uuidBridge << " does not exist";
+  }
+  else {
+    ovsdb::structures::bridge_composite_t& bridge( iterBridge->second );
+    bridge.br = br;
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeUpdate );
@@ -248,10 +275,43 @@ void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBri
 }
 
 void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
+
+  for ( auto& sw: m_mapSwitch ) {
+    ovsdb::structures::setBridge_t::iterator iterSetBridge = sw.second.setBridge.find( uuidBridge );
+    if ( sw.second.setBridge.end() == iterSetBridge ) {
+      // bridge can only be found in one switch
+    }
+    else {
+      sw.second.setBridge.erase( iterSetBridge );
+
+      mapBridge_t::iterator iterMapBridge = m_mapBridge.find( uuidBridge );
+      if ( m_mapBridge.end() == iterMapBridge ) {
+        BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeDelete bridge " << uuidBridge << " map item does not exist";
+      }
+      else {
+        m_mapBridge.erase( iterMapBridge );
+        BOOST_LOG_TRIVIAL(info) << "Control::HandleBridgeDelete bridge" << uuidBridge << " deleted";
+      }
+    }
+  }
+
 }
 
 void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
-  // ovs -> local (via request):
+
+  mapBridge_t::iterator iterMapBridge = m_mapBridge.find( uuidBridge );
+  if ( m_mapBridge.end() == iterMapBridge ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortAdd bridge " << uuidBridge << " does not exist";
+  }
+  else {
+    ovsdb::structures::bridge_composite_t bridge( iterMapBridge->second );
+    ovsdb::structures::setPort_t::iterator iterSetPort = bridge.setPort.find( uuidPort );
+    if ( bridge.setPort.end() == iterSetPort ) {
+      bridge.setPort.insert( ovsdb::structures::setPort_t::value_type( uuidPort ) );
+      m_mapPort.insert( m_mapPort.begin(), ovsdb::structures::mapPort_t::value_type( uuidPort, ovsdb::structures::port_composite_t() ) );
+    }
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortAdd );
@@ -264,7 +324,16 @@ void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const 
 }
 
 void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
-  // ovs -> local (via request):
+
+  mapPort_t::iterator iterPort = m_mapPort.find( uuidPort );
+  if ( m_mapPort.end() == iterPort ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortUpdate port " << uuidPort << " does not exist";
+  }
+  else {
+    ovsdb::structures::port_composite_t& port_( iterPort->second );
+    port_.port = port;
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortUpdate );
@@ -281,10 +350,43 @@ void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, c
 }
 
 void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) {
+
+  for ( auto& bridge: m_mapBridge ) {
+    ovsdb::structures::setPort_t::iterator iterSetPort = bridge.second.setPort.find( uuidPort );
+    if ( bridge.second.setPort.end() == iterSetPort ) {
+      // port can only be found in one bridge
+    }
+    else {
+      bridge.second.setPort.erase( iterSetPort );
+
+      mapPort_t::iterator iterMapPort = m_mapPort.find( uuidPort );
+      if ( m_mapPort.end() == iterMapPort ) {
+        BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortDelete port " << uuidPort << " map item does not exist";
+      }
+      else {
+        m_mapPort.erase( iterMapPort );
+        BOOST_LOG_TRIVIAL(info) << "Control::HandlePortDelete port" << uuidPort << " deleted";
+      }
+    }
+  }
+
 }
 
 void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
-  // ovs -> local (via request):
+
+  mapPort_t::iterator iterMapPort = m_mapPort.find( uuidPort );
+  if ( m_mapPort.end() == iterMapPort ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceAdd port " << uuidPort << " does not exist";
+  }
+  else {
+    ovsdb::structures::port_composite_t port( iterMapPort->second );
+    ovsdb::structures::setInterface_t::iterator iterSetInterface = port.setInterface.find( uuidInterface );
+    if ( port.setInterface.end() == iterSetInterface ) {
+      port.setInterface.insert( ovsdb::structures::setInterface_t::value_type( uuidInterface ) );
+      m_mapInterface.insert( m_mapInterface.begin(), ovsdb::structures::mapInterface_t::value_type( uuidInterface, ovsdb::structures::interface_composite_t() ) );
+    }
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceAdd );
@@ -297,7 +399,16 @@ void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort,
 }
 
 void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface) {
-  // ovs -> local (via request):
+
+  mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
+  if ( m_mapInterface.end() == iterInterface ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceUpdate interface " << uuidInterface << " does not exist";
+  }
+  else {
+    ovsdb::structures::interface_composite_t& interface_( iterInterface->second );
+    interface_.interface = interface;
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceUpdate );
@@ -314,10 +425,39 @@ void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& u
 }
 
 void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+
+  for ( auto& port: m_mapPort ) {
+    ovsdb::structures::setInterface_t::iterator iterSetInterface = port.second.setInterface.find( uuidInterface );
+    if ( port.second.setInterface.end() == iterSetInterface ) {
+      // interface can only be found in one port
+    }
+    else {
+      port.second.setInterface.erase( iterSetInterface );
+
+      mapInterface_t::iterator iterMapInterface = m_mapInterface.find( uuidInterface );
+      if ( m_mapInterface.end() == iterMapInterface ) {
+        BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceDelete interface " << uuidInterface << " map item does not exist";
+      }
+      else {
+        m_mapInterface.erase( iterMapInterface );
+        BOOST_LOG_TRIVIAL(info) << "Control::HandleInterfaceDelete interface" << uuidInterface << " deleted";
+      }
+    }
+  }
+
 }
 
 void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
-  // ovs -> local (via request):
+
+  mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
+  if ( m_mapInterface.end() == iterInterface ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleStatisticsUpdate interface " << uuidInterface << " does not exist";
+  }
+  else {
+    ovsdb::structures::interface_composite_t& interface_( iterInterface->second );
+    interface_.stats = stats;
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceStatistics );

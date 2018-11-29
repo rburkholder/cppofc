@@ -9,9 +9,6 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
-#include <set>
-#include <map>
-
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -23,7 +20,7 @@
 #include <zmq_addon.hpp>
 
 #include "bridge.h"
-#include "ovsdb.h"
+#include "ovsdb_structures.h"
 
 namespace asio = boost::asio;
 namespace ip = asio::ip;
@@ -59,15 +56,18 @@ private:
 
   typedef ovsdb::structures::uuidSwitch_t uuidSwitch_t;
   typedef ovsdb::structures::uuidBridge_t uuidBridge_t;
+  typedef ovsdb::structures::uuidPort_t uuidPort_t;
+  typedef ovsdb::structures::uuidInterface_t uuidInterface_t;
 
-  struct switch_t {
-    ovsdb::structures::switch_t sw;
-    std::set<uuidBridge_t> setBridge;
-  };
+  typedef ovsdb::structures::mapSwitch_t mapSwitch_t;
+  typedef ovsdb::structures::mapBridge_t mapBridge_t;
+  typedef ovsdb::structures::mapPort_t mapPort_t;
+  typedef ovsdb::structures::mapInterface_t mapInterface_t;
 
-  typedef std::map<uuidSwitch_t,switch_t> mapSwitch_t;
-
-  mapSwitch_t m_mapSwitch;
+  ovsdb::structures::mapSwitch_t m_mapSwitch;
+  ovsdb::structures::mapBridge_t m_mapBridge;
+  ovsdb::structures::mapPort_t m_mapPort;
+  ovsdb::structures::mapInterface_t m_mapInterface;
 
   void AcceptControlConnections();
 
