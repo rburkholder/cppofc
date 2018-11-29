@@ -9,6 +9,9 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+#include <set>
+#include <map>
+
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -53,6 +56,18 @@ private:
   zmq::socket_t m_zmqSocketRequest;
 
   Bridge m_bridge;
+
+  typedef ovsdb::structures::uuidSwitch_t uuidSwitch_t;
+  typedef ovsdb::structures::uuidBridge_t uuidBridge_t;
+
+  struct switch_t {
+    ovsdb::structures::switch_t sw;
+    std::set<uuidBridge_t> setBridge;
+  };
+
+  typedef std::map<uuidSwitch_t,switch_t> mapSwitch_t;
+
+  mapSwitch_t m_mapSwitch;
 
   void AcceptControlConnections();
 

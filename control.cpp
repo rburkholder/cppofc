@@ -168,7 +168,12 @@ void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
 }
 
 void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
-  // ovs -> local (via request):
+
+  mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
+  if ( m_mapSwitch.end() == iterSwitch ) {
+    iterSwitch = m_mapSwitch.insert( m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, switch_t() ) );
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
@@ -180,7 +185,16 @@ void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
 }
 
 void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t& sw ) {
-  // ovs -> local (via request):
+
+  mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
+  if ( m_mapSwitch.end() == iterSwitch ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchUpdate " << uuidSwitch << " does not exist";
+  }
+  else {
+    switch_t& switch_( iterSwitch->second );
+    switch_.sw = sw;
+  }
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchUpdate );
@@ -195,10 +209,19 @@ void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwi
 }
 
 void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
+
+  mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
+  if ( m_mapSwitch.end() == iterSwitch ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchDelete " << uuidSwitch << " does not exist";
+  }
+  else {
+    m_mapSwitch.erase( iterSwitch );
+    BOOST_LOG_TRIVIAL(info) << "Control::HandleSwitchDelete " << uuidSwitch << " deleted";
+  }
 }
 
 void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuid_t& uuidBridge ) {
-  // ovs -> local (via request):
+
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeAdd );
