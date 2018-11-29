@@ -172,13 +172,19 @@ void Control::PostToZmqRequest( pMultipart_t& pMultipart ) {
 //   this then allows refactoring the below to message passing, local storage, and mesasge generation from existing structures
 
 void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
+  HandleSwitchAdd_local( uuidSwitch );
+  HandleSwitchAdd_msg( uuidSwitch );
+}
 
+void Control::HandleSwitchAdd_local( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
     iterSwitch = m_mapSwitch.insert(
       m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, ovsdb::structures::switch_composite_t() ) );
   }
+}
 
+void Control::HandleSwitchAdd_msg( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchAdd );
@@ -189,8 +195,14 @@ void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t& sw ) {
+// ==
 
+void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t& sw ) {
+  HandleSwitchUpdate_local( uuidSwitch, sw );
+  HandleSwitchUpdate_msg( uuidSwitch, sw );
+}
+
+void Control::HandleSwitchUpdate_local( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t&  sw ) {
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchUpdate switch " << uuidSwitch << " does not exist";
@@ -199,7 +211,9 @@ void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwi
     ovsdb::structures::switch_composite_t& switch_( iterSwitch->second );
     switch_.sw = sw;
   }
+}
 
+void Control::HandleSwitchUpdate_msg( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::switch_t&  sw ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsSwitchUpdate );
@@ -213,8 +227,14 @@ void Control::HandleSwitchUpdate( const ovsdb::structures::uuidSwitch_t& uuidSwi
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
+// ==
 
+void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
+  HandleSwitchDelete_local( uuidSwitch );
+  HandleSwitchDelete_msg( uuidSwitch );
+}
+
+void Control::HandleSwitchDelete_local( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchDelete switch " << uuidSwitch << " does not exist";
@@ -225,8 +245,17 @@ void Control::HandleSwitchDelete( const ovsdb::structures::uuidSwitch_t& uuidSwi
   }
 }
 
-void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuid_t& uuidBridge ) {
+void Control::HandleSwitchDelete_msg( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
+}
 
+// ==
+
+void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuid_t& uuidBridge ) {
+  HandleBridgeAdd_local( uuidSwitch, uuidBridge );
+  HandleBridgeAdd_msg( uuidSwitch, uuidBridge );
+}
+
+void Control::HandleBridgeAdd_local( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuidBridge_t& uuidBridge )  {
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeAdd switch " << uuidSwitch << " does not exist";
@@ -239,7 +268,9 @@ void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
       m_mapBridge.insert( m_mapBridge.begin(), ovsdb::structures::mapBridge_t::value_type( uuidBridge, ovsdb::structures::bridge_composite_t() ) );
     }
   }
+}
 
+void Control::HandleBridgeAdd_msg( const ovsdb::structures::uuidSwitch_t& uuidSwitch, const ovsdb::structures::uuidBridge_t& uuidBridge ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeAdd );
@@ -251,8 +282,14 @@ void Control::HandleBridgeAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br ) {
+// ==
 
+void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br ) {
+  HandleBridgeUpdate_local( uuidBridge, br );
+  HandleBridgeUpdate_msg( uuidBridge, br );
+}
+
+void Control::HandleBridgeUpdate_local( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br) {
   mapBridge_t::iterator iterBridge = m_mapBridge.find( uuidBridge );
   if ( m_mapBridge.end() == iterBridge ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeUpdate bridge " << uuidBridge << " does not exist";
@@ -261,7 +298,9 @@ void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBri
     ovsdb::structures::bridge_composite_t& bridge( iterBridge->second );
     bridge.br = br;
   }
+}
 
+void Control::HandleBridgeUpdate_msg( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::bridge_t& br ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsBridgeUpdate );
@@ -274,8 +313,14 @@ void Control::HandleBridgeUpdate( const ovsdb::structures::uuidBridge_t& uuidBri
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
+// ==
 
+void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
+  HandleBridgeDelete_local( uuidBridge );
+  HandleBridgeDelete_msg( uuidBridge );
+}
+
+void Control::HandleBridgeDelete_local( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
   for ( auto& sw: m_mapSwitch ) {
     ovsdb::structures::setBridge_t::iterator iterSetBridge = sw.second.setBridge.find( uuidBridge );
     if ( sw.second.setBridge.end() == iterSetBridge ) {
@@ -294,11 +339,19 @@ void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBri
       }
     }
   }
-
 }
 
-void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
+void Control::HandleBridgeDelete_msg( const ovsdb::structures::uuidBridge_t& ) {
+}
 
+// ==
+
+void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
+  HandlePortAdd_local( uuidBridge, uuidPort );
+  HandlePortAdd_msg( uuidBridge, uuidPort );
+}
+
+void Control::HandlePortAdd_local( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
   mapBridge_t::iterator iterMapBridge = m_mapBridge.find( uuidBridge );
   if ( m_mapBridge.end() == iterMapBridge ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortAdd bridge " << uuidBridge << " does not exist";
@@ -311,7 +364,9 @@ void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const 
       m_mapPort.insert( m_mapPort.begin(), ovsdb::structures::mapPort_t::value_type( uuidPort, ovsdb::structures::port_composite_t() ) );
     }
   }
+}
 
+void Control::HandlePortAdd_msg( const ovsdb::structures::uuidBridge_t& uuidBridge, const ovsdb::structures::uuidPort_t& uuidPort ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortAdd );
@@ -323,8 +378,14 @@ void Control::HandlePortAdd( const ovsdb::structures::uuid_t& uuidBridge, const 
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
+// ==
 
+void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
+  HandlePortUpdate_local( uuidPort, port );
+  HandlePortUpdate_msg( uuidPort, port );
+}
+
+void Control::HandlePortUpdate_local( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
   mapPort_t::iterator iterPort = m_mapPort.find( uuidPort );
   if ( m_mapPort.end() == iterPort ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortUpdate port " << uuidPort << " does not exist";
@@ -333,7 +394,9 @@ void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, c
     ovsdb::structures::port_composite_t& port_( iterPort->second );
     port_.port = port;
   }
+}
 
+void Control::HandlePortUpdate_msg( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::port_t& port ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsPortUpdate );
@@ -349,8 +412,14 @@ void Control::HandlePortUpdate( const ovsdb::structures::uuidPort_t& uuidPort, c
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) {
+// ==
 
+void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) {
+  HandlePortDelete_local( uuidPort );
+  HandlePortDelete_msg( uuidPort );
+}
+
+void Control::HandlePortDelete_local( const ovsdb::structures::uuidPort_t& uuidPort ) {
   for ( auto& bridge: m_mapBridge ) {
     ovsdb::structures::setPort_t::iterator iterSetPort = bridge.second.setPort.find( uuidPort );
     if ( bridge.second.setPort.end() == iterSetPort ) {
@@ -369,11 +438,19 @@ void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) 
       }
     }
   }
-
 }
 
-void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+void Control::HandlePortDelete_msg( const ovsdb::structures::uuidPort_t& uuidPort ) {
+}
 
+// ==
+
+void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+  HandleInterfaceAdd_local( uuidPort, uuidInterface );
+  HandleInterfaceAdd_msg( uuidPort, uuidInterface );
+}
+
+void Control::HandleInterfaceAdd_local( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface) {
   mapPort_t::iterator iterMapPort = m_mapPort.find( uuidPort );
   if ( m_mapPort.end() == iterMapPort ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceAdd port " << uuidPort << " does not exist";
@@ -386,7 +463,9 @@ void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort,
       m_mapInterface.insert( m_mapInterface.begin(), ovsdb::structures::mapInterface_t::value_type( uuidInterface, ovsdb::structures::interface_composite_t() ) );
     }
   }
+}
 
+void Control::HandleInterfaceAdd_msg( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceAdd );
@@ -398,8 +477,14 @@ void Control::HandleInterfaceAdd( const ovsdb::structures::uuidPort_t& uuidPort,
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface) {
+// ==
 
+void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface) {
+  HandleInterfaceUpdate_local( uuidInterface, interface );
+  HandleInterfaceUpdate_msg( uuidInterface, interface );
+}
+
+void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface ) {
   mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
   if ( m_mapInterface.end() == iterInterface ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceUpdate interface " << uuidInterface << " does not exist";
@@ -408,7 +493,9 @@ void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& u
     ovsdb::structures::interface_composite_t& interface_( iterInterface->second );
     interface_.interface = interface;
   }
+}
 
+void Control::HandleInterfaceUpdate_msg( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::interface_t& interface ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceUpdate );
@@ -424,8 +511,14 @@ void Control::HandleInterfaceUpdate( const ovsdb::structures::uuidInterface_t& u
   PostToZmqRequest( pMultipart );
 }
 
-void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+// ==
 
+void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+  HandleInterfaceDelete_local( uuidInterface );
+  HandleInterfaceDelete_msg( uuidInterface );
+}
+
+void Control::HandleInterfaceDelete_local( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
   for ( auto& port: m_mapPort ) {
     ovsdb::structures::setInterface_t::iterator iterSetInterface = port.second.setInterface.find( uuidInterface );
     if ( port.second.setInterface.end() == iterSetInterface ) {
@@ -444,11 +537,19 @@ void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& u
       }
     }
   }
-
 }
 
-void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
+void Control::HandleInterfaceDelete_msg( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
+}
 
+// ==
+
+void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
+  HandleStatisticsUpdate_local( uuidInterface, stats );
+  HandleStatisticsUpdate_msg( uuidInterface, stats );
+}
+
+void Control::HandleStatisticsUpdate_local( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
   mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
   if ( m_mapInterface.end() == iterInterface ) {
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleStatisticsUpdate interface " << uuidInterface << " does not exist";
@@ -457,13 +558,16 @@ void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& 
     ovsdb::structures::interface_composite_t& interface_( iterInterface->second );
     interface_.stats = stats;
   }
+}
 
+void Control::HandleStatisticsUpdate_msg( const ovsdb::structures::uuidInterface_t& uuidInterface, const ovsdb::structures::statistics_t& stats ) {
   auto pMultipart = std::make_unique<zmq::multipart_t>();  // TODO: use a pool?
 
   msg::header hdrSnd( 1, msg::type::eOvsInterfaceStatistics );
   pMultipart->addtyp<msg::header>( hdrSnd );
 
   pMultipart->addstr( uuidInterface );
+  // TODO: convert to a single typed structure of statistics_t (to be done in network byte order?)
   pMultipart->addtyp<size_t>( stats.collisions );
   pMultipart->addtyp<size_t>( stats.rx_bytes );
   pMultipart->addtyp<size_t>( stats.rx_crc_err );
@@ -479,3 +583,4 @@ void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& 
 
   PostToZmqRequest( pMultipart );
 }
+
