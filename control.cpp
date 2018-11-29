@@ -335,7 +335,7 @@ void Control::HandleStatisticsUpdate( const ovsdb::structures::uuidInterface_t& 
   pMultipart->addtyp<size_t>( stats.tx_bytes );
   pMultipart->addtyp<size_t>( stats.tx_dropped );
   pMultipart->addtyp<size_t>( stats.tx_errors );
-  pMultipart->addtyp<size_t>( stats.collisions );
+  pMultipart->addtyp<size_t>( stats.tx_packets );
 
   PostToZmqRequest( pMultipart );
 }
