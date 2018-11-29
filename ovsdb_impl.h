@@ -11,8 +11,6 @@
 #ifndef OVSDB_IMPL_H
 #define OVSDB_IMPL_H
 
-#include <set>
-
 // lsof|grep ovsdb
 
 #include <boost/asio/local/stream_protocol.hpp>

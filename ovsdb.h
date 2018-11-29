@@ -9,9 +9,6 @@
 #ifndef OVSDB_H
 #define OVSDB_H
 
-#include <memory>
-#include <functional>
-
 #include <boost/asio/io_context.hpp>
 
 #include "ovsdb_structures.h"

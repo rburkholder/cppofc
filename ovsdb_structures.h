@@ -9,6 +9,9 @@
 #ifndef OVSDB_STRUCTURES_H
 #define OVSDB_STRUCTURES_H
 
+#include <set>
+#include <functional>
+
 namespace ovsdb {
 namespace structures {
 
