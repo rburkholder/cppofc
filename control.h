@@ -59,15 +59,40 @@ private:
   typedef ovsdb::structures::uuidPort_t uuidPort_t;
   typedef ovsdb::structures::uuidInterface_t uuidInterface_t;
 
-  typedef ovsdb::structures::mapSwitch_t mapSwitch_t;
-  typedef ovsdb::structures::mapBridge_t mapBridge_t;
-  typedef ovsdb::structures::mapPort_t mapPort_t;
-  typedef ovsdb::structures::mapInterface_t mapInterface_t;
+  typedef std::set<uuidSwitch_t> setSwitch_t;
+  typedef std::set<uuidBridge_t> setBridge_t;
+  typedef std::set<uuidPort_t> setPort_t;
+  typedef std::set<uuidInterface_t> setInterface_t;
 
-  ovsdb::structures::mapSwitch_t m_mapSwitch;
-  ovsdb::structures::mapBridge_t m_mapBridge;
-  ovsdb::structures::mapPort_t m_mapPort;
-  ovsdb::structures::mapInterface_t m_mapInterface;
+  struct switch_composite_t {
+    ovsdb::structures::switch_t sw;
+    setBridge_t setBridge;
+  };
+
+  struct bridge_composite_t {
+    ovsdb::structures::bridge_t br;
+    setPort_t setPort;
+  };
+
+  struct port_composite_t {
+    ovsdb::structures::port_t port;
+    setInterface_t setInterface;
+  };
+
+  struct interface_composite_t {
+    ovsdb::structures::interface_t interface;
+    ovsdb::structures::statistics_t stats;
+  };
+
+  typedef std::map<uuidSwitch_t,switch_composite_t> mapSwitch_t;
+  typedef std::map<uuidBridge_t,bridge_composite_t> mapBridge_t;
+  typedef std::map<uuidPort_t,port_composite_t> mapPort_t;
+  typedef std::map<uuidInterface_t,interface_composite_t> mapInterface_t;
+
+  mapSwitch_t m_mapSwitch;
+  mapBridge_t m_mapBridge;
+  mapPort_t m_mapPort;
+  mapInterface_t m_mapInterface;
 
   void AcceptControlConnections();
 

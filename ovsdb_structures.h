@@ -23,21 +23,11 @@ namespace structures {
   typedef uuid_t uuidPort_t;
   typedef uuid_t uuidInterface_t;
 
-  typedef std::set<uuidSwitch_t> setSwitch_t;
-  typedef std::set<uuidBridge_t> setBridge_t;
-  typedef std::set<uuidPort_t> setPort_t;
-  typedef std::set<uuidInterface_t> setInterface_t;
-
   // ----
   struct switch_t {
     std::string hostname;
     std::string ovs_version;
     std::string db_version;
-  };
-
-  struct switch_composite_t {
-    ovsdb::structures::switch_t sw;
-    setBridge_t setBridge;
   };
 
   struct bridge_t {
@@ -48,22 +38,12 @@ namespace structures {
     bridge_t(): stp_enable( false ) {}
   };
 
-  struct bridge_composite_t {
-    ovsdb::structures::bridge_t br;
-    setPort_t setPort;
-  };
-
   struct port_t { // ports from a range of bridges
     std::string name;
     uint16_t tag; // port access vlan
     std::set<uint16_t> setTrunk; // a set of vlan numbers
     std::set<uint16_t> setVlanMode;  // not sure content of this yet
     port_t(): tag {} {}
-  };
-
-  struct port_composite_t {
-    ovsdb::structures::port_t port;
-    setInterface_t setInterface;
   };
 
   struct interface_t { // interfaces from a range of ports
@@ -77,7 +57,6 @@ namespace structures {
     interface_t(): ifindex {}, ofport {} {}
   };
 
-  // structure not used yet, used once strings are processed by boost::spririt
   struct statistics_t {
     size_t collisions;
     size_t rx_bytes;
@@ -97,16 +76,6 @@ namespace structures {
       tx_bytes {}, tx_packets {}, tx_dropped {}, tx_errors {}
       {}
   };
-
-  struct interface_composite_t {
-    ovsdb::structures::interface_t interface;
-    ovsdb::structures::statistics_t stats;
-  };
-
-  typedef std::map<uuidSwitch_t,switch_composite_t> mapSwitch_t;
-  typedef std::map<uuidBridge_t,bridge_composite_t> mapBridge_t;
-  typedef std::map<uuidPort_t,port_composite_t> mapPort_t;
-  typedef std::map<uuidInterface_t,interface_composite_t> mapInterface_t;
 
   typedef std::function<void(const uuidSwitch_t&)> fSwitchAdd_t;
   typedef std::function<void(const uuidSwitch_t&,const switch_t&)> fSwitchUpdate_t;
