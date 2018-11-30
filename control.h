@@ -70,19 +70,19 @@ private:
   };
 
   struct bridge_composite_t {
-    uuidSwitch_t uuidSwitch;
+    uuidSwitch_t uuidOwnerSwitch;
     ovsdb::structures::bridge_t br;
     setPort_t setPort;
   };
 
   struct port_composite_t {
-    uuidBridge_t uuidBridge;
+    uuidBridge_t uuidOwnerBridge;
     ovsdb::structures::port_t port;
     setInterface_t setInterface;
   };
 
   struct interface_composite_t {
-    uuidPort_t uuidPort;
+    uuidPort_t uuidOwnerPort;
     ovsdb::structures::interface_t interface;
     ovsdb::structures::statistics_t stats;
   };

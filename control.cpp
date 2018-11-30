@@ -268,7 +268,7 @@ void Control::HandleBridgeAdd_local( const ovsdb::structures::uuidSwitch_t& uuid
       switch_.setBridge.insert( setBridge_t::value_type( uuidBridge ) );
       mapBridge_t::iterator iterBridge = m_mapBridge.insert( m_mapBridge.begin(), mapBridge_t::value_type( uuidBridge, bridge_composite_t() ) );
       assert( m_mapBridge.end() != iterBridge );
-      iterBridge->second.uuidSwitch = uuidSwitch;
+      iterBridge->second.uuidOwnerSwitch = uuidSwitch;
     }
   }
 }
@@ -329,7 +329,7 @@ void Control::HandleBridgeDelete_local( const ovsdb::structures::uuidBridge_t& u
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeDelete bridge " << uuidBridge << " map item does not exist";
   }
   else {
-    mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( iterMapBridge->second.uuidSwitch );
+    mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( iterMapBridge->second.uuidOwnerSwitch );
     assert( m_mapSwitch.end() != iterSwitch );
     setBridge_t::iterator iterSetBridge = iterSwitch->second.setBridge.find( uuidBridge );
     assert( iterSwitch->second.setBridge.end() != iterSetBridge );
@@ -362,7 +362,7 @@ void Control::HandlePortAdd_local( const ovsdb::structures::uuidBridge_t& uuidBr
       bridge.setPort.insert( setPort_t::value_type( uuidPort ) );
       mapPort_t::iterator iterPort = m_mapPort.insert( m_mapPort.begin(), mapPort_t::value_type( uuidPort, port_composite_t() ) );
       assert( m_mapPort.end() != iterPort );
-      iterPort->second.uuidBridge = uuidBridge;
+      iterPort->second.uuidOwnerBridge = uuidBridge;
     }
   }
 }
@@ -426,7 +426,7 @@ void Control::HandlePortDelete_local( const ovsdb::structures::uuidPort_t& uuidP
     BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortDelete port " << uuidPort << " map item does not exist";
   }
   else {
-    mapBridge_t::iterator iterBridge = m_mapBridge.find( iterMapPort->second.uuidBridge );
+    mapBridge_t::iterator iterBridge = m_mapBridge.find( iterMapPort->second.uuidOwnerBridge );
     assert( m_mapBridge.end() != iterBridge );
     setPort_t::iterator iterSetPort = iterBridge->second.setPort.find( uuidPort );
     assert( iterBridge->second.setPort.end() != iterSetPort );
@@ -459,7 +459,7 @@ void Control::HandleInterfaceAdd_local( const ovsdb::structures::uuidPort_t& uui
       port.setInterface.insert( setInterface_t::value_type( uuidInterface ) );
       mapInterface_t::iterator iterInterface = m_mapInterface.insert( m_mapInterface.begin(), mapInterface_t::value_type( uuidInterface, interface_composite_t() ) );
       assert( m_mapInterface.end() != iterInterface );
-      iterInterface->second.uuidPort = uuidPort;
+      iterInterface->second.uuidOwnerPort = uuidPort;
     }
   }
 }
@@ -523,7 +523,7 @@ void Control::HandleInterfaceDelete_local( const ovsdb::structures::uuidInterfac
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceDelete interface " << uuidInterface << " map item does not exist";
   }
   else {
-    mapPort_t::iterator iterPort = m_mapPort.find( iterMapInterface->second.uuidPort );
+    mapPort_t::iterator iterPort = m_mapPort.find( iterMapInterface->second.uuidOwnerPort );
     assert( m_mapPort.end() != iterPort );
     setInterface_t::iterator iterSetInterface = iterPort->second.setInterface.find( uuidInterface );
     assert( iterPort->second.setInterface.end() != iterSetInterface );
