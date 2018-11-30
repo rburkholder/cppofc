@@ -179,8 +179,8 @@ void Control::HandleSwitchAdd( const ovsdb::structures::uuidSwitch_t& uuidSwitch
 void Control::HandleSwitchAdd_local( const ovsdb::structures::uuidSwitch_t& uuidSwitch ) {
   mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( uuidSwitch );
   if ( m_mapSwitch.end() == iterSwitch ) {
-    iterSwitch = m_mapSwitch.insert(
-      m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, switch_composite_t() ) );
+    iterSwitch = m_mapSwitch.insert( m_mapSwitch.begin(), mapSwitch_t::value_type( uuidSwitch, switch_composite_t() ) );
+    assert( m_mapSwitch.end() != iterSwitch );
   }
 }
 
@@ -240,6 +240,7 @@ void Control::HandleSwitchDelete_local( const ovsdb::structures::uuidSwitch_t& u
     BOOST_LOG_TRIVIAL(warning) << "Control::HandleSwitchDelete switch " << uuidSwitch << " does not exist";
   }
   else {
+    assert( iterSwitch->second.setBridge.empty() );
     m_mapSwitch.erase( iterSwitch );
     BOOST_LOG_TRIVIAL(info) << "Control::HandleSwitchDelete switch " << uuidSwitch << " deleted";
   }
@@ -265,7 +266,9 @@ void Control::HandleBridgeAdd_local( const ovsdb::structures::uuidSwitch_t& uuid
     setSwitch_t::iterator iterSetSwitch = switch_.setBridge.find( uuidBridge );
     if ( switch_.setBridge.end() == iterSetSwitch ) {
       switch_.setBridge.insert( setBridge_t::value_type( uuidBridge ) );
-      m_mapBridge.insert( m_mapBridge.begin(), mapBridge_t::value_type( uuidBridge, bridge_composite_t() ) );
+      mapBridge_t::iterator iterBridge = m_mapBridge.insert( m_mapBridge.begin(), mapBridge_t::value_type( uuidBridge, bridge_composite_t() ) );
+      assert( m_mapBridge.end() != iterBridge );
+      iterBridge->second.uuidSwitch = uuidSwitch;
     }
   }
 }
@@ -321,23 +324,19 @@ void Control::HandleBridgeDelete( const ovsdb::structures::uuidBridge_t& uuidBri
 }
 
 void Control::HandleBridgeDelete_local( const ovsdb::structures::uuidBridge_t& uuidBridge ) {
-  for ( auto& sw: m_mapSwitch ) {
-    setBridge_t::iterator iterSetBridge = sw.second.setBridge.find( uuidBridge );
-    if ( sw.second.setBridge.end() == iterSetBridge ) {
-      // bridge can only be found in one switch
-    }
-    else {
-      sw.second.setBridge.erase( iterSetBridge );
+  mapBridge_t::iterator iterMapBridge = m_mapBridge.find( uuidBridge );
+  if ( m_mapBridge.end() == iterMapBridge ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeDelete bridge " << uuidBridge << " map item does not exist";
+  }
+  else {
+    mapSwitch_t::iterator iterSwitch = m_mapSwitch.find( iterMapBridge->second.uuidSwitch );
+    assert( m_mapSwitch.end() != iterSwitch );
+    setBridge_t::iterator iterSetBridge = iterSwitch->second.setBridge.find( uuidBridge );
+    assert( iterSwitch->second.setBridge.end() != iterSetBridge );
+    iterSwitch->second.setBridge.erase( iterSetBridge );
 
-      mapBridge_t::iterator iterMapBridge = m_mapBridge.find( uuidBridge );
-      if ( m_mapBridge.end() == iterMapBridge ) {
-        BOOST_LOG_TRIVIAL(warning) << "Control::HandleBridgeDelete bridge " << uuidBridge << " map item does not exist";
-      }
-      else {
-        m_mapBridge.erase( iterMapBridge );
-        BOOST_LOG_TRIVIAL(info) << "Control::HandleBridgeDelete bridge" << uuidBridge << " deleted";
-      }
-    }
+    m_mapBridge.erase( iterMapBridge );
+    BOOST_LOG_TRIVIAL(info) << "Control::HandleBridgeDelete bridge" << uuidBridge << " deleted";
   }
 }
 
@@ -361,7 +360,9 @@ void Control::HandlePortAdd_local( const ovsdb::structures::uuidBridge_t& uuidBr
     setPort_t::iterator iterSetPort = bridge.setPort.find( uuidPort );
     if ( bridge.setPort.end() == iterSetPort ) {
       bridge.setPort.insert( setPort_t::value_type( uuidPort ) );
-      m_mapPort.insert( m_mapPort.begin(), mapPort_t::value_type( uuidPort, port_composite_t() ) );
+      mapPort_t::iterator iterPort = m_mapPort.insert( m_mapPort.begin(), mapPort_t::value_type( uuidPort, port_composite_t() ) );
+      assert( m_mapPort.end() != iterPort );
+      iterPort->second.uuidBridge = uuidBridge;
     }
   }
 }
@@ -420,23 +421,19 @@ void Control::HandlePortDelete( const ovsdb::structures::uuidPort_t& uuidPort ) 
 }
 
 void Control::HandlePortDelete_local( const ovsdb::structures::uuidPort_t& uuidPort ) {
-  for ( auto& bridge: m_mapBridge ) {
-    setPort_t::iterator iterSetPort = bridge.second.setPort.find( uuidPort );
-    if ( bridge.second.setPort.end() == iterSetPort ) {
-      // port can only be found in one bridge
-    }
-    else {
-      bridge.second.setPort.erase( iterSetPort );
+  mapPort_t::iterator iterMapPort = m_mapPort.find( uuidPort );
+  if ( m_mapPort.end() == iterMapPort ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortDelete port " << uuidPort << " map item does not exist";
+  }
+  else {
+    mapBridge_t::iterator iterBridge = m_mapBridge.find( iterMapPort->second.uuidBridge );
+    assert( m_mapBridge.end() != iterBridge );
+    setPort_t::iterator iterSetPort = iterBridge->second.setPort.find( uuidPort );
+    assert( iterBridge->second.setPort.end() != iterSetPort );
+    iterBridge->second.setPort.erase( iterSetPort );
 
-      mapPort_t::iterator iterMapPort = m_mapPort.find( uuidPort );
-      if ( m_mapPort.end() == iterMapPort ) {
-        BOOST_LOG_TRIVIAL(warning) << "Control::HandlePortDelete port " << uuidPort << " map item does not exist";
-      }
-      else {
-        m_mapPort.erase( iterMapPort );
-        BOOST_LOG_TRIVIAL(info) << "Control::HandlePortDelete port" << uuidPort << " deleted";
-      }
-    }
+    m_mapPort.erase( iterMapPort );
+    BOOST_LOG_TRIVIAL(info) << "Control::HandlePortDelete port" << uuidPort << " deleted";
   }
 }
 
@@ -460,7 +457,9 @@ void Control::HandleInterfaceAdd_local( const ovsdb::structures::uuidPort_t& uui
     setInterface_t::iterator iterSetInterface = port.setInterface.find( uuidInterface );
     if ( port.setInterface.end() == iterSetInterface ) {
       port.setInterface.insert( setInterface_t::value_type( uuidInterface ) );
-      m_mapInterface.insert( m_mapInterface.begin(), mapInterface_t::value_type( uuidInterface, interface_composite_t() ) );
+      mapInterface_t::iterator iterInterface = m_mapInterface.insert( m_mapInterface.begin(), mapInterface_t::value_type( uuidInterface, interface_composite_t() ) );
+      assert( m_mapInterface.end() != iterInterface );
+      iterInterface->second.uuidPort = uuidPort;
     }
   }
 }
@@ -519,23 +518,19 @@ void Control::HandleInterfaceDelete( const ovsdb::structures::uuidInterface_t& u
 }
 
 void Control::HandleInterfaceDelete_local( const ovsdb::structures::uuidInterface_t& uuidInterface ) {
-  for ( auto& port: m_mapPort ) {
-    setInterface_t::iterator iterSetInterface = port.second.setInterface.find( uuidInterface );
-    if ( port.second.setInterface.end() == iterSetInterface ) {
-      // interface can only be found in one port
-    }
-    else {
-      port.second.setInterface.erase( iterSetInterface );
+  mapInterface_t::iterator iterMapInterface = m_mapInterface.find( uuidInterface );
+  if ( m_mapInterface.end() == iterMapInterface ) {
+    BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceDelete interface " << uuidInterface << " map item does not exist";
+  }
+  else {
+    mapPort_t::iterator iterPort = m_mapPort.find( iterMapInterface->second.uuidPort );
+    assert( m_mapPort.end() != iterPort );
+    setInterface_t::iterator iterSetInterface = iterPort->second.setInterface.find( uuidInterface );
+    assert( iterPort->second.setInterface.end() != iterSetInterface );
+    iterPort->second.setInterface.erase( iterSetInterface );
 
-      mapInterface_t::iterator iterMapInterface = m_mapInterface.find( uuidInterface );
-      if ( m_mapInterface.end() == iterMapInterface ) {
-        BOOST_LOG_TRIVIAL(warning) << "Control::HandleInterfaceDelete interface " << uuidInterface << " map item does not exist";
-      }
-      else {
-        m_mapInterface.erase( iterMapInterface );
-        BOOST_LOG_TRIVIAL(info) << "Control::HandleInterfaceDelete interface" << uuidInterface << " deleted";
-      }
-    }
+    m_mapInterface.erase( iterMapInterface );
+    BOOST_LOG_TRIVIAL(info) << "Control::HandleInterfaceDelete interface" << uuidInterface << " deleted";
   }
 }
 
