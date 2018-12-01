@@ -1,7 +1,7 @@
 /*
  * File:   control.h
  * Author: Raymond Burkholder
- *         raymond@burkholder.net *
+ *         raymond@burkholder.net
  *
  * Created on November 22, 2018, 4:17 PM
  */

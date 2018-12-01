@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ethernet.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
@@ -13,16 +13,17 @@
 
 #include <boost/endian/arithmetic.hpp>
 
-#include "../common.h"
+//#include "../common.h"
+#include "../mac.h"
 #include "../hexdump.h"
 
 namespace ethernet {
-  
+
 // https://en.wikipedia.org/wiki/Ethernet_frame
 // https://en.wikipedia.org/wiki/EtherType
 // https://en.wikipedia.org/wiki/IEEE_802.1Q
 
-enum Ethertype { 
+enum Ethertype {
     ipv4=0x0800
   , arp=0x0806
   , ieee8021q=0x8100 // vlan
@@ -51,27 +52,27 @@ struct header_ {
 class header {
   friend std::ostream& operator<<( std::ostream&, const header& );
 public:
-  
+
   header( uint8_t& ); // packet data, determine whether to init or not
   virtual ~header( );
-  
+
   uint16_t GetEthertype() const {
     return m_pHeader->m_ethertype;
   }
-  
+
   const mac_t& GetDstMac() const { return m_pHeader->m_macDest; }
   const mac_t& GetSrcMac() const { return m_pHeader->m_macSrc; }
-  
-  uint8_t& GetMessage() { 
+
+  uint8_t& GetMessage() {
     return (m_pHeader->m_message)[0];
   }
-  
+
   std::ostream& Emit( std::ostream& stream ) const;
-  
+
 private:
-  
+
   header_* m_pHeader;
-  
+
 };
 
 } // namespace ethernet

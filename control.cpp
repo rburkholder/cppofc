@@ -32,6 +32,7 @@
 #include "ovsdb.h"
 #include "tcp_session.h"
 #include "control.h"
+#include "mac.h"
 
 Control::Control( int port )
 :
@@ -462,6 +463,7 @@ void Control::HandleInterfaceAdd_local( const ovsdb::structures::uuidPort_t& uui
       iterInterface->second.uuidOwnerPort = uuidPort;
     }
   }
+
 }
 
 void Control::HandleInterfaceAdd_msg( const ovsdb::structures::uuidPort_t& uuidPort, const ovsdb::structures::uuidInterface_t& uuidInterface ) {
@@ -491,6 +493,40 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
   else {
     interface_composite_t& interface_( iterInterface->second );
     interface_.interface = interface;
+
+    mapPort_t::const_iterator iterPort = m_mapPort.find( interface_.uuidOwnerPort );
+    const ovsdb::structures::port_t& port( iterPort->second.port );
+
+    Bridge::interface_t bi;
+
+    bi.tag = port.tag;
+    bi.setTrunk = port.setTrunk;
+    bi.setVlanMode = port.setVlanMode;
+    bi.ifindex = interface.ifindex;
+    bi.ofport = interface.ofport;
+
+    if ( "up" == interface.admin_state ) {
+      bi.admin_state = Bridge::OpState::up;
+    }
+    else {
+      if ( "down" == interface.admin_state ) {
+        bi.admin_state = Bridge::OpState::down;
+      }
+    }
+
+    if ( "up" == interface.link_state ) {
+      bi.link_state = Bridge::OpState::up;
+    }
+    else {
+      if ( "down" == interface.link_state ) {
+        bi.link_state = Bridge::OpState::down;
+      }
+    }
+
+    ConvertStringToMac( interface.mac_in_use, bi.mac_in_use );
+
+    m_bridge.UpdateInterface( bi );
+
   }
 }
 
@@ -578,4 +614,3 @@ void Control::HandleStatisticsUpdate_msg( const ovsdb::structures::uuidInterface
 
   PostToZmqRequest( pMultipart );
 }
-

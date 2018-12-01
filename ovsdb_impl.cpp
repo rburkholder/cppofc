@@ -409,6 +409,8 @@ bool decode_impl::parse_statistics( const json& j ) {
           if ( map.end() == iter ) {
             bool bFound( false );
             // TODO: construct via macro to ensure consistency
+            // take a look at the spirit example:
+            //   https://www.boost.org/doc/libs/1_64_0/libs/spirit/doc/html/spirit/qi/tutorials/complex___our_first_complex_parser.html
             if ( "collisions"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->collisions ) ); bFound = true;
             if ( "rx_bytes"     == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_bytes ) ); bFound = true;
             if ( "rx_crc_err"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_crc_err ) ); bFound = true;

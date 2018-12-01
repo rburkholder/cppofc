@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   mac.h
  * Author: sysadmin
  *
@@ -9,31 +9,57 @@
 #define MAC_H
 
 #include <cstring>
+#include <cstdint>
+#include <vector>
+#include <string>
 
-#include "common.h"
+//#include "common.h"
+
+typedef uint8_t mac_t[ 6 ];
+
+void ConvertStringToMac( const std::string&, mac_t& ); // hh:hh:hh:hh:hh:hh
 
 class MacAddress {
 public:
-  
-  MacAddress();  
+
+  MacAddress();
   MacAddress( const mac_t& mac );
   MacAddress( const MacAddress& rhs );
-  
+  MacAddress( const std::string& );
+
   static bool IsBroadcast( const mac_t& mac );
   static bool IsBroadcast( const MacAddress& mac );
-  
+
   static bool IsMulticast( const mac_t& mac );
   static bool IsMulticast( const MacAddress& mac );
-  
+
   const mac_t& Value() const;
-  
+
   bool operator==( const mac_t& rhs ) const;
   bool operator==( const MacAddress& rhs ) const;
-  
+
 protected:
 private:
   mac_t m_mac;
 };
+
+// http://en.cppreference.com/w/cpp/utility/hash
+namespace std {
+  template<> struct hash<const mac_t&> {
+    typedef const mac_t&  argument_type;
+    typedef std::size_t result_type;
+    result_type operator()( argument_type mac ) const {
+      result_type value;
+      value  = mac[0]; value <<= 4;
+      value ^= mac[5]; value <<= 5;
+      value ^= mac[1]; value <<= 5;
+      value ^= mac[4]; value <<= 5;
+      value ^= mac[2]; value <<= 5;
+      value ^= mac[3];
+      return value;
+      }
+    };
+}
 
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {

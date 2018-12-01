@@ -1,12 +1,12 @@
-/* 
+/*
  * File:   tcp_session.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
- * 
+ *
  * Created on June 6, 2017, 11:07 AM
  */
 
-// 
+//
 
 #include <ostream>
 #include <iomanip>
@@ -80,7 +80,7 @@ void tcp_session::do_read() {
 
           // inbound data arrives
           // if reassembly data available;
-          //    append to reassembly buffer, 
+          //    append to reassembly buffer,
           //    clear inbound buffer
           //    move adjusted reassembly buffer to inbound buffer
           // loop on input buffer:
@@ -90,30 +90,30 @@ void tcp_session::do_read() {
           //   if less than header.length:
           //     move remaining octets to reassembly buffer
           //     exit loop for more
-          //   if >= header.length: 
+          //   if >= header.length:
           //     process packet
           //     move beginning to end
           //     loop for more
-          
+
           std::size_t length = lenRead;
-          
+
           if ( 0 != m_vReassembly.size() ) {
             m_vReassembly.insert( m_vReassembly.end(), m_vRx.begin(), m_vRx.begin() + lenRead );
             m_vRx.clear();
             m_vRx = std::move( m_vReassembly );
             length = m_vRx.size();
           }
-          
+
           vByte_iter_t iterBegin = m_vRx.begin();
           vByte_iter_t iterEnd = iterBegin + length;
-          
+
           ofp141::ofp_header* pOfpHeader;
           bool bReassemble( false );
-          
+
           bool bLooping( true );
-          
+
           while ( bLooping ) {
-            
+
             auto nOctetsRemaining = iterEnd - iterBegin;
 
             if ( nOctetsRemaining < sizeof( ofp141::ofp_header ) ) bReassemble = true;
@@ -135,7 +135,7 @@ void tcp_session::do_read() {
               bLooping = iterBegin != iterEnd;
            }
           }
-          
+
           std::cout << "<<< end." << std::endl;
 
         } // end if ( ec )
@@ -155,7 +155,7 @@ void tcp_session::do_read() {
 }
 
 void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
-  
+
   ofp141::ofp_header* pHeader = new( pBegin ) ofp141::ofp_header;
 
   // can probably remove this check after code is validated
@@ -168,18 +168,18 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
     assert( 0 );
   }
 
-  std::cout 
+  std::cout
     << "IN: "
     << HexDump<const uint8_t*>( pBegin, pEnd )
     << std::endl;
 
-  std::cout 
-    << (uint16_t)pHeader->version 
-    << "," << (uint16_t)pHeader->type 
-    << "," << pHeader->length 
-    << "," << pHeader->xid 
+  std::cout
+    << (uint16_t)pHeader->version
+    << "," << (uint16_t)pHeader->type
+    << "," << pHeader->length
+    << "," << pHeader->xid
     << std::endl;
-  
+
   if ( OFP_VERSION == pHeader->version ) {
     switch (pHeader->type) {
       case ofp141::ofp_type::OFPT_HELLO: {
@@ -203,21 +203,21 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             mod.cookie = 0x101; // can change this as cookie usage becomes refined
             actions.len += sizeof( action );
 
-            // need to update pMatch length once match fields are added                      
+            // need to update pMatch length once match fields are added
           }
         };
-        
+
         vByte_t v = std::move( GetAvailableBuffer() );
         v.resize( sizeof( add_table_miss_flow ) );
-        auto pMod = new( v.data() ) add_table_miss_flow; 
+        auto pMod = new( v.data() ) add_table_miss_flow;
         pMod->init();
         pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
-        std::cout 
-          << "Sent MissFlow flow entry: " 
+        std::cout
+          << "Sent MissFlow flow entry: "
           << HexDump<vByte_iter_t>( v.begin(), v.end() )
           << std::endl;
         QueueTxToWrite( std::move( v ) );
-        
+
         // TODO:  install two flows (higher priority than default packet_in):
         //   match src broadcast -> drop (should there be such an animal?)
         //   match dst broadcast -> flood
@@ -230,8 +230,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // now should be able to modularize this code
 
         const auto pPacket = new(pBegin) ofp141::ofp_packet_in;
-        std::cout 
-          << "packet in meta: " 
+        std::cout
+          << "packet in meta: "
           << "bufid=" << std::hex << pPacket->buffer_id << std::dec
           << ", total_len=" << pPacket->total_len
           << ", reason=" << (uint16_t)pPacket->reason
@@ -245,7 +245,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
         auto pMatch = new( &pPacket->match ) codec::ofp_flow_mod::ofp_match_;
         const auto pPayload = pBegin + pPacket->header.length - pPacket->total_len;
-        std::cout 
+        std::cout
           << "  content: "
           << HexDump<uint8_t*>( pPayload, pPayload + pPacket->total_len )
           << ::std::endl;
@@ -283,7 +283,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
           case ethernet::Ethertype::ipv4: {
             protocol::ipv4::Packet ipv4( *pMessage );
             std::cout << ipv4 << ::std::endl;
-            
+
             switch ( ipv4.GetHeader().protocol ) {
               case 6: {// tcp
                 protocol::tcp::Packet tcp( ipv4.GetData() );
@@ -308,7 +308,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             }
             break;
         }
-        
+
         // create a lambda (TODO: needs to be restructured, for handling message
         //   needs to be integral to the cookie switch statement (to be refactored)
         uint32_t nSrcPort;
@@ -335,7 +335,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 mod.cookie = 0x201;
                 mod.idle_timeout = 10; // seconds
                 mod.priority = 100;
-                
+
                 // pMatch used as placeholder for match structures
                 boost::endian::big_uint8_t* pMatch = &mod.match.oxm_fields[0];
 
@@ -343,7 +343,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 auto* pMatchEthSrc = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
                 pMatchEthSrc->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc );
                 mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
-                
+
                 // match structures start from here
                 pMatch += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
 
@@ -370,29 +370,29 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
               } // init()
             }; // update_flow_mac_src_dest
-            
+
             MacAddress macSrc( ethernet.GetSrcMac() );
             MacAddress macDst( ethernet.GetDstMac() );
 
             nSrcPort = nSrcPort_;
             Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, macSrc.Value() );
-            
+
             nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
-            
+
             // if we arrived in this code, it means a flow or set of flows:
             //   a) have not existed, or
             //   b) have expired
-            
+
             typedef codec::ofp_flow_mod::Verdict Verdict;
             Verdict verdict( Verdict::Drop );
-            
-            if ( MacAddress::IsMulticast( macSrc ) 
+
+            if ( MacAddress::IsMulticast( macSrc )
               || MacAddress::IsBroadcast( macSrc )
             ) {
               std::cout << "source based broadcast/multicast address found" << std::endl;
             }
             else {
-              if (   MacAddress::IsMulticast( macDst ) 
+              if (   MacAddress::IsMulticast( macDst )
                 ||   MacAddress::IsBroadcast( macDst )
                 || ( ofp141::ofp_port_no::OFPP_MAX <= nDstPort )
               ) {
@@ -402,36 +402,36 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               else {
                 // configure flow in each direction
                 // remove/overwrite/add flow: match dest mac, set dest port,
-                // if a mac-dest only flow is inserted, 
+                // if a mac-dest only flow is inserted,
                 //   won't get a packet_in from the other direction to learn those macs
                 // therefore, only insert src/dest based flows, both ways
                 //   use flow expiry of 10 seconds for testing
                 //   match srcmac, destmac, set dest port
                 //   put in both directions
-                
+
                 {
                   vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( max_length );
-                  auto pMod = new( v.data() ) update_flow_mac_src_dest; 
+                  auto pMod = new( v.data() ) update_flow_mac_src_dest;
                   pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nDstPort );
                   v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                   //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
                   QueueTxToWrite( std::move( v ) );
-                  std::cout << "Update Flow1: " 
+                  std::cout << "Update Flow1: "
                     << std::hex << nDstPort << std::dec << std::endl;
                 }
 
                 {
                   vByte_t v = std::move( GetAvailableBuffer() );
                   v.resize( max_length );
-                  auto pMod = new( v.data() ) update_flow_mac_src_dest; 
+                  auto pMod = new( v.data() ) update_flow_mac_src_dest;
                   pMod->init( ethernet.GetDstMac(), ethernet.GetSrcMac(), nSrcPort );
                   v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
                   //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
                   QueueTxToWrite( std::move( v ) );
                   std::cout << "Update Flow2: " << nSrcPort << std::endl;
                 }
-                
+
                 verdict = Verdict::Directed;
               }
             }
@@ -460,7 +460,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                 QueueTxToWrite( std::move( v ) );
                 std::cout << "Verdict Directed " << std::endl;
                 }
-                
+
                 break;
               case Verdict::Flood: {
                 // flood via ALL
@@ -483,9 +483,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
       case ofp141::ofp_type::OFPT_ERROR: { // v1.4.1 page 148
         const auto pError = new(pBegin) ofp141::ofp_error_msg;
-        std::cout 
-          << "Error type " << pError->type 
-          << " code " << pError->code 
+        std::cout
+          << "Error type " << pError->type
+          << " code " << pError->code
           << std::endl;
         break;
         }
@@ -524,7 +524,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         break;
       case ofp141::ofp_type::OFPT_PORT_STATUS: {
-        // multiple messages stacked, so need to change code in this whole section 
+        // multiple messages stacked, so need to change code in this whole section
         //   to sequentially parse the inbound bytes -- 2018/11/13 I think this is taken care of now
         const auto pStatus = new(pBegin) ofp141::ofp_port_status;
         codec::ofp_port_status status( *pStatus );
@@ -577,7 +577,7 @@ void tcp_session::do_write() {
       [this, self]( boost::system::error_code ec, std::size_t len )
       {
         UnloadTxInWrite();
-//        std::cout << "do_write atomic: " << 
+//        std::cout << "do_write atomic: " <<
         if ( 2 <= m_transmitting.fetch_sub( 1, std::memory_order_release ) ) {
           //std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
           LoadTxInWrite();
@@ -609,6 +609,7 @@ vByte_t tcp_session::GetAvailableBuffer() {
   return v;
 }
 
+// TODO: run these methods in a strand?
 void tcp_session::QueueTxToWrite( vByte_t v ) {
   std::unique_lock<std::mutex> lock( m_mutex );
   //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
