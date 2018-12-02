@@ -27,6 +27,7 @@
         <itemPath>protocol/ipv4/udp.h</itemPath>
         <itemPath>protocol/vlan.h</itemPath>
       </logicalFolder>
+      <itemPath>Buffer.h</itemPath>
       <itemPath>bridge.h</itemPath>
       <itemPath>common.h</itemPath>
       <itemPath>control.h</itemPath>
@@ -66,6 +67,7 @@
         <itemPath>protocol/ipv4/udp.cpp</itemPath>
         <itemPath>protocol/vlan.cpp</itemPath>
       </logicalFolder>
+      <itemPath>Buffer.cpp</itemPath>
       <itemPath>bridge.cpp</itemPath>
       <itemPath>control.cpp</itemPath>
       <itemPath>mac.cpp</itemPath>
@@ -119,6 +121,10 @@
           </linkerLibItems>
         </linkerTool>
       </compileType>
+      <item path="Buffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Buffer.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="bridge.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="bridge.h" ex="false" tool="3" flavor2="0">
@@ -238,6 +244,10 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="Buffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Buffer.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="bridge.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="bridge.h" ex="false" tool="3" flavor2="0">

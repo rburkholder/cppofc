@@ -35,6 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/Buffer.o \
 	${OBJECTDIR}/bridge.o \
 	${OBJECTDIR}/codecs/datapathid.o \
 	${OBJECTDIR}/codecs/ofp_async_config.o \
@@ -83,6 +84,11 @@ LDLIBSOPTIONS=-lpthread -lboost_system-mt -lzmq -lboost_thread-mt -lboost_log_se
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/cppofc ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/Buffer.o: Buffer.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -DBOOST_ASIO_ENABLE_HANDLER_TRACKING -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Buffer.o Buffer.cpp
 
 ${OBJECTDIR}/bridge.o: bridge.cpp
 	${MKDIR} -p ${OBJECTDIR}
