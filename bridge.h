@@ -12,6 +12,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <functional>
 #include <unordered_map>
 
 #include "common.h"
@@ -23,25 +24,31 @@
 //   will need to do this any way to deal with packets requiring long duration processing such as
 //      dns lookups, squid lookups, ....
 
+// TODO: in tcp_session decodes, confirm access port is not receiving trunk info
+
 class Bridge {
 public:
 
   typedef size_t ofport_t;
+  typedef uint16_t vlanid_t;
 
-  enum OpState { unknown, up, down };
+  typedef std::function<void(vByte_t&&)> fAcquireBuffer;
+  typedef std::function<void(vByte_t&&)> fTransmitBuffer;
+
+  enum OpState { unknOpState, up, down };
   enum MacStatus { StatusQuo, Multicast, Broadcast, Learned, Moved }; // add 'Flap' ?
 
   struct interface_t {
     uint16_t tag; // port access vlan
-    std::set<uint16_t> setTrunk; // a set of vlan numbers
-    std::set<uint16_t> setVlanMode;  // not sure content of this yet
+    std::set<vlanid_t> setTrunk; // a set of vlan numbers
+    std::set<vlanid_t> setVlanMode;  // not sure content of this yet
     OpState admin_state;
     OpState link_state;
     mac_t mac_in_use;
     size_t ifindex;
     ofport_t ofport;
     interface_t()
-      : tag( 0 ), admin_state( OpState::unknown ), link_state( OpState::unknown ), ifindex( 0 ), ofport( 0 )
+      : tag( 0 ), admin_state( OpState::unknOpState ), link_state( OpState::unknOpState ), ifindex( 0 ), ofport( 0 )
     {}
   };
 
@@ -58,18 +65,29 @@ public:
 
 private:
 
+  enum typeVlan { unknVlan=0, access=1, trunk=2 };
+
   struct MacInfo {
     nPort_t m_inPort;
     MacInfo( nPort_t inPort ): m_inPort( inPort ) {}
   };
 
-  typedef std::map<ofport_t,interface_t> mapInterface_t;
-
-  // change to pimpl for use with MacAddress
   typedef std::unordered_map<MacAddress,MacInfo> mapMac_t;
-
   mapMac_t m_mapMac;
+
+  typedef std::map<ofport_t,interface_t> mapInterface_t;
   mapInterface_t m_mapInterface;
+
+  typedef std::set<ofport_t> setPort_t;
+
+  struct vlan_t {
+    setPort_t setPortAccess; // set of ports as access
+    setPort_t setPortTrunk;  // set of ports as trunk
+    uint32_t idGroupAccess; // openflow group for access ports
+    uint32_t idGroupTrunk;  // openflow group for trunk ports
+  };
+
+  typedef std::map<vlanid_t,vlan_t> mapVlanToPort_t;
 
 };
 
