@@ -66,7 +66,10 @@ struct mac_parser_t: qi::grammar<Iterator, vMac_t()> {
 };
 }
 
-void ConvertStringToMac( const std::string& sMac, mac_t& mac ) {
+///
+/// \param macSrc
+/// \param macDst
+void ConvertStringToMac( const std::string& macSrc, mac_t& macDst ) {
   typedef std::vector<uint8_t> vMac_t;
   vMac_t vResult;
   vResult.reserve( 6 );
@@ -75,15 +78,15 @@ void ConvertStringToMac( const std::string& sMac, mac_t& mac ) {
   typedef mac_parser_t<iterator_type> mac_parser_string_t;
   mac_parser_string_t parser;
 
-  std::string::const_iterator iter = sMac.begin();
-  std::string::const_iterator end = sMac.end();
+  std::string::const_iterator iter = macSrc.begin();
+  std::string::const_iterator end = macSrc.end();
   auto result = qi::parse( iter, end, parser, vResult );
 
   if ( 1 != result ) throw std::runtime_error( "ill formed mac address (1)" );
   if ( iter != end ) throw std::runtime_error( "ill formed mac address (2)" );
   assert( sizeof( mac_t ) == vResult.size() );
 
-  std::memcpy( mac, vResult.data(), sizeof( mac_t ) );
+  std::memcpy( macDst, vResult.data(), sizeof( mac_t ) );
 }
 
 bool MacAddress::IsMulticast( const mac_t& mac ) {

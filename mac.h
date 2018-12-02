@@ -17,7 +17,7 @@
 
 typedef uint8_t mac_t[ 6 ];
 
-void ConvertStringToMac( const std::string&, mac_t& ); // hh:hh:hh:hh:hh:hh
+void ConvertStringToMac( const std::string& src, mac_t& dst ); // hh:hh:hh:hh:hh:hh
 
 class MacAddress {
 public:
