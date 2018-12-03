@@ -19,12 +19,21 @@ Buffer::~Buffer() {}
 
 vByte_t Buffer::ObtainBuffer() {
   std::unique_lock<std::mutex> lock( m_mutex );
-  vByte_t vByte = std::move( m_qTxBuffersToBeWritten.front() );
-  m_qTxBuffersToBeWritten.pop();
+  if ( m_qBuffersAvailable.empty() ) {
+    m_qBuffersAvailable.push( vByte_t() );
+  }
+  vByte_t vByte = std::move( m_qBuffersAvailable.front() );
+  m_qBuffersAvailable.pop();
   return vByte;
 }
 
-void Buffer::ReturnBuffer( vByte_t& vByte) {
+void Buffer::AddBuffer( vByte_t& vByte) {
   std::unique_lock<std::mutex> lock( m_mutex );
+  //vByte.clear(); // don't do this as this is used for queued storage
   m_qBuffersAvailable.push( std::move( vByte ) );
+}
+
+bool Buffer::Empty() {
+  std::unique_lock<std::mutex> lock( m_mutex );
+  return m_qBuffersAvailable.empty();
 }

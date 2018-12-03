@@ -34,7 +34,8 @@ public:
   virtual ~Buffer();
 
   vByte_t ObtainBuffer();
-  void ReturnBuffer( vByte_t& );
+  void AddBuffer( vByte_t& );
+  bool Empty();
 
   //asio::io_context::strand& Strand() { return m_strandBufferOps; }
 
@@ -43,12 +44,13 @@ private:
 
   //asio::io_context::strand m_strandBufferOps;
 
+  // TODO: might be better to maintain the lock outside of here
   std::mutex m_mutex;
 
   typedef std::queue<vByte_t> qBuffers_t;
 
   qBuffers_t m_qBuffersAvailable;
-  qBuffers_t m_qTxBuffersToBeWritten;
+  //qBuffers_t m_qTxBuffersToBeWritten;
 
   Buffer( const Buffer& ) = delete;
 
