@@ -37,3 +37,7 @@ bool Buffer::Empty() {
   std::unique_lock<std::mutex> lock( m_mutex );
   return m_qBuffersAvailable.empty();
 }
+
+const vByte_t& Buffer::Front() const {
+  return m_qBuffersAvailable.front();
+}

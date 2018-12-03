@@ -571,19 +571,19 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 //}
 
 void tcp_session::do_write() {
-  auto self(shared_from_this());
+  auto self( shared_from_this() );
   //std::cout << "do_write start: " << std::endl;
   asio::async_write(
-    m_socket, boost::asio::buffer( m_vTxInWrite ),  // rather than class variable, pass contents into lambda
+    m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
       [this, self]( boost::system::error_code ec, std::size_t len )
       {
-        //std::unique_lock<std::mutex> lock( m_mutex ); // need this lock to cover double test?
-        UnloadTxInWrite();
+        vByte_t v = std::move( m_bufferTxQueue.ObtainBuffer() );
+        v.clear();
+        m_bufferAvailable.AddBuffer( v );
 //        std::cout << "do_write atomic: " <<
         if ( 2 <= m_transmitting.fetch_sub( 1, std::memory_order_release ) ) {
-        //if ( !m_bufferWaitingToTx.Empty() ) {
           //std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
-          LoadTxInWrite();
+          //m_vTxInWrite = std::move( m_bufferTxQueue.ObtainBuffer() );
           do_write();
         }
         //std::cout << "do_write complete:" << ec << "," << len << std::endl;
@@ -593,10 +593,6 @@ void tcp_session::do_write() {
       });
 }
 
-void tcp_session::GetAvailableBuffer( vByte_t& v ) {
-  v = std::move( m_bufferAvailable.ObtainBuffer() );
-}
-
 vByte_t tcp_session::GetAvailableBuffer() {
   return m_bufferAvailable.ObtainBuffer();
 }
@@ -604,22 +600,10 @@ vByte_t tcp_session::GetAvailableBuffer() {
 // TODO: run these methods in a strand?
 void tcp_session::QueueTxToWrite( vByte_t v ) { // TODO: look at changing to lvalue ref or rvalue ref
   //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+  m_bufferTxQueue.AddBuffer( v );
   if ( 0 == m_transmitting.fetch_add( 1, std::memory_order_acquire ) ) {
     //std::cout << "QTTW1: " << std::endl;
-    m_vTxInWrite = std::move( v );
     do_write();
   }
-  else {
-    //std::cout << "QTTW2: " << std::endl;
-    m_bufferWaitingToTx.AddBuffer( v );
-  }
 }
 
-void tcp_session::LoadTxInWrite() {
-  m_vTxInWrite = std::move( m_bufferWaitingToTx.ObtainBuffer() );
-}
-
-void tcp_session::UnloadTxInWrite() {
-  m_vTxInWrite.clear();
-  m_bufferAvailable.AddBuffer( m_vTxInWrite );
-}

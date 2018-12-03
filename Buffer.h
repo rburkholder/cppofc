@@ -36,6 +36,7 @@ public:
   vByte_t ObtainBuffer();
   void AddBuffer( vByte_t& );
   bool Empty();
+  const vByte_t& Front() const;
 
   //asio::io_context::strand& Strand() { return m_strandBufferOps; }
 

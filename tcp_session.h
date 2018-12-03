@@ -50,8 +50,6 @@ private:
 
   void do_read();
 
-  //void do_write(std::size_t length);
-
   // TODO:  need a write queue, need to update the xid value in the header
   //    so, create a method or class for handling queued messages and transactions
   //void do_write( vChar_t& v );
@@ -68,12 +66,8 @@ private:
   // TODO: run stuff using these constructs through a strand instead
   std::atomic<uint32_t> m_transmitting;
 
-  //qBuffers_t m_qBuffersAvailable;
-  //qBuffers_t m_qTxBuffersToBeWritten;
-  vByte_t m_vTxInWrite;
-
   Buffer m_bufferAvailable;
-  Buffer m_bufferWaitingToTx;
+  Buffer m_bufferTxQueue;
 
   Bridge& m_bridge;
 
@@ -81,11 +75,8 @@ private:
 
   void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
 
-  void GetAvailableBuffer( vByte_t& v );
   vByte_t GetAvailableBuffer();
   void QueueTxToWrite( vByte_t );
-  void LoadTxInWrite();
-  void UnloadTxInWrite();
 
 };
 
