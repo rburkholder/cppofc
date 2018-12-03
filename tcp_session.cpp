@@ -577,6 +577,7 @@ void tcp_session::do_write() {
     m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
       [this, self]( boost::system::error_code ec, std::size_t len )
       {
+        std::unique_lock<std::mutex> lock( m_mutex );
         vByte_t v = std::move( m_bufferTxQueue.ObtainBuffer() );
         v.clear();
         m_bufferAvailable.AddBuffer( v );
@@ -594,11 +595,13 @@ void tcp_session::do_write() {
 }
 
 vByte_t tcp_session::GetAvailableBuffer() {
+  std::unique_lock<std::mutex> lock( m_mutex );
   return m_bufferAvailable.ObtainBuffer();
 }
 
 // TODO: run these methods in a strand?
 void tcp_session::QueueTxToWrite( vByte_t v ) { // TODO: look at changing to lvalue ref or rvalue ref
+  std::unique_lock<std::mutex> lock( m_mutex );
   //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
   m_bufferTxQueue.AddBuffer( v );
   if ( 0 == m_transmitting.fetch_add( 1, std::memory_order_acquire ) ) {

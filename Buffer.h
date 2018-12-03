@@ -46,7 +46,7 @@ private:
   //asio::io_context::strand m_strandBufferOps;
 
   // TODO: might be better to maintain the lock outside of here
-  std::mutex m_mutex;
+  //std::mutex m_mutex;
 
   typedef std::queue<vByte_t> qBuffers_t;
 

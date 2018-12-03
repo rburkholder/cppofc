@@ -33,6 +33,9 @@ public:
 
   void start();
 
+  vByte_t GetAvailableBuffer();
+  void QueueTxToWrite( vByte_t );
+
 private:
 
   enum { max_length = 65560 };  // total header and data for ipv4 is 65535
@@ -66,6 +69,8 @@ private:
   // TODO: run stuff using these constructs through a strand instead
   std::atomic<uint32_t> m_transmitting;
 
+  std::mutex m_mutex;
+
   Buffer m_bufferAvailable;
   Buffer m_bufferTxQueue;
 
@@ -74,9 +79,6 @@ private:
   //asio::io_context::strand m_ioStrand;
 
   void ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd );
-
-  vByte_t GetAvailableBuffer();
-  void QueueTxToWrite( vByte_t );
 
 };
 
