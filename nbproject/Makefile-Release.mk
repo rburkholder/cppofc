@@ -40,6 +40,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/datapathid.o \
 	${OBJECTDIR}/codecs/ofp_async_config.o \
 	${OBJECTDIR}/codecs/ofp_flow_mod.o \
+	${OBJECTDIR}/codecs/ofp_group_mod.o \
 	${OBJECTDIR}/codecs/ofp_header.o \
 	${OBJECTDIR}/codecs/ofp_hello.o \
 	${OBJECTDIR}/codecs/ofp_packet_out.o \
@@ -109,6 +110,11 @@ ${OBJECTDIR}/codecs/ofp_flow_mod.o: codecs/ofp_flow_mod.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_flow_mod.o codecs/ofp_flow_mod.cpp
+
+${OBJECTDIR}/codecs/ofp_group_mod.o: codecs/ofp_group_mod.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_group_mod.o codecs/ofp_group_mod.cpp
 
 ${OBJECTDIR}/codecs/ofp_header.o: codecs/ofp_header.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
