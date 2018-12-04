@@ -92,6 +92,7 @@ private:
     setPort_t setPortTrunk;  // set of ofport_t as trunk
     uint32_t idGroupAccess; // openflow group for access ports
     uint32_t idGroupTrunk;  // openflow group for trunk ports
+    vlan_t(): idGroupAccess( 0 ), idGroupTrunk( 0 ) {}
   };
 
   typedef std::map<vlanid_t,vlan_t> mapVlanToPort_t;
@@ -104,6 +105,7 @@ private:
   fTransmitBuffer_t m_fTransmitBuffer;
 
   mapVlanToPort_t m_mapVlanToPort;
+  setPort_t m_setPortWithAllVlans;
 
 };
 

@@ -94,22 +94,67 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 //void Bridge::AddInterface( const interface_t& ) {
 //}
 
-void Bridge::UpdateInterface( const interface_t& interface ) {
+void Bridge::UpdateInterface( const interface_t& interface_ ) {
   std::unique_lock<std::mutex> lock( m_mutex );
-  // is ofport==0 a valid value?
-  mapInterface_t::iterator iterMapInterface = m_mapInterface.find( interface.ofport );
+  // is ofport==0 a valid value?  -- no, need to find the reference again
+  mapInterface_t::iterator iterMapInterface = m_mapInterface.find( interface_.ofport );
   if ( m_mapInterface.end() == iterMapInterface ) {
-    iterMapInterface = m_mapInterface.insert( m_mapInterface.begin(), mapInterface_t::value_type( interface.ofport, interface ) );
+    iterMapInterface = m_mapInterface.insert( m_mapInterface.begin(), mapInterface_t::value_type( interface_.ofport, interface_ ) );
   }
   else {
-    iterMapInterface->second = interface;
+    iterMapInterface->second = interface_;
     // TODO:  be a bit more subtle, check for changes one by one.
+    //        ie, delete ofport from access, trunk, global
   }
 
-  //mapVlanToPort_t::iterator iterVlan = m_mapVlanToPort.find( interface.)
+  interface_t& interface( iterMapInterface->second );
 
+  auto fAddAccess = [this](interface_t& interface){
+    mapVlanToPort_t::iterator iterMapVlanToPort;
+    iterMapVlanToPort = m_mapVlanToPort.find( interface.tag );
+    if ( m_mapVlanToPort.end() == iterMapVlanToPort ) {
+      iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( interface.tag, vlan_t() ) );
+    }
+    iterMapVlanToPort->second.setPortAccess.insert( interface.ofport );
+  };
 
-  // TODO:  update local relationships for supporting easy bridge matching.
+  auto fAddTrunk = [this](interface_t& interface){
+    if ( interface.setTrunk.empty() ) {
+      m_setPortWithAllVlans.insert( interface.ofport );
+    }
+    else {
+      mapVlanToPort_t::iterator iterMapVlanToPort;
+      for ( auto vlan: interface.setTrunk ) {
+        iterMapVlanToPort = m_mapVlanToPort.find( vlan );
+        if ( m_mapVlanToPort.end() == iterMapVlanToPort ) {
+          iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( vlan, vlan_t() ) );
+        }
+        iterMapVlanToPort->second.setPortAccess.insert( interface.ofport );
+      }
+    }
+  };
+
+  switch ( interface.eVlanMode ) {
+    case VlanMode::access:
+      assert( 0 != interface.tag );
+      fAddAccess( interface );
+      break;
+    case VlanMode::trunk:
+      //assert( !interface.setTrunk.empty() ); // can't do this as all vlans might be acceptable
+      fAddTrunk( interface );
+      break;
+    case VlanMode::native_tagged:
+      assert( 0 != interface.tag );
+      fAddAccess( interface );
+      fAddTrunk( interface );
+      break;
+    case VlanMode::dot1q_tunnel:
+      assert( 0 );
+      break;
+    case VlanMode::native_untagged:
+      assert( 0 );
+      break;
+  }
 
   if ( m_bRulesInjectionActive ) {
 

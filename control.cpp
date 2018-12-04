@@ -530,16 +530,21 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
     }
 
     // TODO: put a spirit parser on this
-    if ( "" == port.VlanMode ) {
-      if ( ( 0 != port.tag ) && ( !port.setTrunk.empty() ) ) {
-        bi.eVlanMode = Bridge::VlanMode::native_tagged;
+    if ( 0 == port.VlanMode.size() ) {
+      if ( ( 0 == port.tag ) && ( port.setTrunk.empty() ) ) {
+        bi.eVlanMode = Bridge::VlanMode::trunk;
       }
       else {
-        if ( 0 != port.tag ) {
-          bi.eVlanMode = Bridge::VlanMode::access;
+        if ( ( 0 != port.tag ) && ( !port.setTrunk.empty() ) ) {
+          bi.eVlanMode = Bridge::VlanMode::native_tagged;
         }
         else {
-          bi.eVlanMode = Bridge::VlanMode::trunk; // setTrunk is empty(all vlans) or populated(selected vlans)
+          if ( 0 != port.tag ) {
+            bi.eVlanMode = Bridge::VlanMode::access;
+          }
+          else {
+            bi.eVlanMode = Bridge::VlanMode::trunk; // setTrunk is empty(all vlans) or populated(selected vlans)
+          }
         }
       }
     }
@@ -555,6 +560,7 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
               if ( "native-untagged" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::native_untagged;
               else {
                 std::cout << "Control::HandleInterfaceUpdate_local - unknown vlan_mode: " << port.VlanMode << std::endl;
+                assert( 0 );
               }
             }
           }
