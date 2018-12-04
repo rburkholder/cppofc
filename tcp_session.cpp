@@ -191,6 +191,19 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
         QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
 
+        // Start bridge to update groups and forwarding rules
+        // TODO: need a strand for the bridge?  What threads use the bridge?
+        m_bridge.StartRulesInjection(
+          // fAcquireBuffer
+          [this]()->vByte_t{
+            return std::move( GetAvailableBuffer() );
+          },
+          // fTransmitBuffer
+          [this]( vByte_t v ){
+            QueueTxToWrite( std::move( v ) );
+          } );
+
+        // this table miss entry then starts to generate Packet_in messages
         struct add_table_miss_flow {
           codec::ofp_flow_mod::ofp_flow_mod_ mod;
           codec::ofp_flow_mod::ofp_instruction_actions_ actions;
@@ -202,7 +215,6 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             mod.header.length = sizeof( add_table_miss_flow );
             mod.cookie = 0x101; // can change this as cookie usage becomes refined
             actions.len += sizeof( action );
-
             // need to update pMatch length once match fields are added
           }
         };
@@ -527,6 +539,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
       case ofp141::ofp_type::OFPT_PORT_STATUS: {
         // multiple messages stacked, so need to change code in this whole section
         //   to sequentially parse the inbound bytes -- 2018/11/13 I think this is taken care of now
+        // TODO: use this to update the gui, to confirm what other parts of the engine are saying (ovsdb code does something similar)
         const auto pStatus = new(pBegin) ofp141::ofp_port_status;
         codec::ofp_port_status status( *pStatus );
         }

@@ -23,6 +23,8 @@ namespace structures {
   typedef uuid_t uuidPort_t;
   typedef uuid_t uuidInterface_t;
 
+  typedef uint16_t vlanid_t;
+
   // ----
   struct switch_t {
     std::string hostname;
@@ -40,9 +42,9 @@ namespace structures {
 
   struct port_t { // ports from a range of bridges
     std::string name;
-    uint16_t tag; // port access vlan
-    std::set<uint16_t> setTrunk; // a set of vlan numbers
-    std::set<uint16_t> setVlanMode;  // not sure content of this yet
+    vlanid_t tag;                // port access vlan
+    std::set<vlanid_t> setTrunk; // a set of vlan numbers
+    std::string VlanMode; // http://www.openvswitch.org/support/dist-docs/ovs-vswitchd.conf.db.5.html
     port_t(): tag {} {}
   };
 

@@ -33,9 +33,6 @@ public:
 
   void start();
 
-  vByte_t GetAvailableBuffer();
-  void QueueTxToWrite( vByte_t );
-
 private:
 
   enum { max_length = 65560 };  // total header and data for ipv4 is 65535
@@ -64,9 +61,8 @@ private:
   vByte_t m_vReassembly;
   typedef vByte_t::iterator vByte_iter_t;
 
-  typedef std::queue<vByte_t> qBuffers_t;
-
   // TODO: run stuff using these constructs through a strand instead
+  // TODO: given the mutex, may not need the atomic
   std::atomic<uint32_t> m_transmitting;
 
   std::mutex m_mutex;
@@ -75,6 +71,9 @@ private:
   Buffer m_bufferTxQueue;
 
   Bridge& m_bridge;
+
+  vByte_t GetAvailableBuffer(); // use std::move out of buffer
+  void QueueTxToWrite( vByte_t );  // use std::move into buffer
 
   //asio::io_context::strand m_ioStrand;
 

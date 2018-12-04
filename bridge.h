@@ -11,6 +11,7 @@
 
 #include <set>
 #include <map>
+#include <mutex>
 #include <string>
 #include <functional>
 #include <unordered_map>
@@ -32,21 +33,22 @@ public:
   typedef size_t ofport_t;
   typedef uint16_t vlanid_t;
 
-  typedef std::function<void(vByte_t&&)> fAcquireBuffer;
-  typedef std::function<void(vByte_t&&)> fTransmitBuffer;
+  typedef std::function<vByte_t(void)> fAcquireBuffer_t;
+  typedef std::function<void(vByte_t)> fTransmitBuffer_t;
 
   enum OpState { unknOpState, up, down };
   enum MacStatus { StatusQuo, Multicast, Broadcast, Learned, Moved }; // add 'Flap' ?
+  enum VlanMode { access, trunk, dot1q_tunnel, native_tagged, native_untagged };
 
   struct interface_t {
     uint16_t tag; // port access vlan
     std::set<vlanid_t> setTrunk; // a set of vlan numbers
-    std::set<vlanid_t> setVlanMode;  // not sure content of this yet
+    VlanMode eVlanMode;  // not sure content of this yet
     OpState admin_state;
     OpState link_state;
     mac_t mac_in_use;
-    size_t ifindex;
-    ofport_t ofport;
+    size_t ifindex;   // id from 'ip link'
+    ofport_t ofport;  // openflow port id
     interface_t()
       : tag( 0 ), admin_state( OpState::unknOpState ), link_state( OpState::unknOpState ), ifindex( 0 ), ofport( 0 )
     {}
@@ -55,17 +57,22 @@ public:
   Bridge( );
   virtual ~Bridge( );
 
+  // from ovsdb:
 //  void AddInterface( const interface_t& ); // used embedded ofport as index
   void UpdateInterface( const interface_t& );
   void DelInterface( ofport_t );
   void UpdateState( ofport_t, OpState admin_state, OpState link_state );
 
+  // from tcp_session on putting more smarts into bridge:
+  void StartRulesInjection( fAcquireBuffer_t, fTransmitBuffer_t );
+
+  // currently from tcp_session wondering how to forward packets
   MacStatus Update( nPort_t nPort, const mac_t& macSource );
   nPort_t Lookup( const mac_t& mac );
 
 private:
 
-  enum typeVlan { unknVlan=0, access=1, trunk=2 };
+  //enum typeVlan { unknVlan=0, access=1, trunk=2 };
 
   struct MacInfo {
     nPort_t m_inPort;
@@ -81,13 +88,22 @@ private:
   typedef std::set<ofport_t> setPort_t;
 
   struct vlan_t {
-    setPort_t setPortAccess; // set of ports as access
-    setPort_t setPortTrunk;  // set of ports as trunk
+    setPort_t setPortAccess; // set of ofport_t as access
+    setPort_t setPortTrunk;  // set of ofport_t as trunk
     uint32_t idGroupAccess; // openflow group for access ports
     uint32_t idGroupTrunk;  // openflow group for trunk ports
   };
 
   typedef std::map<vlanid_t,vlan_t> mapVlanToPort_t;
+
+  std::mutex m_mutex;
+
+  bool m_bRulesInjectionActive;
+
+  fAcquireBuffer_t m_fAcquireBuffer;
+  fTransmitBuffer_t m_fTransmitBuffer;
+
+  mapVlanToPort_t m_mapVlanToPort;
 
 };
 

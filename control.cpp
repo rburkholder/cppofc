@@ -15,12 +15,13 @@
    ip link set dev ovs-system up
  *
  * other commands:
-    ovs-vsctl set-fail-mode ovsbr0 secure
-    ovs-vsctl del-fail-mode ovsbr0
+    ovs-vsctl set-fail-mode ovsbr0 secure|standalone  // standalone is default, or empty
+    //ovs-vsctl del-fail-mode ovsbr0
     ovs-vsctl get-fail-mode ovsbr0
  */
 
 #include <memory>
+#include <iostream>
 
 #include <boost/asio/post.hpp>
 
@@ -501,7 +502,6 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
 
     bi.tag = port.tag;
     bi.setTrunk = port.setTrunk;
-    bi.setVlanMode = port.setVlanMode;
     bi.ifindex = interface.ifindex;
     bi.ofport = interface.ofport;
 
@@ -512,6 +512,9 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
       if ( "down" == interface.admin_state ) {
         bi.admin_state = Bridge::OpState::down;
       }
+      else {
+        std::cout << "interface.admin_state unknown: " << interface.admin_state << std::endl;
+      }
     }
 
     if ( "up" == interface.link_state ) {
@@ -520,6 +523,42 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
     else {
       if ( "down" == interface.link_state ) {
         bi.link_state = Bridge::OpState::down;
+      }
+      else {
+        std::cout << "interface.link_state unknown: " << interface.link_state << std::endl;
+      }
+    }
+
+    // TODO: put a spirit parser on this
+    if ( "access" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::access;
+    else {
+      if ( "trunk" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::trunk;
+      else {
+        if ( "native-tagged" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::native_tagged;
+        else {
+          if ( "native-untagged" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::native_untagged;
+          else {
+            if ( "dot1q-tunnel" == port.VlanMode ) bi.eVlanMode = Bridge::VlanMode::dot1q_tunnel;
+            else {
+              if ( "" == port.VlanMode ) {
+                if ( ( 0 != port.tag ) && ( !port.setTrunk.empty() ) ) {
+                  bi.eVlanMode = Bridge::VlanMode::native_tagged;
+                }
+                else {
+                  if ( 0 != port.tag ) {
+                    bi.eVlanMode = Bridge::VlanMode::access;
+                  }
+                  else {
+                    bi.eVlanMode = Bridge::VlanMode::trunk; // setTrunk is empty(all vlans) or populated(selected vlans)
+                  }
+                }
+              }
+              else {
+                std::cout << "Control::HandleInterfaceUpdate_local - unknown vlan_mode: " << port.VlanMode << std::endl;
+              }
+            }
+          }
+        }
       }
     }
 

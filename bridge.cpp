@@ -11,7 +11,9 @@
 #include "bridge.h"
 #include "openflow/openflow-spec1.4.1.h"
 
-Bridge::Bridge( ) {
+Bridge::Bridge( )
+: m_bRulesInjectionActive( false )
+{
 }
 
 Bridge::~Bridge( ) {
@@ -93,6 +95,7 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 //}
 
 void Bridge::UpdateInterface( const interface_t& interface ) {
+  std::unique_lock<std::mutex> lock( m_mutex );
   // is ofport==0 a valid value?
   mapInterface_t::iterator iterMapInterface = m_mapInterface.find( interface.ofport );
   if ( m_mapInterface.end() == iterMapInterface ) {
@@ -101,8 +104,17 @@ void Bridge::UpdateInterface( const interface_t& interface ) {
   else {
     iterMapInterface->second = interface;
     // TODO:  be a bit more subtle, check for changes one by one.
-    // TODO:  update local relationships for supporting easy bridge matching.
   }
+
+  //mapVlanToPort_t::iterator iterVlan = m_mapVlanToPort.find( interface.)
+
+
+  // TODO:  update local relationships for supporting easy bridge matching.
+
+  if ( m_bRulesInjectionActive ) {
+
+  }
+
 }
 
 void Bridge::DelInterface( ofport_t ) {
@@ -111,3 +123,16 @@ void Bridge::DelInterface( ofport_t ) {
 void Bridge::UpdateState( ofport_t, OpState admin_state, OpState link_state ) {
 }
 
+void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuffer_t fTransmitBuffer ) {
+
+  std::unique_lock<std::mutex> lock( m_mutex );
+
+  assert( nullptr != fAcquireBuffer );
+  m_fAcquireBuffer =  std::move( fAcquireBuffer );
+  assert( nullptr != fTransmitBuffer );
+  m_fTransmitBuffer = std::move( fTransmitBuffer );
+
+  m_bRulesInjectionActive = true;
+
+  // TODO: send what we know
+}

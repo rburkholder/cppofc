@@ -293,13 +293,15 @@ bool decode_impl::parse_bridge( const json& j ) {
 bool decode_impl::parse_port( const json& j ) {
 
   auto& ports = j[ "Port" ];
-  //std::cout << ports.dump(2) << std::endl;
+  std::cout << ports.dump(2) << std::endl;
   for ( json::const_iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
     uuid_t uuidPort = iterPortObject.key();
     auto iterPort = m_mapPort.find( uuidPort );
     assert ( m_mapPort.end() != iterPort );
+
     auto& port( iterPort->second );
     auto& values = iterPortObject.value()[ "new" ];
+
     port.name = values[ "name" ];
     if ( values[ "tag" ].is_number() ) {
       port.tag = values[ "tag" ];
@@ -315,6 +317,10 @@ bool decode_impl::parse_port( const json& j ) {
       for ( json::const_iterator iterVlan = vlans.begin(); vlans.end() != iterVlan; iterVlan++ ) {
         port.setTrunk.insert( std::set<uint16_t>::value_type( *iterVlan ) );
       }
+    }
+
+    if ( values[ "vlan_mode" ].is_string() ) {
+      port.VlanMode = values[ "vlan_mode" ];
     }
 
     if ( nullptr != m_ovsdb.m_f.fPortUpdate ) {
