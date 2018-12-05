@@ -16,14 +16,11 @@
 #include <tuple>
 
 #include "../openflow/openflow-spec1.4.1.h"
-//#include "../common.h"
 #include "../mac.h"
 #include "ofp_header.h"
 
 namespace codec {
-
-class ofp_flow_mod {
-public:
+namespace ofp_flow_mod {
 
   enum Verdict { Drop, Directed, Flood };
 
@@ -220,12 +217,7 @@ public:
     }
   };
 
-protected:
-
-private:
-
-};
-
+} // namespace ofp_flow_mod
 } // namespace codec
 
 #endif /* OFP_FLOW_MOD_H */
