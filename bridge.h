@@ -31,7 +31,8 @@ class Bridge {
 public:
 
   typedef size_t ofport_t;
-  typedef uint16_t vlanid_t;
+  typedef uint16_t idVlan_t;
+  typedef uint32_t idGroup_t;
 
   typedef std::function<vByte_t(void)> fAcquireBuffer_t;
   typedef std::function<void(vByte_t)> fTransmitBuffer_t;
@@ -41,8 +42,8 @@ public:
   enum VlanMode { access, trunk, dot1q_tunnel, native_tagged, native_untagged };
 
   struct interface_t {
-    vlanid_t tag; // port access vlan
-    std::set<vlanid_t> setTrunk; // a set of vlan numbers
+    idVlan_t tag; // port access vlan
+    std::set<idVlan_t> setTrunk; // a set of vlan numbers
     VlanMode eVlanMode;  // not sure content of this yet
     OpState admin_state;
     OpState link_state;
@@ -87,7 +88,6 @@ private:
 
   typedef std::set<ofport_t> setPort_t;
 
-  typedef uint32_t idGroup_t;
   //idGroup_t m_idGroup_base;  // next available idGroup; TODO: need to validate against a maximum, or reclaim unused ones
   //idGroup_t GroupId() { idGroup_t id = m_idGroup_base; m_idGroup_base++; return id; }
 
@@ -106,7 +106,7 @@ private:
     {}
   };
 
-  typedef std::map<vlanid_t,VlanToPort_t> mapVlanToPort_t;
+  typedef std::map<idVlan_t,VlanToPort_t> mapVlanToPort_t;
 
   std::mutex m_mutex;
 

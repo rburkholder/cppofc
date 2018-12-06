@@ -46,12 +46,29 @@ namespace ofp_flow_mod {
     boost::endian::big_uint32_t port;
 
     void init( uint32_t port_ ) {
-      header = OXM_HEADER(
+      header = OXM_HEADER( // line 686
         ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
         ofp141::oxm_ofb_match_fields::OFPXMT_OFB_IN_PORT,
         4
         );
       port = port_;
+    }
+  };
+
+  struct ofpxmt_ofb_vlan_vid_ {
+    boost::endian::big_uint32_t header;
+    boost::endian::big_uint16_t vlan;
+    // will require 6 bytes of padding
+    void init( uint16_t vlan_ ) {
+      header = OXM_HEADER( // line 760
+        ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+        ofp141::oxm_ofb_match_fields::OFPXMT_OFB_VLAN_VID,
+        2
+        );
+      // for a match ( pass in the flag via the parameter)
+      //vlan = vlan_ | ofp141::ofp_vlan_id::OFPVID_PRESENT;
+      // for a set?
+      vlan = vlan_;
     }
   };
 
@@ -148,6 +165,50 @@ namespace ofp_flow_mod {
     }
   };
 
+  // pg 80, v1.4.1 s7.2.4
+  struct ofp_action_pop_vlan_: public ofp141::ofp_action_generic {
+    void init() {
+      type = ofp141::ofp_action_type::OFPAT_POP_VLAN;
+      len = sizeof( ofp141::ofp_action_generic );
+      std::memset( pad, 0, 4 );
+    }
+  };
+
+  // pg 79, v1.4.1 s7.2.4
+  struct ofp_action_push_vlan_: public ofp141::ofp_action_push {
+    void init( uint16_t ethertype_ ) {
+      type = ofp141::ofp_action_type::OFPAT_PUSH_VLAN;
+      len = sizeof( ofp141::ofp_action_push );
+      assert( ( 0x8100 == ethertype_ ) || ( 0x88a8 == ethertype_ ) );
+      ethertype = ethertype_;
+      std::memset( pad, 0, 2 );
+    }
+  };
+
+  // pg 80, v1.4.1 s7.2.4
+  struct ofp_action_set_field_: public ofp141::ofp_action_set_field {
+    void init() {
+      type = ofp141::ofp_action_type::OFPAT_SET_FIELD;
+      len  = sizeof( ofp141::ofp_action_set_field );
+    }
+    uint8_t* tlv() { return (uint8_t*)(&field[0]); }
+  };
+
+  struct ofp_action_set_field_vlan_id_: public ofp141::ofp_action_set_field {
+    static const size_t placeholding = sizeof( ofpxmt_ofb_vlan_vid_ ) - 4;
+    static const size_t padding
+      = 16 -
+        ( sizeof( ofp141::ofp_action_set_field ) + placeholding );
+    uint8_t placeholder[ placeholding ];
+    uint8_t pad[ padding ];
+    void init( uint16_t idVlan ) {
+      assert( 16 == sizeof( ofp_action_set_field_vlan_id_ ) );
+      auto pVid = new( &(field[0]) ) ofpxmt_ofb_vlan_vid_;
+      pVid->init( idVlan );
+      std::memset( pad, 0, padding );
+      len = 16;
+    }
+  };
 
   // pg 77 v1.4.1 s7.2.4
   struct ofp_action_output_: public ofp141::ofp_action_output {

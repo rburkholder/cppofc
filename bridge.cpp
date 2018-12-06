@@ -97,6 +97,17 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 //void Bridge::AddInterface( const interface_t& ) {
 //}
 
+  // TODO: move this out to common?
+  template<typename T>
+  T* Append( vByte_t& v ) {
+    size_t increment( sizeof( T ) );
+    size_t placeholder( v.size() );
+    size_t new_size = placeholder + increment;
+    v.resize( new_size );
+    T* p = new( v.data() + placeholder ) T;
+    return p;
+  }
+
 void Bridge::UpdateInterface( const interface_t& interface_ ) {
 
   std::unique_lock<std::mutex> lock( m_mutex );
@@ -165,11 +176,50 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
   }
 
   // TODO: on startup, will need to delete or sync up groups already existing in switch
-/*
+
   if ( m_bRulesInjectionActive ) {
+
     for ( auto& entry: m_mapVlanToPort ) {
-      vlanid_t idVlan( entry.first );
+      idVlan_t idVlan( entry.first );
       VlanToPort_t& v2p( entry.second );
+
+      struct BuildGroup {
+        enum op { pass, push, pop };
+        vByte_t v;
+        BuildGroup( vByte_t v_ ): v( std::move( v_ ) ) {}
+        void AddCommand( ofp141::ofp_group_mod_command cmd, Bridge::idGroup_t idGroup ) {
+          auto pMod = ::Append<codec::ofp_group_mod::ofp_group_mod_>( v );
+          pMod->init( cmd, idGroup );
+        }
+        void AddOutput( op op_, Bridge::idVlan_t idVlan, Bridge::ofport_t ofport ) {
+
+          auto pBucket = ::Append<codec::ofp_group_mod::ofp_bucket_>( v );
+          pBucket->init();
+
+          switch ( op_ ) {
+            case op::pass:
+              // nothing to do
+              break;
+            case op::pop: {
+              auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
+              pAction->init();
+              }
+              break;
+            case op::push:
+              auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
+              pActionPushVlan->init( 0x8100 );
+              auto pActionSetField = ::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
+              pActionSetField->init( idVlan );
+              break;
+          }
+
+          auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+          pAction->init( ofport );
+
+          pBucket->len = v.size();
+        }
+      };
+
 
       if ( v2p.bGroupNeedsUpdate ) {
 
@@ -178,30 +228,33 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
         //         and don't emit if the group has no buckets
 
         // build group for idVlan
-        vByte_t v = std::move( m_fAcquireBuffer() );
+        BuildGroup groupAccess( std::move( m_fAcquireBuffer() ) );
+        BuildGroup groupTrunk(  std::move( m_fAcquireBuffer() ) );
 
-        size_t sizePacket( 0 );
-
-        auto pMod = Append<codec::ofp_group_mod::ofp_group_mod_>( v, sizePacket );
+        //auto pMod = Append<codec::ofp_group_mod::ofp_group_mod_>( v, sizePacket );
 
         if ( v2p.bGroupAdded ) {
-          pMod->init( ofp141::ofp_group_mod_command::OFPGC_MODIFY, 10000 + idVlan );
+          //pMod->init( ofp141::ofp_group_mod_command::OFPGC_MODIFY, 10000 + idVlan );
+          groupAccess.AddCommand( ofp141::ofp_group_mod_command::OFPGC_MODIFY, 10000 + idVlan );
+          groupTrunk.AddCommand(  ofp141::ofp_group_mod_command::OFPGC_MODIFY, 20000 + idVlan );
         }
         else {
-          pMod->init( ofp141::ofp_group_mod_command::OFPGC_ADD, 10000 + idVlan );
+          //pMod->init( ofp141::ofp_group_mod_command::OFPGC_ADD, 10000 + idVlan );
+          groupAccess.AddCommand( ofp141::ofp_group_mod_command::OFPGC_ADD, 10000 + idVlan );
+          groupTrunk.AddCommand(  ofp141::ofp_group_mod_command::OFPGC_ADD, 20000 + idVlan );
         }
 
         // add buckets for access
         if ( !v2p.setPortAccess.empty() ) {
           for ( auto ofport: v2p.setPortAccess ) {
 
-            auto pBucket = Append<codec::ofp_group_mod::ofp_bucket_>( v, sizePacket );
-            pBucket->init();
+            //auto pBucket = Append<codec::ofp_group_mod::ofp_bucket_>( v, sizePacket );
+            //pBucket->init();
 
-            auto pAction = Append<codec::ofp_flow_mod::ofp_action_output_>( v, sizePacket );
-            pAction->init( ofport );
+            //auto pAction = Append<codec::ofp_flow_mod::ofp_action_output_>( v, sizePacket );
+            //pAction->init( ofport );
 
-            pBucket->len += pAction->len;
+            //pBucket->len += pAction->len;
 
           }
         }
@@ -231,9 +284,9 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
         v2p.bGroupAdded = true;
         v2p.bGroupNeedsUpdate = false;
 
-        pMod->header.length = sizePacket;
+        //pMod->header.length = sizePacket;
 
-        m_fTransmitBuffer( std::move( v ) );
+        //m_fTransmitBuffer( std::move( v ) );
       }
 
     }
@@ -251,7 +304,7 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
     }
 
   }
-  */
+
 
 }
 
