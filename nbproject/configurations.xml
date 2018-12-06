@@ -106,6 +106,7 @@
           <incDir>
             <pElem>/usr/local/include</pElem>
           </incDir>
+          <commandLine>-Wno-placement-new</commandLine>
           <preprocessorList>
             <Elem>BOOST_ASIO_ENABLE_HANDLER_TRACKING</Elem>
             <Elem>BOOST_LOG_DYN_LINK</Elem>
