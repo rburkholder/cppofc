@@ -11,8 +11,11 @@
 #include "bridge.h"
 #include "openflow/openflow-spec1.4.1.h"
 
+#include "codecs/ofp_group_mod.h"
+#include "codecs/ofp_flow_mod.h"
+
 Bridge::Bridge( )
-: m_bRulesInjectionActive( false )
+: m_bRulesInjectionActive( false )//, m_idGroup_base( 1 )
 {
 }
 
@@ -95,6 +98,7 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 //}
 
 void Bridge::UpdateInterface( const interface_t& interface_ ) {
+
   std::unique_lock<std::mutex> lock( m_mutex );
   // is ofport==0 a valid value?  -- no, need to find the reference again
   mapInterface_t::iterator iterMapInterface = m_mapInterface.find( interface_.ofport );
@@ -105,6 +109,8 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
     iterMapInterface->second = interface_;
     // TODO:  be a bit more subtle, check for changes one by one.
     //        ie, delete ofport from access, trunk, global
+    //          therefore, may need a PortToVlan mapping?
+    //             and may need to delete associated vlan/groups as a consequence of complete deletion?
   }
 
   interface_t& interface( iterMapInterface->second );
@@ -113,9 +119,10 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
     mapVlanToPort_t::iterator iterMapVlanToPort;
     iterMapVlanToPort = m_mapVlanToPort.find( interface.tag );
     if ( m_mapVlanToPort.end() == iterMapVlanToPort ) {
-      iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( interface.tag, vlan_t() ) );
+      iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( interface.tag, VlanToPort_t() ) );
     }
     iterMapVlanToPort->second.setPortAccess.insert( interface.ofport );
+    iterMapVlanToPort->second.bGroupNeedsUpdate = true;
   };
 
   auto fAddTrunk = [this](interface_t& interface){
@@ -127,9 +134,10 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
       for ( auto vlan: interface.setTrunk ) {
         iterMapVlanToPort = m_mapVlanToPort.find( vlan );
         if ( m_mapVlanToPort.end() == iterMapVlanToPort ) {
-          iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( vlan, vlan_t() ) );
+          iterMapVlanToPort = m_mapVlanToPort.insert( m_mapVlanToPort.begin(), mapVlanToPort_t::value_type( vlan, VlanToPort_t() ) );
         }
-        iterMapVlanToPort->second.setPortAccess.insert( interface.ofport );
+        iterMapVlanToPort->second.setPortTrunk.insert( interface.ofport );
+        iterMapVlanToPort->second.bGroupNeedsUpdate = true;
       }
     }
   };
@@ -156,9 +164,94 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
       break;
   }
 
+  // TODO: on startup, will need to delete or sync up groups already existing in switch
+/*
   if ( m_bRulesInjectionActive ) {
+    for ( auto& entry: m_mapVlanToPort ) {
+      vlanid_t idVlan( entry.first );
+      VlanToPort_t& v2p( entry.second );
+
+      if ( v2p.bGroupNeedsUpdate ) {
+
+        // TODO: need two passes: 1) for IN access vlan, 2) for IN trunk vlan
+        //   no... single pass, but build group based upon whether inbound is access or trunk
+        //         and don't emit if the group has no buckets
+
+        // build group for idVlan
+        vByte_t v = std::move( m_fAcquireBuffer() );
+
+        size_t sizePacket( 0 );
+
+        auto pMod = Append<codec::ofp_group_mod::ofp_group_mod_>( v, sizePacket );
+
+        if ( v2p.bGroupAdded ) {
+          pMod->init( ofp141::ofp_group_mod_command::OFPGC_MODIFY, 10000 + idVlan );
+        }
+        else {
+          pMod->init( ofp141::ofp_group_mod_command::OFPGC_ADD, 10000 + idVlan );
+        }
+
+        // add buckets for access
+        if ( !v2p.setPortAccess.empty() ) {
+          for ( auto ofport: v2p.setPortAccess ) {
+
+            auto pBucket = Append<codec::ofp_group_mod::ofp_bucket_>( v, sizePacket );
+            pBucket->init();
+
+            auto pAction = Append<codec::ofp_flow_mod::ofp_action_output_>( v, sizePacket );
+            pAction->init( ofport );
+
+            pBucket->len += pAction->len;
+
+          }
+        }
+
+        // add buckets for trunk
+        if ( !v2p.setPortTrunk.empty() ) {
+        }
+
+        // add buckets for trunk-all
+        if ( !m_setPortWithAllVlans.empty() ) {
+        }
+
+        // build group for trunk
+        if ( !v2p.setPortTrunk.empty() || !m_setPortWithAllVlans.empty() ) {
+          // add group for trunk
+          if ( !v2p.setPortTrunk.empty() ) {
+            // build bucket for targeted trunk ports
+          }
+          if ( !m_setPortWithAllVlans.empty() ) {
+            // build bucket for trunk-all ports
+            for ( auto ofport: m_setPortWithAllVlans ) {
+              // vlans need to go to trunk-all ports
+            }
+          }
+        }
+
+        v2p.bGroupAdded = true;
+        v2p.bGroupNeedsUpdate = false;
+
+        pMod->header.length = sizePacket;
+
+        m_fTransmitBuffer( std::move( v ) );
+      }
+
+    }
+
+    // build group to trasnmit to other trunk-all ports
+    // use idGroup 0 for base of this group
+    // TODO: use group forwarding to use this from above access and trunk port groups
+    if ( !m_setPortWithAllVlans.empty() ) {
+      // TODO: build only if two or more entries
+      // add group for trunk-all port
+      // build bucket for trunk-all ports
+      for ( auto ofport: m_setPortWithAllVlans ) {
+        // vlans need to go to trunk-all ports
+      }
+    }
 
   }
+  */
 
 }
 

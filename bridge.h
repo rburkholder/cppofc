@@ -41,7 +41,7 @@ public:
   enum VlanMode { access, trunk, dot1q_tunnel, native_tagged, native_untagged };
 
   struct interface_t {
-    uint16_t tag; // port access vlan
+    vlanid_t tag; // port access vlan
     std::set<vlanid_t> setTrunk; // a set of vlan numbers
     VlanMode eVlanMode;  // not sure content of this yet
     OpState admin_state;
@@ -87,15 +87,26 @@ private:
 
   typedef std::set<ofport_t> setPort_t;
 
-  struct vlan_t {
+  typedef uint32_t idGroup_t;
+  //idGroup_t m_idGroup_base;  // next available idGroup; TODO: need to validate against a maximum, or reclaim unused ones
+  //idGroup_t GroupId() { idGroup_t id = m_idGroup_base; m_idGroup_base++; return id; }
+
+  // used for broadcast when destination port is unknown
+  struct VlanToPort_t {
     setPort_t setPortAccess; // set of ofport_t as access
     setPort_t setPortTrunk;  // set of ofport_t as trunk
-    uint32_t idGroupAccess; // openflow group for access ports
-    uint32_t idGroupTrunk;  // openflow group for trunk ports
-    vlan_t(): idGroupAccess( 0 ), idGroupTrunk( 0 ) {}
+    //idGroup_t idGroupAccess; // openflow group for access ports
+    //idGroup_t idGroupTrunk;  // openflow group for trunk ports
+    bool bGroupAdded;
+    bool bGroupNeedsUpdate;
+    //VlanToPort_t( idGroup_t id ):
+    VlanToPort_t():
+      //idGroupAccess( id ), idGroupTrunk( id ),
+      bGroupAdded( false ), bGroupNeedsUpdate( false )
+    {}
   };
 
-  typedef std::map<vlanid_t,vlan_t> mapVlanToPort_t;
+  typedef std::map<vlanid_t,VlanToPort_t> mapVlanToPort_t;
 
   std::mutex m_mutex;
 
@@ -106,6 +117,17 @@ private:
 
   mapVlanToPort_t m_mapVlanToPort;
   setPort_t m_setPortWithAllVlans;
+
+  // TODO: move this out to common?
+  template<typename T>
+  T* Append( vByte_t& v, size_t& accumulator ) {
+    size_t increment = sizeof( T );
+    size_t new_size = accumulator + increment;
+    v.resize( new_size );
+    T* p = new( v.data() + accumulator ) T;
+    accumulator = new_size;
+    return p;
+  }
 
 };
 

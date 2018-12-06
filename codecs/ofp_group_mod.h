@@ -26,9 +26,11 @@ struct ofp_group_mod_: public ofp141::ofp_group_mod {
     auto pHeader = new( &header ) codec::ofp_header::ofp_header_;
     pHeader->init();
     header.type = ofp141::ofp_type::OFPT_GROUP_MOD;
+    header.length = sizeof( ofp_group_mod );
     assert( sizeof( ofp_group_mod_ ) == sizeof( ofp141::ofp_group_mod ) );
     //command = ofp141::ofp_group_mod_command::OFPGC_MODIFY;
     command = cmd;
+    pad = 0;
     type = ofp141::ofp_group_type::OFPGT_ALL; // pg 23, v141
     group_id = group_id_;
   }
@@ -41,6 +43,7 @@ struct ofp_bucket_: public ofp141::ofp_bucket {
     weight = 1;
     watch_port = 0;
     watch_group = 0;
+    memset( pad, 0, 4 );
   }
 };
 
