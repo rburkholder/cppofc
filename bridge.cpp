@@ -97,7 +97,7 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 
 void Bridge::UpdateInterface( const interface_t& interface_ ) {
 
-  std::cout << "** Bridge::UpdateInterface " << interface_.tag << "," << interface_.ofport << "," << interface_.ifindex << std::endl;
+  //std::cout << "** Bridge::UpdateInterface " << interface_.tag << "," << interface_.ofport << "," << interface_.ifindex << std::endl;
 
   // 0xfffe seems to match the bridge, can be multiple bridges, same ofport, different ifindex
   if ( ( ofp141::ofp_port_no::OFPP_MAX >= interface_.ofport ) && ( 0xfffe != interface_.ofport ) ) {
@@ -168,11 +168,11 @@ void Bridge::UpdateInterface( const interface_t& interface_ ) {
 
     // TODO: on startup, will need to delete or sync up groups already existing in switch
 
-    std::cout << "** Bridge::m_bRulesInjectionActive test" << std::endl;
+    //std::cout << "** Bridge::m_bRulesInjectionActive test" << std::endl;
 
     if ( m_bRulesInjectionActive ) {
 
-      std::cout << "** Bridge::m_bRulesInjectionActive passed" << std::endl;
+      //std::cout << "** Bridge::m_bRulesInjectionActive passed" << std::endl;
 
       BuildGroups();
 
@@ -189,7 +189,7 @@ void Bridge::UpdateState( ofport_t, OpState admin_state, OpState link_state ) {
 
 void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuffer_t fTransmitBuffer ) {
 
-  std::cout << "** Bridge::m_bRulesInjectionActive locking" << std::endl;
+  //std::cout << "** Bridge::m_bRulesInjectionActive locking" << std::endl;
 
   std::unique_lock<std::mutex> lock( m_mutex );
 
@@ -198,11 +198,11 @@ void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuff
   assert( nullptr != fTransmitBuffer );
   m_fTransmitBuffer = std::move( fTransmitBuffer );
 
-  std::cout << "** Bridge::m_bRulesInjectionActive to be set" << std::endl;
+  //std::cout << "** Bridge::m_bRulesInjectionActive to be set" << std::endl;
 
   m_bRulesInjectionActive = true;
 
-  std::cout << "** Bridge::m_bRulesInjectionActive is set" << std::endl;
+  //std::cout << "** Bridge::m_bRulesInjectionActive is set" << std::endl;
 
   // TODO: send what we know
   BuildGroups();
@@ -227,15 +227,15 @@ void Bridge::BuildGroups() {
     codec::ofp_group_mod::ofp_group_mod_* pMod;
     BuildGroup( vByte_t v_ ): pMod( nullptr), v( std::move( v_ ) ) {}
     void AddCommand( ofp141::ofp_group_mod_command cmd, Bridge::idGroup_t idGroup ) {
-      std::cout << "BuildGroup::AddCommand" << std::endl;
+      //std::cout << "BuildGroup::AddCommand" << std::endl;
       v.clear();
       pMod = ::Append<codec::ofp_group_mod::ofp_group_mod_>( v );
       pMod->init( cmd, idGroup );
-      std::cout << "BuildGroup::AddCommand: " << pMod->header.length << std::endl;
+      //std::cout << "BuildGroup::AddCommand: " << pMod->header.length << std::endl;
     }
     void AddOutput( op op_, Bridge::idVlan_t idVlan, Bridge::ofport_t ofport ) {
 
-      std::cout << "BuildGroup::AddOutput" << std::endl;
+      //std::cout << "BuildGroup::AddOutput" << std::endl;
 
       size_t sizeStarting = v.size();
 
@@ -262,11 +262,11 @@ void Bridge::BuildGroups() {
       auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
       pAction->init( ofport );
       pAction->max_len = 0;
-      std::cout << "BuildGroup::pAction port " << pAction->port << std::endl;
+      //std::cout << "BuildGroup::pAction port " << pAction->port << std::endl;
 
       pBucket->len = v.size() - sizeStarting;
       pMod->header.length = v.size();
-      std::cout << "BuildGroup::AddOutput: " << pMod->header.length << std::endl;
+      //std::cout << "BuildGroup::AddOutput: " << pMod->header.length << std::endl;
     }
   };
 
@@ -275,7 +275,7 @@ void Bridge::BuildGroups() {
     assert( 0 < idVlan );
     VlanToPort_t& v2p( entry.second );
 
-    std::cout << "** BuildGroup: vlan " << idVlan << std::endl;
+    //std::cout << "** BuildGroup: vlan " << idVlan << std::endl;
 
     if ( v2p.bGroupNeedsUpdate ) {
 
@@ -283,7 +283,7 @@ void Bridge::BuildGroups() {
       //   no... single pass, but build group based upon whether inbound is access or trunk
       //         and don't emit if the group has no buckets
 
-      std::cout << "** BuildGroup: vlan " << idVlan << " update " << std::endl;
+      //std::cout << "** BuildGroup: vlan " << idVlan << " update " << std::endl;
 
       // build group for idVlan
       BuildGroup groupAccess( std::move( m_fAcquireBuffer() ) ); // in_port is access, build outports
@@ -304,7 +304,7 @@ void Bridge::BuildGroups() {
       if ( !v2p.setPortAccess.empty() ) {
         for ( auto ofport: v2p.setPortAccess ) {
           groupAccess.AddOutput( BuildGroup::op::pass, idVlan, ofport ); // access to access
-          groupTrunk.AddOutput(  BuildGroup::op::pop, idVlan, ofport );  // trunk to access
+          groupTrunk.AddOutput(  BuildGroup::op::pop,  idVlan, ofport );  // trunk to access
         }
       }
 
@@ -330,9 +330,9 @@ void Bridge::BuildGroups() {
       assert( 0 != groupAccess.v.size() );
       assert( 0 != groupTrunk.v.size() );
 
-      std::cout << "** BuildGroup: vlan " << idVlan << " queue access " << groupAccess.v.size() << std::endl;
+      //std::cout << "** BuildGroup: vlan " << idVlan << " queue access " << groupAccess.v.size() << std::endl;
       m_fTransmitBuffer( std::move( groupAccess.v ) );
-      std::cout << "** BuildGroup: vlan " << idVlan << " queue trunk " << groupTrunk.v.size() << std::endl;
+      //std::cout << "** BuildGroup: vlan " << idVlan << " queue trunk " << groupTrunk.v.size() << std::endl;
       m_fTransmitBuffer( std::move( groupTrunk.v ) );
     }
 
@@ -342,7 +342,7 @@ void Bridge::BuildGroups() {
   if ( !m_setPortWithAllVlans.empty() ) {
     if ( 1 < m_setPortWithAllVlans.size() ) {
 
-      std::cout << "** BuildGroup: trunk-all" << std::endl;
+      //std::cout << "** BuildGroup: trunk-all" << std::endl;
 
       BuildGroup groupTrunkAll( std::move( m_fAcquireBuffer() ) ); // in_port is trunk-all, build outports
       if ( m_bGroupTrunkAllAdded ) {
@@ -359,7 +359,7 @@ void Bridge::BuildGroups() {
 
       assert( 0 != groupTrunkAll.v.size() );
 
-      std::cout << "** BuildGroup: m_fTransmitBuffer " << " queue trunk all " << groupTrunkAll.v.size() << std::endl;
+      //std::cout << "** BuildGroup: m_fTransmitBuffer " << " queue trunk all " << groupTrunkAll.v.size() << std::endl;
       m_fTransmitBuffer( std::move( groupTrunkAll.v ) );
     }
   }

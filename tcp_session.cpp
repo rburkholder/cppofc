@@ -591,15 +591,15 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
 void tcp_session::do_write() {
   auto self( shared_from_this() );
-  std::cout << "do_write start: " << std::endl;
+  //std::cout << "do_write start: " << std::endl;
   if ( 0 == m_bufferTxQueue.Front().size() ) {
     assert( 0 );
   }
- std::cout
-    << "OUT: " << std::endl
-   << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
-    << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
-    << std::endl;
+ //std::cout
+ //   << "OUT: " << std::endl
+ //  << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
+ //   << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
+ //   << std::endl;
 
   asio::async_write(
     m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
@@ -611,11 +611,11 @@ void tcp_session::do_write() {
         m_bufferAvailable.AddBuffer( v );
 //        std::cout << "do_write atomic: " <<
         if ( 2 <= m_transmitting.fetch_sub( 1, std::memory_order_release ) ) {
-          std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+          //std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
           //m_vTxInWrite = std::move( m_bufferTxQueue.ObtainBuffer() );
           do_write();
         }
-        std::cout << "do_write complete:" << ec << "," << len << std::endl;
+        //std::cout << "do_write complete:" << ec << "," << len << std::endl;
         //if (!ec) {
         //  do_read();
         //}

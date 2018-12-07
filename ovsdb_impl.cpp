@@ -293,7 +293,7 @@ bool decode_impl::parse_bridge( const json& j ) {
 bool decode_impl::parse_port( const json& j ) {
 
   auto& ports = j[ "Port" ];
-  std::cout << ports.dump(2) << std::endl;
+  //std::cout << ports.dump(2) << std::endl;
   for ( json::const_iterator iterPortObject = ports.begin(); ports.end() != iterPortObject; iterPortObject++ ) {
     uuid_t uuidPort = iterPortObject.key();
     auto iterPort = m_mapPort.find( uuidPort );
