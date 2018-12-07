@@ -40,9 +40,9 @@ struct ofp_bucket_: public ofp141::ofp_bucket {
   void init() {
     assert( sizeof( ofp_bucket_ ) == sizeof( ofp141::ofp_bucket ) );
     len = sizeof( ofp_bucket_ );
-    weight = 1;
-    watch_port = 0;
-    watch_group = 0;
+    weight = 0;
+    watch_port = ofp141::ofp_port_no::OFPP_ANY;
+    watch_group = ofp141::ofp_group::OFPG_ANY;
     memset( pad, 0, 4 );
   }
 };

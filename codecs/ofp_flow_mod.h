@@ -66,9 +66,9 @@ namespace ofp_flow_mod {
         2
         );
       // for a match ( pass in the flag via the parameter)
-      //vlan = vlan_ | ofp141::ofp_vlan_id::OFPVID_PRESENT;
+      vlan = vlan_ | ofp141::ofp_vlan_id::OFPVID_PRESENT;
       // for a set?
-      vlan = vlan_;
+      //vlan = vlan_;
     }
   };
 
@@ -206,6 +206,7 @@ namespace ofp_flow_mod {
       auto pVid = new( &(field[0]) ) ofpxmt_ofb_vlan_vid_;
       pVid->init( idVlan );
       std::memset( pad, 0, padding );
+      type = ofp141::ofp_action_type::OFPAT_SET_FIELD;
       len = 16;
     }
   };
@@ -216,7 +217,8 @@ namespace ofp_flow_mod {
       type = ofp141::ofp_action_type::OFPAT_OUTPUT;
       len = sizeof( ofp141::ofp_action_output );
       port = nPort;
-      max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+      //max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+      max_len = 0;
       std::memset( pad, 0, 6 );
     }
   };

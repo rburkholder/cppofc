@@ -88,25 +88,23 @@ private:
 
   typedef std::set<ofport_t> setPort_t;
 
-  //idGroup_t m_idGroup_base;  // next available idGroup; TODO: need to validate against a maximum, or reclaim unused ones
-  //idGroup_t GroupId() { idGroup_t id = m_idGroup_base; m_idGroup_base++; return id; }
-
   // used for broadcast when destination port is unknown
   struct VlanToPort_t {
     setPort_t setPortAccess; // set of ofport_t as access
     setPort_t setPortTrunk;  // set of ofport_t as trunk
-    //idGroup_t idGroupAccess; // openflow group for access ports
-    //idGroup_t idGroupTrunk;  // openflow group for trunk ports
     bool bGroupAdded;
     bool bGroupNeedsUpdate;
-    //VlanToPort_t( idGroup_t id ):
     VlanToPort_t():
-      //idGroupAccess( id ), idGroupTrunk( id ),
       bGroupAdded( false ), bGroupNeedsUpdate( false )
     {}
   };
 
   typedef std::map<idVlan_t,VlanToPort_t> mapVlanToPort_t;
+
+  mapVlanToPort_t m_mapVlanToPort;
+
+  bool m_bGroupTrunkAllAdded;
+  setPort_t m_setPortWithAllVlans;
 
   std::mutex m_mutex;
 
@@ -115,19 +113,7 @@ private:
   fAcquireBuffer_t m_fAcquireBuffer;
   fTransmitBuffer_t m_fTransmitBuffer;
 
-  mapVlanToPort_t m_mapVlanToPort;
-  setPort_t m_setPortWithAllVlans;
-
-  // TODO: move this out to common?
-  template<typename T>
-  T* Append( vByte_t& v, size_t& accumulator ) {
-    size_t increment = sizeof( T );
-    size_t new_size = accumulator + increment;
-    v.resize( new_size );
-    T* p = new( v.data() + accumulator ) T;
-    accumulator = new_size;
-    return p;
-  }
+  void BuildGroups();
 
 };
 

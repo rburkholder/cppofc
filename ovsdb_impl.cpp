@@ -527,7 +527,7 @@ void decode_impl::do_read() {
                 parse_interface( result );
 
                 m_state = startStatisticsMonitor;
-                send_monitor_statistics();
+//                send_monitor_statistics();
 
               }
               break;

@@ -140,11 +140,9 @@ void tcp_session::do_read() {
 
         } // end if ( ec )
         else {
+          std::cout << "read error: " << ec.value() << "," << ec.message() << std::endl;
           if ( 2 == ec.value() ) {
             assert( 0 );  // 'End of file', so need to re-open, or abort
-          }
-          else {
-            std::cout << "read error: " << ec.value() << "," << ec.message() << std::endl;
           }
             // do we do another read or let it close implicitly or close explicitly?
         } // end else ( ec )
@@ -191,18 +189,6 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
         QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
 
-        // Start bridge to update groups and forwarding rules
-        // TODO: need a strand for the bridge?  What threads use the bridge?
-        m_bridge.StartRulesInjection(
-          // fAcquireBuffer
-          [this]()->vByte_t{
-            return std::move( GetAvailableBuffer() );
-          },
-          // fTransmitBuffer
-          [this]( vByte_t v ){
-            QueueTxToWrite( std::move( v ) );
-          } );
-
         // this table miss entry then starts to generate Packet_in messages
         struct add_table_miss_flow {
           codec::ofp_flow_mod::ofp_flow_mod_ mod;
@@ -212,6 +198,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             mod.init();
             actions.init();
             action.init();
+            action.max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
             mod.header.length = sizeof( add_table_miss_flow );
             mod.cookie = 0x101; // can change this as cookie usage becomes refined
             actions.len += sizeof( action );
@@ -233,6 +220,19 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // TODO:  install two flows (higher priority than default packet_in):
         //   match src broadcast -> drop (should there be such an animal?)
         //   match dst broadcast -> flood
+
+        // Start bridge to update groups and forwarding rules
+        // TODO: need a strand for the bridge?  What threads use the bridge?
+        std::cout << "** tcp_session::m_bRulesInjectionActive calling StartRulesInjection" << std::endl;
+        m_bridge.StartRulesInjection(
+          // fAcquireBuffer
+          [this]()->vByte_t{
+            return std::move( GetAvailableBuffer() );
+          },
+          // fTransmitBuffer
+          [this]( vByte_t v ){
+            QueueTxToWrite( std::move( v ) );
+          } );
 
         }
         break;
@@ -518,6 +518,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         break;
       case ofp141::ofp_type::OFPT_ECHO_REQUEST: {
+        std::cout
+          << "ofp141::ofp_type::OFPT_ECHO_REQUEST received/replied"
+          << std::endl;
         const auto pEcho = new(pBegin) ofp141::ofp_header;
         vByte_t v = std::move( GetAvailableBuffer() );
         v.resize( sizeof( codec::ofp_header::ofp_header_ ) );
@@ -532,6 +535,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         break;
       case ofp141::ofp_type::OFPT_GET_ASYNC_REPLY: {
+        std::cout
+          << "ofp141::ofp_type::OFPT_GET_ASYNC_REPLY (after features_reply):"
+          << std::endl;
         const auto pAsyncReply = new(pBegin) ofp141::ofp_async_config;
         codec::ofp_async_config config( *pAsyncReply );
         }
@@ -585,7 +591,16 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
 void tcp_session::do_write() {
   auto self( shared_from_this() );
-  //std::cout << "do_write start: " << std::endl;
+  std::cout << "do_write start: " << std::endl;
+  if ( 0 == m_bufferTxQueue.Front().size() ) {
+    assert( 0 );
+  }
+ std::cout
+    << "OUT: " << std::endl
+   << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
+    << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
+    << std::endl;
+
   asio::async_write(
     m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
       [this, self]( boost::system::error_code ec, std::size_t len )
@@ -596,11 +611,11 @@ void tcp_session::do_write() {
         m_bufferAvailable.AddBuffer( v );
 //        std::cout << "do_write atomic: " <<
         if ( 2 <= m_transmitting.fetch_sub( 1, std::memory_order_release ) ) {
-          //std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+          std::cout << "do_write with atomic at " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
           //m_vTxInWrite = std::move( m_bufferTxQueue.ObtainBuffer() );
           do_write();
         }
-        //std::cout << "do_write complete:" << ec << "," << len << std::endl;
+        std::cout << "do_write complete:" << ec << "," << len << std::endl;
         //if (!ec) {
         //  do_read();
         //}
@@ -616,6 +631,9 @@ vByte_t tcp_session::GetAvailableBuffer() {
 void tcp_session::QueueTxToWrite( vByte_t v ) { // TODO: look at changing to lvalue ref or rvalue ref
   std::unique_lock<std::mutex> lock( m_mutex );
   //std::cout << "QTTW: " << m_transmitting.load( std::memory_order_acquire ) << std::endl;
+  if ( 0 == v.size() ) {
+    assert( 0 );
+  }
   m_bufferTxQueue.AddBuffer( v );
   if ( 0 == m_transmitting.fetch_add( 1, std::memory_order_acquire ) ) {
     //std::cout << "QTTW1: " << std::endl;
