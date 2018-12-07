@@ -6,6 +6,8 @@
  * Created on November 22, 2018, 4:17 PM
  */
 
+// To debug ASIO, use DEFINE: BOOST_ASIO_ENABLE_HANDLER_TRACKING
+
 #include <iostream>
 
 #include "control.h"
