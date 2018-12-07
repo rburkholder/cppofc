@@ -271,7 +271,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         uint16_t idEtherType( 0 );
         if ( ethernet::Ethertype::ieee8021q == ethernet.GetEthertype() ) {
           ethernet::vlan vlan( ethernet.GetMessage() );
-          std::cout << vlan << ::std::endl;
+          std::cout << "found vlan: " << vlan << ::std::endl;
           idVlan = vlan.GetVID();
           pMessage = &vlan.GetMessage();
           idEtherType = vlan.GetEthertype();
@@ -289,7 +289,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             break;
           case ethernet::Ethertype::ieee8021q: {  // 802.1q vlan (shouldn't be able to get here )
             ethernet::vlan vlan( *pMessage );
-            std::cout << vlan << ::std::endl;
+            std::cout << "bad vlan in vlan found: " << vlan << ::std::endl;
+            assert( 0 ); // not dealing with vlan in vlan
             }
             break;
           case ethernet::Ethertype::ipv4: {
@@ -325,7 +326,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         //   needs to be integral to the cookie switch statement (to be refactored)
         uint32_t nSrcPort;
         codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
-          [this, &nSrcPort, &ethernet](nPort_t nSrcPort_) -> codec::ofp_flow_mod::Verdict {
+          [this, idVlan, &nSrcPort, &ethernet](nPort_t nSrcPort_) -> codec::ofp_flow_mod::Verdict {
 
             struct update_flow_mac_dest_actions {
               codec::ofp_flow_mod::ofp_instruction_actions_ actions;
@@ -387,7 +388,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             MacAddress macDst( ethernet.GetDstMac() );
 
             nSrcPort = nSrcPort_;
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, macSrc.Value() );
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, idVlan, macSrc.Value() );
 
             nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
 

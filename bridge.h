@@ -68,16 +68,19 @@ public:
   void StartRulesInjection( fAcquireBuffer_t, fTransmitBuffer_t );
 
   // currently from tcp_session wondering how to forward packets
-  MacStatus Update( nPort_t nPort, const mac_t& macSource );
+  MacStatus Update( nPort_t nPort, idVlan_t idVlan, const mac_t& macSource );
   nPort_t Lookup( const mac_t& mac );
 
 private:
 
-  //enum typeVlan { unknVlan=0, access=1, trunk=2 };
+  typedef std::set<idVlan_t> setVlan_t;
+  typedef std::set<ofport_t> setPort_t;
 
   struct MacInfo {
     nPort_t m_inPort;
-    MacInfo( nPort_t inPort ): m_inPort( inPort ) {}
+    size_t m_cntMoved;
+    setVlan_t m_setVlanEncountered;
+    MacInfo( nPort_t inPort ): m_cntMoved( 0 ), m_inPort( inPort ) {}
   };
 
   typedef std::unordered_map<MacAddress,MacInfo> mapMac_t;
@@ -85,8 +88,6 @@ private:
 
   typedef std::map<ofport_t,interface_t> mapInterface_t;
   mapInterface_t m_mapInterface;
-
-  typedef std::set<ofport_t> setPort_t;
 
   // used for broadcast when destination port is unknown
   struct VlanToPort_t {

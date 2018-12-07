@@ -23,7 +23,7 @@ Bridge::Bridge( )
 Bridge::~Bridge( ) {
 }
 
-Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
+Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const mac_t& macSource ) {
 
   if ( 0 == nPort ) {
     throw std::runtime_error( "Bridge::Update need port > 0" );
@@ -38,6 +38,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
       << "bridge: found source multicast " << macSource
       << " on port " << nPort
       << std::endl;
+    // this is an illegal option, source mac cannot be multicast
   }
   else {
     if ( MacAddress::IsBroadcast( mac ) ) {
@@ -46,26 +47,42 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, const mac_t& macSource ) {
         << "bridge: found source broadcast " << macSource
         << " on port " << nPort
         << std::endl;
+      // will need to evaluate this, and look at the meanings
     }
     else {
-      mapMac_t::iterator iter = m_mapMac.find( mac );
-      if ( m_mapMac.end() == iter ) { // didn't find mac
+      mapMac_t::iterator iterMapMac = m_mapMac.find( mac );
+      if ( m_mapMac.end() == iterMapMac ) { // didn't find mac
         std::pair<MacAddress, MacInfo> pair( mac, MacInfo( nPort ) );
-        m_mapMac.insert( pair );
+        iterMapMac = m_mapMac.insert( m_mapMac.begin(), pair );
         status = Learned;
         std::cout
-          << "bridge: learned mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
-          << " on port " << nPort
+          << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
+          << " learned on port " << nPort
           << std::endl;
       }
       else {
-        if ( nPort != iter->second.m_inPort ) { // mac moved (check for flap sometime)
-          iter->second.m_inPort = nPort;
+        if ( nPort != iterMapMac->second.m_inPort ) { // mac moved (check for flap sometime)
+          iterMapMac->second.m_inPort = nPort;
+          iterMapMac->second.m_cntMoved++;
           status = Moved;
           std::cout
             << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
             << " moved to port " << nPort
+            << " flap count " << iterMapMac->second.m_cntMoved
             << std::endl;
+        }
+      }
+      if ( 0 != idVlan ) {
+        setVlan_t& setVlanEncountered( iterMapMac->second.m_setVlanEncountered );
+        if ( 0 != setVlanEncountered.size() ) {
+          setVlan_t::iterator iterSetVlan = setVlanEncountered.find( idVlan );
+          if ( setVlanEncountered.end() == iterSetVlan ) {
+            setVlanEncountered.insert( idVlan );
+            std::cout
+              << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
+              << " has vlan " << idVlan
+              << std::endl;
+          }
         }
       }
     }
@@ -97,7 +114,7 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
 
 void Bridge::UpdateInterface( const interface_t& interface_ ) {
 
-  //std::cout << "** Bridge::UpdateInterface " << interface_.tag << "," << interface_.ofport << "," << interface_.ifindex << std::endl;
+  std::cout << "Bridge::UpdateInterface " << interface_.tag << "," << interface_.ofport << "," << interface_.ifindex << std::endl;
 
   // 0xfffe seems to match the bridge, can be multiple bridges, same ofport, different ifindex
   if ( ( ofp141::ofp_port_no::OFPP_MAX >= interface_.ofport ) && ( 0xfffe != interface_.ofport ) ) {
