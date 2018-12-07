@@ -189,6 +189,19 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         QueueTxToWrite( std::move( codec::ofp_hello::Create( std::move( GetAvailableBuffer() ) ) ) );
         QueueTxToWrite( std::move( codec::ofp_switch_features::CreateRequest( std::move( GetAvailableBuffer() ) ) ) );
 
+        // Start bridge to update groups and forwarding rules
+        // TODO: need a strand for the bridge?  What threads use the bridge?
+        std::cout << "** tcp_session::m_bRulesInjectionActive calling StartRulesInjection" << std::endl;
+        m_bridge.StartRulesInjection(
+          // fAcquireBuffer
+          [this]()->vByte_t{
+            return std::move( GetAvailableBuffer() );
+          },
+          // fTransmitBuffer
+          [this]( vByte_t v ){
+            QueueTxToWrite( std::move( v ) );
+          } );
+
         // this table miss entry then starts to generate Packet_in messages
         struct add_table_miss_flow {
           codec::ofp_flow_mod::ofp_flow_mod_ mod;
@@ -220,19 +233,6 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // TODO:  install two flows (higher priority than default packet_in):
         //   match src broadcast -> drop (should there be such an animal?)
         //   match dst broadcast -> flood
-
-        // Start bridge to update groups and forwarding rules
-        // TODO: need a strand for the bridge?  What threads use the bridge?
-        std::cout << "** tcp_session::m_bRulesInjectionActive calling StartRulesInjection" << std::endl;
-        m_bridge.StartRulesInjection(
-          // fAcquireBuffer
-          [this]()->vByte_t{
-            return std::move( GetAvailableBuffer() );
-          },
-          // fTransmitBuffer
-          [this]( vByte_t v ){
-            QueueTxToWrite( std::move( v ) );
-          } );
 
         }
         break;
