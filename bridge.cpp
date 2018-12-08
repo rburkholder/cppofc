@@ -105,6 +105,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddre
   return status;
 }
 
+// 2018/12/08 deprecated once code removed from tcp_session
 nPort_t Bridge::Lookup( const MacAddress& mac ) {
 
   nPort_t nPort( ofp141::ofp_port_no::OFPP_ANY );  // neither ingress nor egress (pg 15)
@@ -194,21 +195,28 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             << "bridge::forward broadcast from " << ofp_ingress
             << ", to vlan " << vlan
             << ", on group " << vlan + ( bSrcAccess ? 10000 : 20000 )
+            << ", packet size of " << nOctets
             << std::endl;
+
           vByte_t v = std::move( m_fAcquireBuffer() );
           v.clear();
-          auto*  pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
+
+          auto* pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
           pOut->initv2( ofp_ingress );
+
           auto* pGroup = ::Append<ofp141::ofp_action_group>( v );
           pGroup->type = ofp141::ofp_action_type::OFPAT_GROUP;
           pGroup->len  = sizeof( ofp141::ofp_action_group );
           pGroup->group_id = vlan + ( bSrcAccess ? 10000 : 20000 );
           pOut->actions_len = pGroup->len; // simple way for now
+
           vByte_t::size_type size = v.size();
           v.resize( v.size() + nOctets );
           auto* pAppend = v.data() + size;
           std::memcpy( pAppend, pPacket, nOctets );
           pOut->header.length = v.size();
+
+          assert( 0 != m_fTransmitBuffer );
           m_fTransmitBuffer( std::move( v ) );
         }
         else {
@@ -224,11 +232,12 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           auto* pFlowMod = ::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
           pFlowMod->init();
           pFlowMod->idle_timeout = 30;
+          pFlowMod->cookie = 0x201;
           pFlowMod->priority = 1024;
           //pFlowMod->match.
 
           v.resize( v.size() - sizeof( pFlowMod->match.pad ) );  // subtract the padding field in ofp_match
-          vByte_t::size_type sizePreMatches = v.size();
+          vByte_t::size_type sizeMatchesStart = v.size();
 
           auto* pMatchInPort = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_in_port_>( v );
           pMatchInPort->init( ofp_ingress );
@@ -247,7 +256,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             pMatchVlan->init( vlan );
           }
 
-          size_t sizeMatch = v.size() - sizePreMatches;
+          size_t sizeMatch = v.size() - sizeMatchesStart;
           pFlowMod->match.type = ofp141::ofp_match_type::OFPMT_OXM;
           pFlowMod->match.length = sizeMatch;
           auto* pMatch = new ( &pFlowMod->match ) codec::ofp_flow_mod::ofp_match_;
@@ -257,6 +266,11 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           mapInterface_t::iterator iterInterfaceDst = m_mapInterface.find( iterMapMacDst->second.m_inPort );
           assert( m_mapInterface.end() != iterInterfaceDst );
           interface_t& interfaceDst( iterInterfaceDst->second );
+
+          vByte_t::size_type sizeActionsStart = v.size();
+
+          auto* pActions = ::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
+          pActions->init();
 
           if ( bSrcAccess ) {
             if ( vlan == interfaceDst.tag ) {} // pass packet
@@ -282,6 +296,8 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           auto* pOutput = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
           pOutput->init( iterMapMacDst->second.m_inPort );
 
+          pActions->len = v.size() - sizeActionsStart;
+
           pFlowMod->header.length = v.size();
 
           m_fTransmitBuffer( std::move( v ) );
@@ -298,6 +314,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           }
 
           // ===
+          if ( false )
           {
             vByte_t v = std::move( m_fAcquireBuffer() );
             v.clear();

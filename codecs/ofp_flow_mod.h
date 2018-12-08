@@ -22,9 +22,7 @@
 namespace codec {
 namespace ofp_flow_mod {
 
-  enum Verdict { Drop, Directed, Flood };
-
-  typedef std::function<Verdict( uint32_t )> fCookie0x101_t; // in_port
+  typedef std::function<void( uint32_t )> fCookie0x101_t; // in_port
   //typedef std::function<void( mac_t& )> fEth_t;
 
   // included in oxm fields.
@@ -96,10 +94,12 @@ namespace ofp_flow_mod {
 
   // pg 63 v1.4.1 s7.2.2 (a default empty entry)
   struct ofp_match_: public ofp141::ofp_match {
+
     void init() {
       type = ofp141::ofp_match_type::OFPMT_OXM;
       length = sizeof( type ) + sizeof( length );
     }
+
     size_t fill_size() const { return ( length + 7 ) / 8 * 8 - length; }
     uint8_t* fill() {  // returns next available octet location
       auto* pPad = new( this ) uint8_t;
@@ -114,11 +114,13 @@ namespace ofp_flow_mod {
     }
 
     // TODO: will need to refactor as different matches are required
-    Verdict decode( fCookie0x101_t& fCookie0x101 ) {
-      Verdict verdict( Verdict::Drop );
+    // decodes *this ofp_match structure
+    // 2018/12/08, really only need IN_PORT for now
+    void decode( fCookie0x101_t& fCookie0x101 ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p;
+      bool bFoundInPort( false );
       while ( lenMatches > cnt ) {
         p = new( &ofp141::ofp_match::oxm_fields[cnt] ) oxm_header_;
         std::cout
@@ -134,8 +136,9 @@ namespace ofp_flow_mod {
             ofpxmt_ofb_in_port_* pInPort = new( p ) ofpxmt_ofb_in_port_;
             std::cout << "in_port=" << pInPort->port << std::endl;
             if ( nullptr != fCookie0x101 ) {
-              verdict = fCookie0x101( pInPort->port );
+              fCookie0x101( pInPort->port );
             } // if
+            bFoundInPort = true;
             } // case
             break;
           case ofp141::OFPXMT_OFB_ETH_DST: {
@@ -158,7 +161,7 @@ namespace ofp_flow_mod {
         cnt += sizeof( oxm_header_ ) + p->oxm_length();
         assert( lenMatches >= cnt );
       }
-    return verdict;
+    assert( bFoundInPort );
     }
   };
 

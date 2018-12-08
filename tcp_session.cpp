@@ -324,167 +324,23 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
         // create a lambda (TODO: needs to be restructured, for handling message
         //   needs to be integral to the cookie switch statement (to be refactored)
-        uint32_t nSrcPort;
         codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
-          [this, idVlan, &nSrcPort, &ethernet](nPort_t nSrcPort_) -> codec::ofp_flow_mod::Verdict {
-
-            struct update_flow_mac_dest_actions {
-              codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-              codec::ofp_flow_mod::ofp_action_output_ action;
-              void init( uint32_t nPort ) {
-                actions.init();
-                action.init( nPort );
-              }
-            };
-
-            struct update_flow_mac_src_dest {
-              // once functional, could be used as a template for what to do with variable number of matches, actions
-              codec::ofp_flow_mod::ofp_flow_mod_ mod;
-
-              void init( const mac_t& macSrc, const mac_t& macDst, uint32_t nPortDest ) {
-
-                mod.init();
-
-                mod.cookie = 0x201;
-                mod.idle_timeout = 10; // seconds
-                mod.priority = 100;
-
-                // pMatch used as placeholder for match structures
-                boost::endian::big_uint8_t* pMatch = &mod.match.oxm_fields[0];
-
-                // create match on source mac
-                auto* pMatchEthSrc = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
-                pMatchEthSrc->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc );
-                mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
-
-                // match structures start from here
-                pMatch += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
-
-                // create match on destination mac
-                auto* pMatchEthDst = new ( pMatch ) codec::ofp_flow_mod::ofpxmt_ofb_eth_;
-                pMatchEthDst->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst );
-                mod.match.length += sizeof( codec::ofp_flow_mod::ofpxmt_ofb_eth_ );
-
-                // update overall length from match structures
-                mod.header.length += mod.match.length; // fixed after all oxm fields processed
-
-                // standard requires some padding
-                uint8_t fill_size( 0 );
-                uint8_t* pAligned = mod.fill( fill_size );
-                mod.header.length += fill_size; // skip over additional padding
-
-                // set action for output port
-                auto* pActions = new( pAligned ) update_flow_mac_dest_actions;
-                pActions->init( nPortDest );
-                pActions->actions.len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
-
-                // update overall length from action structures
-                mod.header.length += pActions->actions.len;
-
-              } // init()
-            }; // update_flow_mac_src_dest
+          // nSrcPort_ comes from match decode
+          [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
 
             MacAddress macSrc( ethernet.GetSrcMac() );
             MacAddress macDst( ethernet.GetDstMac() );
 
-            nSrcPort = nSrcPort_;
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, idVlan, macSrc );
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
+            m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
 
-            nPort_t nDstPort = m_bridge.Lookup( macDst );;
-
-            // if we arrived in this code, it means a flow or set of flows:
-            //   a) have not existed, or
-            //   b) have expired
-
-            typedef codec::ofp_flow_mod::Verdict Verdict;
-            Verdict verdict( Verdict::Drop );
-
-            if ( macSrc.IsMulticast()
-              || macSrc.IsBroadcast()
-            ) {
-              std::cout << "source based broadcast/multicast address found" << std::endl;
-            }
-            else {
-              if (   macDst.IsMulticast( macDst )
-                ||   macDst.IsBroadcast( macDst )
-                || ( ofp141::ofp_port_no::OFPP_MAX <= nDstPort )
-              ) {
-                // need to flood the packet
-                verdict = Verdict::Flood;
-              }
-              else {
-                // configure flow in each direction
-                // remove/overwrite/add flow: match dest mac, set dest port,
-                // if a mac-dest only flow is inserted,
-                //   won't get a packet_in from the other direction to learn those macs
-                // therefore, only insert src/dest based flows, both ways
-                //   use flow expiry of 10 seconds for testing
-                //   match srcmac, destmac, set dest port
-                //   put in both directions
-
-                {
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  v.resize( max_length );
-                  auto pMod = new( v.data() ) update_flow_mac_src_dest;
-                  pMod->init( ethernet.GetSrcMac(), ethernet.GetDstMac(), nDstPort );
-                  v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
-                  //std::cout << "MOD1: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
-                  QueueTxToWrite( std::move( v ) );
-                  std::cout << "Update Flow1: "
-                    << std::hex << nDstPort << std::dec << std::endl;
-                }
-
-                {
-                  vByte_t v = std::move( GetAvailableBuffer() );
-                  v.resize( max_length );
-                  auto pMod = new( v.data() ) update_flow_mac_src_dest;
-                  pMod->init( ethernet.GetDstMac(), ethernet.GetSrcMac(), nSrcPort );
-                  v.resize( pMod->mod.header.length ); // remove padding (invalidates pMod )
-                  //std::cout << "MOD2: " << HexDump<vByte_t::iterator>( v.begin(), v.end(), ' ' ) << std::endl;
-                  QueueTxToWrite( std::move( v ) );
-                  std::cout << "Update Flow2: " << nSrcPort << std::endl;
-                }
-
-                verdict = Verdict::Directed;
-              }
-            }
-            return verdict;
           }; // end of lambda( in_port )
 
-        // three choices - refactor in to switch ( status ) statement above
-        // 1) flood to all ports if dest mac not found
-        // 2) flood to all ports if broadcast mac found
-        // 3) send to table if found in bridge table (flow should have been installed above)
         switch ( pPacket->cookie ) {
           case 0x101: {
-            typedef codec::ofp_flow_mod::Verdict Verdict;
-            Verdict verdict = pMatch->decode( fCookie0x101 ); // process match fields via the lambda
-            switch ( verdict ) {
-              case Verdict::Drop:
-                // do nothing
-                std::cout << "Verdict Drop " << std::endl;
-                break;
-              case Verdict::Directed:{
-                // send via table?  // TODO: fix this to be a send via table, may need a barrier message
-                vByte_t v = std::move( GetAvailableBuffer() );
-                //codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
-                //out.build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_TABLE );
-                codec::ofp_packet_out::build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_ALL );
-                QueueTxToWrite( std::move( v ) );
-                std::cout << "Verdict Directed " << std::endl;
-                }
-
-                break;
-              case Verdict::Flood: {
-                // flood via ALL
-                vByte_t v = std::move( GetAvailableBuffer() );
-                //codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
-                codec::ofp_packet_out::build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
-                QueueTxToWrite( std::move( v ) );
-                std::cout << "Verdict Flood" << std::endl;
-                }
-                break;
-            }
+            // need to decode the IN_PORT for the bridge
+            pMatch->decode( fCookie0x101 ); // process match fields via the lambda
+            // no longer any need for the Verdict, decisions are handled in bridge
             }
             break;
           default:
@@ -605,11 +461,11 @@ void tcp_session::do_write() {
   if ( 0 == m_bufferTxQueue.Front().size() ) {
     assert( 0 );
   }
- //std::cout
- //   << "OUT: " << std::endl
- //  << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
- //   << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
- //   << std::endl;
+ std::cout
+    << "OUT: " << std::endl
+    << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
+    << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
+    << std::endl;
 
   asio::async_write(
     m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
@@ -625,7 +481,7 @@ void tcp_session::do_write() {
           //m_vTxInWrite = std::move( m_bufferTxQueue.ObtainBuffer() );
           do_write();
         }
-        //std::cout << "do_write complete:" << ec << "," << len << std::endl;
+        std::cout << "do_write complete:" << ec << "," << len << std::endl;
         //if (!ec) {
         //  do_read();
         //}
