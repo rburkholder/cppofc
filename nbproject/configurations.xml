@@ -7,6 +7,8 @@
       <logicalFolder name="f2" displayName="codecs" projectFiles="true">
         <itemPath>codecs/datapathid.h</itemPath>
         <itemPath>codecs/ofp_async_config.h</itemPath>
+        <itemPath>codecs/ofp_barrier.cpp</itemPath>
+        <itemPath>codecs/ofp_barrier.h</itemPath>
         <itemPath>codecs/ofp_flow_mod.h</itemPath>
         <itemPath>codecs/ofp_group_mod.cpp</itemPath>
         <itemPath>codecs/ofp_group_mod.h</itemPath>
@@ -139,6 +141,10 @@
       </item>
       <item path="codecs/ofp_async_config.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/ofp_barrier.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_barrier.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/ofp_flow_mod.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_flow_mod.h" ex="false" tool="3" flavor2="0">
@@ -265,6 +271,10 @@
       <item path="codecs/ofp_async_config.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/ofp_async_config.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/ofp_barrier.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="codecs/ofp_barrier.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/ofp_flow_mod.cpp" ex="false" tool="1" flavor2="0">
       </item>

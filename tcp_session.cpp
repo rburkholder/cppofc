@@ -549,6 +549,15 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // TODO: use this to update the gui, to confirm what other parts of the engine are saying (ovsdb code does something similar)
         const auto pStatus = new(pBegin) ofp141::ofp_port_status;
         codec::ofp_port_status status( *pStatus );
+        std::cout
+          << "ofp141::ofp_type::OFPT_PORT_STATUS"
+          << std::endl;
+        }
+        break;
+      case ofp141::ofp_type::OFPT_BARRIER_REPLY: {
+        std::cout
+          << "ofp141::ofp_type::OFPT_BARRIER_REPLY"
+          << std::endl;
         }
         break;
       default:

@@ -39,6 +39,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/bridge.o \
 	${OBJECTDIR}/codecs/datapathid.o \
 	${OBJECTDIR}/codecs/ofp_async_config.o \
+	${OBJECTDIR}/codecs/ofp_barrier.o \
 	${OBJECTDIR}/codecs/ofp_flow_mod.o \
 	${OBJECTDIR}/codecs/ofp_group_mod.o \
 	${OBJECTDIR}/codecs/ofp_header.o \
@@ -105,6 +106,11 @@ ${OBJECTDIR}/codecs/ofp_async_config.o: codecs/ofp_async_config.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_async_config.o codecs/ofp_async_config.cpp
+
+${OBJECTDIR}/codecs/ofp_barrier.o: codecs/ofp_barrier.cpp
+	${MKDIR} -p ${OBJECTDIR}/codecs
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/codecs/ofp_barrier.o codecs/ofp_barrier.cpp
 
 ${OBJECTDIR}/codecs/ofp_flow_mod.o: codecs/ofp_flow_mod.cpp
 	${MKDIR} -p ${OBJECTDIR}/codecs
