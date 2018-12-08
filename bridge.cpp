@@ -164,16 +164,16 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
       }
       else {
 
-        interface_t& interface( iterInterface->second );
+        interface_t& interfaceSrc( iterInterface->second );
 
         bool bSrcAccess( false );
 
-        if ( ( 0 == vlan ) && ( VlanMode::access == interface.eVlanMode ) ) {
-          vlan = interface.tag; // associate vlan with access port
+        if ( ( 0 == vlan ) && ( VlanMode::access == interfaceSrc.eVlanMode ) ) {
+          vlan = interfaceSrc.tag; // associate vlan with access port
           bSrcAccess = true;
         }
-        if ( ( 0 == vlan ) && ( VlanMode::native_tagged == interface.eVlanMode ) ) {
-          vlan = interface.tag;
+        if ( ( 0 == vlan ) && ( VlanMode::native_tagged == interfaceSrc.eVlanMode ) ) {
+          vlan = interfaceSrc.tag;
           bSrcAccess = true;
         }
 
@@ -212,13 +212,83 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
         }
         else {
           // install rules into table and route via tables
+          std::cout
+            << "bridge::forward specific from " << ofp_ingress
+            << ", to vlan " << vlan
+            << std::endl;
+
+          vByte_t v = std::move( m_fAcquireBuffer() );
+          v.clear();
+
+          auto* pFlowMod = ::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
+          pFlowMod->init();
+          pFlowMod->idle_timeout = 30;
+          pFlowMod->priority = 1024;
+          //pFlowMod->match.
+
+          v.resize( v.size() - sizeof( pFlowMod->match.pad ) );  // subtract the padding field in ofp_match
+          vByte_t::size_type sizePreMatches = v.size();
+
+          auto* pMatchInPort = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_in_port_>( v );
+          pMatchInPort->init( ofp_ingress );
+
+          auto* pMatchDstMac = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          pMatchDstMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst.Value() );
+
+          auto* pMatchSrcMac = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          pMatchSrcMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc.Value() );
+
+          auto* pMatchVlan   = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_vlan_vid_>( v );
+          if ( bSrcAccess ) {
+            pMatchVlan->init();
+          }
+          else {
+            pMatchVlan->init( vlan );
+          }
+
+          size_t sizeMatch = v.size() - sizePreMatches;
+          pFlowMod->match.type = ofp141::ofp_match_type::OFPMT_OXM;
+          pFlowMod->match.length = sizeMatch;
+          auto* pMatch = new ( &pFlowMod->match ) codec::ofp_flow_mod::ofp_match_;
+          v.resize( v.size() + pMatch->fill_size() );
+          pMatch->fill();
+
+          mapInterface_t::iterator iterInterfaceDst = m_mapInterface.find( iterMapMacDst->second.m_inPort );
+          assert( m_mapInterface.end() != iterInterfaceDst );
+          interface_t& interfaceDst( iterInterfaceDst->second );
+
+          if ( bSrcAccess ) {
+            if ( vlan == interfaceDst.tag ) {} // pass packet
+            else {
+              // need the 802.1q header
+              assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
+              auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
+              pActionPushVlan->init( 0x8100 );
+              auto pActionSetVlan= ::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
+              pActionSetVlan->init( vlan );
+            }
+          }
+          else { // working with source trunk
+            if ( vlan == interfaceDst.tag ) { // destination access port
+              auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
+              pAction->init();
+            }
+            else { // pass packet
+              assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
+            }
+          }
+
+          auto* pOutput = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+          pOutput->init( iterMapMacDst->second.m_inPort );
+
+          pFlowMod->header.length = v.size();
+
+          m_fTransmitBuffer( std::move( v ) );
+
         }
       }
-
-
     }
   }
-
 
 }
 

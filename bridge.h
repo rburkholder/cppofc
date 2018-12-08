@@ -34,6 +34,9 @@ public:
   typedef uint16_t idVlan_t;
   typedef uint32_t idGroup_t;
 
+  typedef std::set<idVlan_t> setVlan_t;
+  typedef std::set<ofport_t> setPort_t;
+
   typedef std::function<vByte_t(void)> fAcquireBuffer_t;
   typedef std::function<void(vByte_t)> fTransmitBuffer_t;
 
@@ -42,8 +45,8 @@ public:
   enum VlanMode { access, trunk, dot1q_tunnel, native_tagged, native_untagged };
 
   struct interface_t {
-    idVlan_t tag; // port access vlan
-    std::set<idVlan_t> setTrunk; // a set of vlan numbers
+    idVlan_t tag; // port access vlan; TODO: test tag is not member of trunk
+    setVlan_t setTrunk; // a set of vlan numbers
     VlanMode eVlanMode;
     OpState admin_state;
     OpState link_state;
@@ -76,9 +79,6 @@ public:
                 );
 
 private:
-
-  typedef std::set<idVlan_t> setVlan_t;
-  typedef std::set<ofport_t> setPort_t;
 
   struct MacInfo {
     nPort_t m_inPort;

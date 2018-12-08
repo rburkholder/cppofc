@@ -65,10 +65,15 @@ namespace ofp_flow_mod {
         ofp141::oxm_ofb_match_fields::OFPXMT_OFB_VLAN_VID,
         2
         );
-      // for a match ( pass in the flag via the parameter)
       vlan = vlan_ | ofp141::ofp_vlan_id::OFPVID_PRESENT;
-      // for a set?
-      //vlan = vlan_;
+    }
+    void init() {
+      header = OXM_HEADER( // line 760
+        ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+        ofp141::oxm_ofb_match_fields::OFPXMT_OFB_VLAN_VID,
+        2
+        );
+      vlan = ofp141::ofp_vlan_id::OFPVID_NONE;
     }
   };
 
@@ -194,6 +199,7 @@ namespace ofp_flow_mod {
     uint8_t* tlv() { return (uint8_t*)(&field[0]); }
   };
 
+  // TODO: fix this:  'field' is causing an issue.
   struct ofp_action_set_field_vlan_id_: public ofp141::ofp_action_set_field {
     static const size_t placeholding = sizeof( ofpxmt_ofb_vlan_vid_ ) - 4;
     static const size_t padding
