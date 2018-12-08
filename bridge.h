@@ -44,7 +44,7 @@ public:
   struct interface_t {
     idVlan_t tag; // port access vlan
     std::set<idVlan_t> setTrunk; // a set of vlan numbers
-    VlanMode eVlanMode;  // not sure content of this yet
+    VlanMode eVlanMode;
     OpState admin_state;
     OpState link_state;
     mac_t mac_in_use;
@@ -70,7 +70,10 @@ public:
   // currently from tcp_session wondering how to forward packets
   MacStatus Update( nPort_t nPort, idVlan_t idVlan, const MacAddress& macSource );
   nPort_t Lookup( const MacAddress& mac );
-  void Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& macSrc, const MacAddress& macDst );
+  void Forward( ofport_t ofp_ingress, idVlan_t vlan,
+                const MacAddress& macSrc, const MacAddress& macDst,
+                uint8_t* pPacket, size_t nOctets
+                );
 
 private:
 

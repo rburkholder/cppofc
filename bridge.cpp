@@ -13,6 +13,20 @@
 
 #include "codecs/ofp_group_mod.h"
 #include "codecs/ofp_flow_mod.h"
+#include "codecs/ofp_packet_out.h"
+
+namespace {
+  // TODO: move this out to common?
+  template<typename T>
+  T* Append( vByte_t& v ) {
+    size_t increment( sizeof( T ) );
+    size_t placeholder( v.size() );
+    size_t new_size = placeholder + increment;
+    v.resize( new_size );
+    T* p = new( v.data() + placeholder ) T;
+    return p;
+  }
+}
 
 Bridge::Bridge( )
 : m_bRulesInjectionActive( false ), m_bGroupTrunkAllAdded( false )
@@ -113,7 +127,10 @@ nPort_t Bridge::Lookup( const MacAddress& mac ) {
   return nPort;
 }
 
-void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& macSrc, const MacAddress& macDst ) {
+void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
+                      const MacAddress& macSrc, const MacAddress& macDst,
+                      uint8_t* pPacket, size_t nOctets
+) {
 
   bool bSomethingOdd( false );
 
@@ -142,10 +159,26 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& mac
       mapInterface_t::iterator iterInterface = m_mapInterface.find( ofp_ingress );
       if ( m_mapInterface.end() == iterInterface ) {
         std::cout
-          << "bridge::forward - couldn find inbound interface " << ofp_ingress
+          << "bridge::forward - couldn't find inbound interface " << ofp_ingress
           << std::endl;
       }
       else {
+
+        interface_t& interface( iterInterface->second );
+
+        bool bSrcAccess( false );
+
+        if ( ( 0 == vlan ) && ( VlanMode::access == interface.eVlanMode ) ) {
+          vlan = interface.tag; // associate vlan with access port
+          bSrcAccess = true;
+        }
+        if ( ( 0 == vlan ) && ( VlanMode::native_tagged == interface.eVlanMode ) ) {
+          vlan = interface.tag;
+          bSrcAccess = true;
+        }
+
+        assert( 0 != vlan ); // not sure what other conditions we are going to have for now
+
         bool bBroadcast( false );
 
         bBroadcast |= macDst.IsBroadcast(); // probably redundant comparison, given map lookup below
@@ -156,6 +189,26 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& mac
 
         if ( bBroadcast ) {
           // route via group
+          std::cout
+            << "bridge::forward broadcast from " << ofp_ingress
+            << ", to vlan " << vlan
+            << ", on group " << vlan + ( bSrcAccess ? 10000 : 20000 )
+            << std::endl;
+          vByte_t v = std::move( m_fAcquireBuffer() );
+          v.clear();
+          auto*  pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
+          pOut->initv2( ofp_ingress );
+          auto* pGroup = ::Append<ofp141::ofp_action_group>( v );
+          pGroup->type = ofp141::ofp_action_type::OFPAT_GROUP;
+          pGroup->len  = sizeof( ofp141::ofp_action_group );
+          pGroup->group_id = vlan + ( bSrcAccess ? 10000 : 20000 );
+          pOut->actions_len = pGroup->len; // simple way for now
+          vByte_t::size_type size = v.size();
+          v.resize( v.size() + nOctets );
+          auto* pAppend = v.data() + size;
+          std::memcpy( pAppend, pPacket, nOctets );
+          pOut->header.length = v.size();
+          m_fTransmitBuffer( std::move( v ) );
         }
         else {
           // install rules into table and route via tables
@@ -281,17 +334,6 @@ void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuff
   // TODO: send what we know
   BuildGroups();
 }
-
-  // TODO: move this out to common?
-  template<typename T>
-  T* Append( vByte_t& v ) {
-    size_t increment( sizeof( T ) );
-    size_t placeholder( v.size() );
-    size_t new_size = placeholder + increment;
-    v.resize( new_size );
-    T* p = new( v.data() + placeholder ) T;
-    return p;
-  }
 
 void Bridge::BuildGroups() {
 

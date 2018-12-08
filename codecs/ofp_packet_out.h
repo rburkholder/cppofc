@@ -37,11 +37,23 @@ namespace ofp_packet_out { // page 129 v1.4.1 s7.3.6
 
   struct ofp_packet_out_: public ofp141::ofp_packet_out {
     ofp_packet_out_() {}
-    void init( uint32_t size, uint32_t in_port_, uint32_t buffer_id_ = OFP_NO_BUFFER ) {
+    void init( uint32_t size, uint32_t in_port_, uint32_t buffer_id_ = OFP_NO_BUFFER ) { // legacy version
       auto* pHeader = new ( &header ) codec::ofp_header::ofp_header_;  // need to change header structure
       pHeader->init();
       header.type = ofp141::ofp_type::OFPT_PACKET_OUT;
       header.length = size;
+      codec::ofp_header::NewXid( *pHeader );
+      buffer_id = buffer_id_;
+      in_port = in_port_;
+      assert( sizeof( ofp_packet_out_ ) == sizeof( ofp141::ofp_packet_out ) );
+      actions_len = sizeof( ofp_action_output_ );
+      std::memset( pad, 0, 6 );
+    }
+    void initv2( uint32_t in_port_, uint32_t buffer_id_ = OFP_NO_BUFFER ) { // new version
+      auto* pHeader = new ( &header ) codec::ofp_header::ofp_header_;  // need to change header structure
+      pHeader->init();
+      header.type = ofp141::ofp_type::OFPT_PACKET_OUT;
+      header.length = sizeof( ofp141::ofp_packet_out ); // updated later remotely
       codec::ofp_header::NewXid( *pHeader );
       buffer_id = buffer_id_;
       in_port = in_port_;
