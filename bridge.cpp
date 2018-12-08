@@ -23,40 +23,39 @@ Bridge::Bridge( )
 Bridge::~Bridge( ) {
 }
 
-Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const mac_t& macSource ) {
+Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddress& macSource ) {
 
   if ( 0 == nPort ) {
     throw std::runtime_error( "Bridge::Update need port > 0" );
   }
 
   MacStatus status( StatusQuo );
-  MacAddress mac( macSource );
 
-  if ( MacAddress::IsMulticast( mac ) ) {
+  if ( macSource.IsMulticast() ) {
     status = Multicast;
     std::cout
-      << "bridge: found source multicast " << macSource
+      << "bridge: found source multicast " << macSource.Value()
       << " on port " << nPort
       << std::endl;
     // this is an illegal option, source mac cannot be multicast
   }
   else {
-    if ( MacAddress::IsBroadcast( mac ) ) {
+    if ( macSource.IsBroadcast() ) {
       status = Broadcast;
       std::cout
-        << "bridge: found source broadcast " << macSource
+        << "bridge: found source broadcast " << macSource.Value()
         << " on port " << nPort
         << std::endl;
       // will need to evaluate this, and look at the meanings
     }
     else {
-      mapMac_t::iterator iterMapMac = m_mapMac.find( mac );
+      mapMac_t::iterator iterMapMac = m_mapMac.find( macSource );
       if ( m_mapMac.end() == iterMapMac ) { // didn't find mac
-        std::pair<MacAddress, MacInfo> pair( mac, MacInfo( nPort ) );
+        std::pair<MacAddress, MacInfo> pair( macSource, MacInfo( nPort ) );
         iterMapMac = m_mapMac.insert( m_mapMac.begin(), pair );
         status = Learned;
         std::cout
-          << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
+          << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
           << " learned on port " << nPort
           << std::endl;
       }
@@ -66,7 +65,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const mac_t& m
           iterMapMac->second.m_cntMoved++;
           status = Moved;
           std::cout
-            << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
+            << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
             << " moved to port " << nPort
             << " flap count " << iterMapMac->second.m_cntMoved
             << std::endl;
@@ -79,7 +78,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const mac_t& m
           if ( setVlanEncountered.end() == iterSetVlan ) {
             setVlanEncountered.insert( idVlan );
             std::cout
-              << "bridge: mac " << HexDump<const uint8_t*>( macSource, macSource + 6, ':' )
+              << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
               << " has vlan " << idVlan
               << std::endl;
           }
@@ -91,11 +90,13 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const mac_t& m
   return status;
 }
 
-nPort_t Bridge::Lookup( const mac_t& mac_ ) {
+nPort_t Bridge::Lookup( const MacAddress& mac ) {
+
   nPort_t nPort( ofp141::ofp_port_no::OFPP_ANY );  // neither ingress nor egress (pg 15)
-  MacAddress mac( mac_ );
-  if ( MacAddress::IsBroadcast( mac_ )
-    || MacAddress::IsMulticast( mac_ )
+  //MacAddress mac( mac_ );
+
+  if ( mac.IsBroadcast()
+    || mac.IsMulticast()
   ) {
     nPort_t nPort( ofp141::ofp_port_no::OFPP_ALL ); // all but ingress (pg 15)
   }
@@ -110,6 +111,62 @@ nPort_t Bridge::Lookup( const mac_t& mac_ ) {
     }
   }
   return nPort;
+}
+
+void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& macSrc, const MacAddress& macDst ) {
+
+  bool bSomethingOdd( false );
+
+  bSomethingOdd |= macSrc.IsBroadcast();
+  bSomethingOdd |= macSrc.IsMulticast();
+
+  if ( bSomethingOdd ) {
+    std::cout
+      << "bridge::forward: src is broadcast or multicast, ignoring"
+      << std::endl;
+  }
+  else {
+
+    mapMac_t::iterator iterMapMacSrc = m_mapMac.find( macSrc );
+    if ( m_mapMac.end() == iterMapMacSrc ) {
+      std::cout
+        << "bridge:;forward: src mac is not in lookup, ignoring, should have already been set"
+        << std::endl;
+    }
+    else {
+
+      // look up source port in mapInterface
+      //    if vlan is 0, then use as acccess port and lookup tag
+      //    if vlan is not zero, confirm vlan belongs as a port (trunk or native), and forward based upon trunk
+
+      mapInterface_t::iterator iterInterface = m_mapInterface.find( ofp_ingress );
+      if ( m_mapInterface.end() == iterInterface ) {
+        std::cout
+          << "bridge::forward - couldn find inbound interface " << ofp_ingress
+          << std::endl;
+      }
+      else {
+        bool bBroadcast( false );
+
+        bBroadcast |= macDst.IsBroadcast(); // probably redundant comparison, given map lookup below
+        bBroadcast |= macDst.IsMulticast(); // probably redundant comparison, given map lookup below
+
+        mapMac_t::iterator iterMapMacDst = m_mapMac.find( macDst );
+        bBroadcast |= m_mapMac.end() == iterMapMacDst;
+
+        if ( bBroadcast ) {
+          // route via group
+        }
+        else {
+          // install rules into table and route via tables
+        }
+      }
+
+
+    }
+  }
+
+
 }
 
 void Bridge::UpdateInterface( const interface_t& interface_ ) {

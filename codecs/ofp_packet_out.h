@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ofp_packet_out.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
@@ -17,14 +17,12 @@
 #include "../codecs/ofp_header.h"
 
 namespace codec {
+namespace ofp_packet_out { // page 129 v1.4.1 s7.3.6
 
-class ofp_packet_out { // page 129 v1.4.1 s7.3.6
-public:
-  
   struct ofp_action_output_: public ofp141::ofp_action_output {
     ofp_action_output_() {}
-    void init( 
-      uint32_t port_ = ofp141::ofp_port_no::OFPP_NORMAL, 
+    void init(
+      uint32_t port_ = ofp141::ofp_port_no::OFPP_NORMAL,
       uint16_t max_len_ = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER
     ) {
       type = ofp141::ofp_action_type::OFPAT_OUTPUT;
@@ -36,7 +34,7 @@ public:
     }
     //size_t size() const { return sizeof( this ); }
   };
-  
+
   struct ofp_packet_out_: public ofp141::ofp_packet_out {
     ofp_packet_out_() {}
     void init( uint32_t size, uint32_t in_port_, uint32_t buffer_id_ = OFP_NO_BUFFER ) {
@@ -52,13 +50,11 @@ public:
       std::memset( pad, 0, 6 );
     }
   };
-  
-  void build( vByte_t&, uint32_t nPort, size_t nOctets, void* pSrc, 
+
+  void build( vByte_t&, uint32_t nPort, size_t nOctets, void* pSrc,
               ofp141::ofp_port_no portOutput = ofp141::ofp_port_no::OFPP_ALL );
-private:
 
-};
-
+} // namespace ofp_packet_out
 } // namespace codec
 
 //struct ofp_packet_out {

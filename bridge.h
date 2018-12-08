@@ -68,8 +68,9 @@ public:
   void StartRulesInjection( fAcquireBuffer_t, fTransmitBuffer_t );
 
   // currently from tcp_session wondering how to forward packets
-  MacStatus Update( nPort_t nPort, idVlan_t idVlan, const mac_t& macSource );
-  nPort_t Lookup( const mac_t& mac );
+  MacStatus Update( nPort_t nPort, idVlan_t idVlan, const MacAddress& macSource );
+  nPort_t Lookup( const MacAddress& mac );
+  void Forward( ofport_t ofp_ingress, idVlan_t vlan, const MacAddress& macSrc, const MacAddress& macDst );
 
 private:
 
@@ -84,6 +85,7 @@ private:
   };
 
   typedef std::unordered_map<MacAddress,MacInfo> mapMac_t;
+  //typedef std::unordered_map<mac_t,MacInfo> mapMac_t;
   mapMac_t m_mapMac;
 
   typedef std::map<ofport_t,interface_t> mapInterface_t;

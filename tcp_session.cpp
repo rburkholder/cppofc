@@ -388,9 +388,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             MacAddress macDst( ethernet.GetDstMac() );
 
             nSrcPort = nSrcPort_;
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, idVlan, macSrc.Value() );
+            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort_, idVlan, macSrc );
 
-            nPort_t nDstPort = m_bridge.Lookup( ethernet.GetDstMac() );;
+            nPort_t nDstPort = m_bridge.Lookup( macDst );;
 
             // if we arrived in this code, it means a flow or set of flows:
             //   a) have not existed, or
@@ -399,14 +399,14 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             typedef codec::ofp_flow_mod::Verdict Verdict;
             Verdict verdict( Verdict::Drop );
 
-            if ( MacAddress::IsMulticast( macSrc )
-              || MacAddress::IsBroadcast( macSrc )
+            if ( macSrc.IsMulticast()
+              || macSrc.IsBroadcast()
             ) {
               std::cout << "source based broadcast/multicast address found" << std::endl;
             }
             else {
-              if (   MacAddress::IsMulticast( macDst )
-                ||   MacAddress::IsBroadcast( macDst )
+              if (   macDst.IsMulticast( macDst )
+                ||   macDst.IsBroadcast( macDst )
                 || ( ofp141::ofp_port_no::OFPP_MAX <= nDstPort )
               ) {
                 // need to flood the packet
@@ -467,9 +467,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               case Verdict::Directed:{
                 // send via table?  // TODO: fix this to be a send via table, may need a barrier message
                 vByte_t v = std::move( GetAvailableBuffer() );
-                codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
+                //codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
                 //out.build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_TABLE );
-                out.build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_ALL );
+                codec::ofp_packet_out::build( v, nSrcPort, pPacket->total_len, pPayload, ofp141::ofp_port_no::OFPP_ALL );
                 QueueTxToWrite( std::move( v ) );
                 std::cout << "Verdict Directed " << std::endl;
                 }
@@ -478,8 +478,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               case Verdict::Flood: {
                 // flood via ALL
                 vByte_t v = std::move( GetAvailableBuffer() );
-                codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
-                out.build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
+                //codec::ofp_packet_out out; // flood for now, but TODO: run through tables again, if not broadcast
+                codec::ofp_packet_out::build( v, nSrcPort, pPacket->total_len, pPayload ); // set for flood
                 QueueTxToWrite( std::move( v ) );
                 std::cout << "Verdict Flood" << std::endl;
                 }
