@@ -14,7 +14,7 @@
 namespace codec {
 namespace ofp_barrier {
 
-struct ofp_barrier: public ofp141::ofp_header {
+struct ofp_barrier_: public ofp141::ofp_header {
   void init() {
     auto* pHeader = new( this ) codec::ofp_header::ofp_header_;
     pHeader->init();
