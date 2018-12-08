@@ -27,9 +27,11 @@ public:
   MacAddress( const MacAddress& rhs );
   MacAddress( const std::string& );
 
+  bool IsBroadcast() const;
   static bool IsBroadcast( const mac_t& mac );
   static bool IsBroadcast( const MacAddress& mac );
 
+  bool IsMulticast() const;
   static bool IsMulticast( const mac_t& mac );
   static bool IsMulticast( const MacAddress& mac );
 
