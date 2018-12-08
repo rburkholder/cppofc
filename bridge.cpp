@@ -13,6 +13,7 @@
 
 #include "codecs/ofp_group_mod.h"
 #include "codecs/ofp_flow_mod.h"
+#include "codecs/ofp_barrier.h"
 #include "codecs/ofp_packet_out.h"
 
 namespace {
@@ -284,6 +285,38 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           pFlowMod->header.length = v.size();
 
           m_fTransmitBuffer( std::move( v ) );
+
+          // ===
+          {
+            vByte_t v = std::move( m_fAcquireBuffer() );
+            v.clear();
+
+            auto* pBarrier = ::Append<codec::ofp_barrier::ofp_barrier_>( v );
+            pBarrier->init();
+
+            m_fTransmitBuffer( std::move( v ) );
+          }
+
+          // ===
+          {
+            vByte_t v = std::move( m_fAcquireBuffer() );
+            v.clear();
+
+            auto*  pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
+            pOut->initv2( ofp_ingress );
+
+            auto* pOutput = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+            pOutput->init( ofp141::ofp_port_no::OFPP_TABLE );
+
+            pOut->actions_len = pOutput->len; // simple way for now
+
+            vByte_t::size_type size = v.size();
+            v.resize( v.size() + nOctets );
+            auto* pAppend = v.data() + size;
+            std::memcpy( pAppend, pPacket, nOctets );
+            pOut->header.length = v.size();
+            m_fTransmitBuffer( std::move( v ) );
+          }
 
         }
       }
