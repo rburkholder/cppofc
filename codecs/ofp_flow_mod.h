@@ -254,7 +254,7 @@ namespace ofp_flow_mod {
   };
 
   // pg 89 v1.4.1 s7.3.4.2
-  struct ofp_flow_mod_: public ofp141::ofp_flow_mod {
+  struct ofp_flow_mod_: public ofp141::ofp_flow_mod { // line 1379 in ofp141 file
     void init() {
       auto pHeader = new( &header ) codec::ofp_header::ofp_header_;
       pHeader->init();
@@ -278,7 +278,7 @@ namespace ofp_flow_mod {
         0
         ;
       importance = 0;
-      auto pMatch = new( &match ) codec::ofp_flow_mod::ofp_match_;
+      auto pMatch = new( &match ) codec::ofp_flow_mod::ofp_match_;  // line 594
       pMatch->init();
     }
 

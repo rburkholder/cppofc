@@ -338,9 +338,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
         switch ( pPacket->cookie ) {
           case 0x101: {
-            // need to decode the IN_PORT for the bridge
+            // for decoding the IN_PORT to supply to the bridge
             pMatch->decode( fCookie0x101 ); // process match fields via the lambda
-            // no longer any need for the Verdict, decisions are handled in bridge
             }
             break;
           default:
@@ -481,7 +480,7 @@ void tcp_session::do_write() {
           //m_vTxInWrite = std::move( m_bufferTxQueue.ObtainBuffer() );
           do_write();
         }
-        std::cout << "do_write complete:" << ec << "," << len << std::endl;
+        //std::cout << "do_write complete:" << ec << "," << len << std::endl;
         //if (!ec) {
         //  do_read();
         //}

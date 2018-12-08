@@ -234,8 +234,11 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           pFlowMod->idle_timeout = 30;
           pFlowMod->cookie = 0x201;
           pFlowMod->priority = 1024;
-          //pFlowMod->match.
 
+          auto* pMatch = new ( &pFlowMod->match ) codec::ofp_flow_mod::ofp_match_;
+          //pMatch->init();  // already performed in init above
+
+          assert( 4 ==  sizeof( pFlowMod->match.pad ) );
           v.resize( v.size() - sizeof( pFlowMod->match.pad ) );  // subtract the padding field in ofp_match
           vByte_t::size_type sizeMatchesStart = v.size();
 
@@ -256,10 +259,8 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             pMatchVlan->init( vlan );
           }
 
-          size_t sizeMatch = v.size() - sizeMatchesStart;
-          pFlowMod->match.type = ofp141::ofp_match_type::OFPMT_OXM;
-          pFlowMod->match.length = sizeMatch;
-          auto* pMatch = new ( &pFlowMod->match ) codec::ofp_flow_mod::ofp_match_;
+          pMatch->length += v.size() - sizeMatchesStart;
+
           v.resize( v.size() + pMatch->fill_size() );
           pMatch->fill();
 
@@ -277,8 +278,10 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             else {
               // need the 802.1q header
               assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
+
               auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
               pActionPushVlan->init( 0x8100 );
+
               auto pActionSetVlan= ::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
               pActionSetVlan->init( vlan );
             }
@@ -303,6 +306,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           m_fTransmitBuffer( std::move( v ) );
 
           // ===
+          //if ( false )
           {
             vByte_t v = std::move( m_fAcquireBuffer() );
             v.clear();
@@ -314,7 +318,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           }
 
           // ===
-          if ( false )
+          //if ( false )
           {
             vByte_t v = std::move( m_fAcquireBuffer() );
             v.clear();
