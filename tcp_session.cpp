@@ -166,17 +166,21 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
     assert( 0 );
   }
 
-  std::cout
-    << "IN: "
-    << HexDump<const uint8_t*>( pBegin, pEnd )
-    << std::endl;
+  if ( false ) {
+    std::cout
+      << "IN: "
+      << HexDump<const uint8_t*>( pBegin, pEnd )
+      << std::endl;
+  }
 
-  std::cout
-    << (uint16_t)pHeader->version
-    << "," << (uint16_t)pHeader->type
-    << "," << pHeader->length
-    << "," << pHeader->xid
-    << std::endl;
+  if ( false ) {
+    std::cout
+      <<  "  ver=" << (uint16_t)pHeader->version
+      << ", type=" << (uint16_t)pHeader->type
+      <<  ", len=" << pHeader->length
+      <<  ", xid=" << pHeader->xid
+      << std::endl;
+  }
 
   if ( OFP_VERSION == pHeader->version ) {
     switch (pHeader->type) {
@@ -191,7 +195,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
         // Start bridge to update groups and forwarding rules
         // TODO: need a strand for the bridge?  What threads use the bridge?
-        std::cout << "** tcp_session::m_bRulesInjectionActive calling StartRulesInjection" << std::endl;
+        //std::cout << "** tcp_session::m_bRulesInjectionActive calling StartRulesInjection" << std::endl;
         m_bridge.StartRulesInjection(
           // fAcquireBuffer
           [this]()->vByte_t{
@@ -460,11 +464,13 @@ void tcp_session::do_write() {
   if ( 0 == m_bufferTxQueue.Front().size() ) {
     assert( 0 );
   }
- std::cout
-    << "OUT: " << std::endl
-    << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
-    << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
-    << std::endl;
+  if ( false ) {
+    std::cout
+      << "OUT: " << std::endl
+      << "00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f" << std::endl
+      << HexDump<vByte_t::const_iterator>( m_bufferTxQueue.Front().begin(), m_bufferTxQueue.Front().end() )
+      << std::endl;
+  }
 
   asio::async_write(
     m_socket, boost::asio::buffer( m_bufferTxQueue.Front() ),  // rather than class variable, pass contents into lambda
