@@ -67,7 +67,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddre
       mapMac_t::iterator iterMapMac = m_mapMac.find( macSource );
       if ( m_mapMac.end() == iterMapMac ) { // didn't find mac
         std::pair<MacAddress, MacInfo> pair( macSource, MacInfo( nPort ) );
-        iterMapMac = m_mapMac.insert( m_mapMac.begin(), pair );
+        iterMapMac = m_mapMac.insert( m_mapMac.begin(), pair ); // vlan is dealt with below
         status = Learned;
         std::cout
           << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
@@ -76,27 +76,27 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddre
       }
       else {
         if ( nPort != iterMapMac->second.m_inPort ) { // mac moved (check for flap sometime)
-          iterMapMac->second.m_inPort = nPort;
-          iterMapMac->second.m_cntMoved++;
+          MacInfo& mac_info( iterMapMac->second );
+          mac_info.m_inPort = nPort;
+          mac_info.m_cntMoved++;
+          mac_info.m_setVlanEncountered.clear();
           status = Moved;
           std::cout
             << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
             << " moved to port " << nPort
-            << " flap count " << iterMapMac->second.m_cntMoved
+            << " flap count " << mac_info.m_cntMoved
             << std::endl;
         }
       }
       if ( 0 != idVlan ) {
         setVlan_t& setVlanEncountered( iterMapMac->second.m_setVlanEncountered );
-        if ( 0 != setVlanEncountered.size() ) {
-          setVlan_t::iterator iterSetVlan = setVlanEncountered.find( idVlan );
-          if ( setVlanEncountered.end() == iterSetVlan ) {
-            setVlanEncountered.insert( idVlan );
-            std::cout
-              << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
-              << " has vlan " << idVlan
-              << std::endl;
-          }
+        setVlan_t::iterator iterSetVlan = setVlanEncountered.find( idVlan );
+        if ( setVlanEncountered.end() == iterSetVlan ) {
+          setVlanEncountered.insert( idVlan );
+          std::cout
+            << "bridge: mac " << HexDump<const uint8_t*>( macSource.Value(), macSource.Value() + 6, ':' )
+            << " has vlan " << idVlan
+            << std::endl;
         }
       }
     }
