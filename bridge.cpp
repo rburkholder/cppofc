@@ -105,30 +105,6 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddre
   return status;
 }
 
-// 2018/12/08 deprecated once code removed from tcp_session
-nPort_t Bridge::Lookup( const MacAddress& mac ) {
-
-  nPort_t nPort( ofp141::ofp_port_no::OFPP_ANY );  // neither ingress nor egress (pg 15)
-  //MacAddress mac( mac_ );
-
-  if ( mac.IsBroadcast()
-    || mac.IsMulticast()
-  ) {
-    nPort_t nPort( ofp141::ofp_port_no::OFPP_ALL ); // all but ingress (pg 15)
-  }
-  else {
-    mapMac_t::iterator iter = m_mapMac.find( mac );
-    if ( m_mapMac.end() == iter ) {
-      //throw std::runtime_error( "Bridge::Lookup: no address found" );
-      // default to OFPP_ANY
-    }
-    else {
-      nPort = iter->second.m_inPort;
-    }
-  }
-  return nPort;
-}
-
 void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
                       const MacAddress& macSrc, const MacAddress& macDst,
                       uint8_t* pPacket, size_t nOctets

@@ -72,7 +72,6 @@ public:
 
   // currently from tcp_session wondering how to forward packets
   MacStatus Update( nPort_t nPort, idVlan_t idVlan, const MacAddress& macSource );
-  nPort_t Lookup( const MacAddress& mac );
   void Forward( ofport_t ofp_ingress, idVlan_t vlan,
                 const MacAddress& macSrc, const MacAddress& macDst,
                 uint8_t* pPacket, size_t nOctets
