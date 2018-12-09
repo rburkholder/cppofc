@@ -35,6 +35,10 @@ public:
   static bool IsMulticast( const mac_t& mac );
   static bool IsMulticast( const MacAddress& mac );
 
+  bool IsAllZero() const; // ARP Probe, RFC 5227
+  static bool IsAllZero( const mac_t& mac );
+  static bool IsAllZero( const MacAddress& mac );
+
   const mac_t& Value() const;
 
   bool operator==( const mac_t& rhs ) const;

@@ -24,6 +24,7 @@
 
 namespace {
   static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  static const mac_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0 };
 }
 
 namespace {
@@ -99,6 +100,18 @@ bool MacAddress::IsMulticast( const MacAddress& mac ) {
 
 bool MacAddress::IsMulticast() const {
   return 1 == ( m_mac[0] & 1 );
+}
+
+bool MacAddress::IsAllZero( const mac_t& mac ) {
+  return 0 == std::memcmp( allzero, mac, sizeof( mac_t ) );
+}
+
+bool MacAddress::IsAllZero( const MacAddress& mac ) {
+  return IsAllZero( mac.m_mac );
+}
+
+bool MacAddress::IsAllZero() const {
+  return 0 == std::memcmp( allzero, m_mac, sizeof( mac_t ) );
 }
 
 bool MacAddress::IsBroadcast( const mac_t& mac ) {
