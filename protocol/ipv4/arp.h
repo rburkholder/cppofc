@@ -33,8 +33,8 @@ namespace arp {
 enum OpCode { ArpRequest=1, ArpReply, RARPRequest, RARPReply,
 DRARPRequest, DRARPReply, DRARPError, InARPRequest, InARPReply };
 
-typedef protocol::ethernet::mac_t mac_t;
-typedef protocol::ethernet::MacAddress MacAddress;
+typedef protocol::ethernet::address_t mac_t;
+typedef protocol::ethernet::address MacAddress;
 
 // ** Header
 

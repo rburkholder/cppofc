@@ -42,7 +42,7 @@ enum Ethertype {
   , vlan_double_tagged=0x9100
 };
 
-typedef protocol::ethernet::mac_t mac_t;
+typedef address_t mac_t;
 
 struct header_ {
   //uint8_t m_padding[ 2 ]; // supplied by ofp_packet_in

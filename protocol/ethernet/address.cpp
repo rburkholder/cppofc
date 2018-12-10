@@ -23,9 +23,9 @@
 #include "address.h"
 
 namespace {
-  static const protocol::ethernet::mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-  static const protocol::ethernet::mac_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0  };
-  static const protocol::ethernet::mac_t multicast = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }; // IEEE 802 Multicast MAC Address (high 3 bytes)
+  static const protocol::ethernet::address_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  static const protocol::ethernet::address_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0  };
+  static const protocol::ethernet::address_t multicast = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }; // IEEE 802 Multicast MAC Address (high 3 bytes)
 }
 
 namespace {
@@ -74,7 +74,7 @@ namespace ethernet {
 ///
 /// \param macSrc
 /// \param macDst
-void ConvertStringToMac( const std::string& macSrc, mac_t& macDst ) {
+void ConvertStringToMac( const std::string& macSrc, address_t& macDst ) {
   typedef std::vector<uint8_t> vMac_t;
   vMac_t vResult;
   vResult.reserve( 6 );
@@ -89,71 +89,71 @@ void ConvertStringToMac( const std::string& macSrc, mac_t& macDst ) {
 
   if ( 1 != result ) throw std::runtime_error( "ill formed mac address (1)" );
   if ( iter != end ) throw std::runtime_error( "ill formed mac address (2)" );
-  assert( sizeof( mac_t ) == vResult.size() );
+  assert( sizeof( address_t ) == vResult.size() );
 
-  std::memcpy( macDst, vResult.data(), sizeof( mac_t ) );
+  std::memcpy( macDst, vResult.data(), sizeof( address_t ) );
 }
 
-bool MacAddress::IsMulticast( const mac_t& mac ) {
+bool address::IsMulticast( const address_t& mac ) {
   return 1 == ( mac[0] & 1 );
 }
 
-bool MacAddress::IsMulticast( const MacAddress& mac ) {
+bool address::IsMulticast( const address& mac ) {
   return 1 == ( mac.m_mac[0] & 1 );
 }
 
-bool MacAddress::IsMulticast() const {
+bool address::IsMulticast() const {
   return 1 == ( m_mac[0] & 1 );
 }
 
-bool MacAddress::IsAllZero( const mac_t& mac ) {
-  return 0 == std::memcmp( allzero, mac, sizeof( mac_t ) );
+bool address::IsAllZero( const address_t& mac ) {
+  return 0 == std::memcmp( allzero, mac, sizeof( address_t ) );
 }
 
-bool MacAddress::IsAllZero( const MacAddress& mac ) {
+bool address::IsAllZero( const address& mac ) {
   return IsAllZero( mac.m_mac );
 }
 
-bool MacAddress::IsAllZero() const {
-  return 0 == std::memcmp( allzero, m_mac, sizeof( mac_t ) );
+bool address::IsAllZero() const {
+  return 0 == std::memcmp( allzero, m_mac, sizeof( address_t ) );
 }
 
-bool MacAddress::IsBroadcast( const mac_t& mac ) {
+bool address::IsBroadcast( const address_t& mac ) {
   return 0 == std::memcmp( mac, broadcast, 6 );
 }
 
-bool MacAddress::IsBroadcast( const MacAddress& mac ) {
+bool address::IsBroadcast( const address& mac ) {
   return IsBroadcast( mac.m_mac );
 }
 
-bool MacAddress::IsBroadcast() const {
+bool address::IsBroadcast() const {
   return 0 == std::memcmp( m_mac, broadcast, 6 );
 }
 
-MacAddress::MacAddress() {
-  std::memset( m_mac, 0, sizeof( mac_t ) );
+address::address() {
+  std::memset( m_mac, 0, sizeof( address_t ) );
 }
 
-MacAddress::MacAddress( const mac_t& mac ) {
-  std::memcpy( m_mac, mac, sizeof( mac_t ) );
+address::address( const address_t& mac ) {
+  std::memcpy( m_mac, mac, sizeof( address_t ) );
 }
 
-MacAddress::MacAddress( const std::string& sMac ) {
+address::address( const std::string& sMac ) {
   ConvertStringToMac( sMac, m_mac );
 }
 
-MacAddress::MacAddress( const MacAddress& rhs ) {
-  std::memcpy( m_mac, rhs.m_mac, sizeof( mac_t ) );
+address::address( const address& rhs ) {
+  std::memcpy( m_mac, rhs.m_mac, sizeof( address_t ) );
 }
 
-const mac_t& MacAddress::Value() const { return m_mac; }
+const address_t& address::Value() const { return m_mac; }
 
-bool MacAddress::operator==( const mac_t& rhs ) const {
-  return 0 == std::memcmp( m_mac, rhs, sizeof( mac_t ) );
+bool address::operator==( const address_t& rhs ) const {
+  return 0 == std::memcmp( m_mac, rhs, sizeof( address_t ) );
 }
 
-bool MacAddress::operator==( const MacAddress& rhs ) const {
-  return 0 == std::memcmp( m_mac, rhs.m_mac, sizeof( mac_t ) );
+bool address::operator==( const address& rhs ) const {
+  return 0 == std::memcmp( m_mac, rhs.m_mac, sizeof( address_t ) );
 }
 
 } // namespace ethernet

@@ -16,38 +16,38 @@
 namespace protocol {
 namespace ethernet {
 
-typedef uint8_t mac_t[ 6 ];
+typedef uint8_t address_t[ 6 ];
 
-void ConvertStringToMac( const std::string& src, mac_t& dst ); // hh:hh:hh:hh:hh:hh
+void ConvertStringToMac( const std::string& src, address_t& dst ); // hh:hh:hh:hh:hh:hh
 
-class MacAddress {
+class address {
 public:
 
-  MacAddress();
-  MacAddress( const mac_t& mac );
-  MacAddress( const MacAddress& rhs );
-  MacAddress( const std::string& );
+  address();
+  address( const address_t& mac );
+  address( const address& rhs );
+  address( const std::string& );
 
   bool IsBroadcast() const;
-  static bool IsBroadcast( const mac_t& mac );
-  static bool IsBroadcast( const MacAddress& mac );
+  static bool IsBroadcast( const address_t& mac );
+  static bool IsBroadcast( const address& mac );
 
   bool IsMulticast() const;
-  static bool IsMulticast( const mac_t& mac );
-  static bool IsMulticast( const MacAddress& mac );
+  static bool IsMulticast( const address_t& mac );
+  static bool IsMulticast( const address& mac );
 
   bool IsAllZero() const; // ARP Probe, RFC 5227
-  static bool IsAllZero( const mac_t& mac );
-  static bool IsAllZero( const MacAddress& mac );
+  static bool IsAllZero( const address_t& mac );
+  static bool IsAllZero( const address& mac );
 
-  const mac_t& Value() const;
+  const address_t& Value() const;
 
-  bool operator==( const mac_t& rhs ) const;
-  bool operator==( const MacAddress& rhs ) const;
+  bool operator==( const address_t& rhs ) const;
+  bool operator==( const address& rhs ) const;
 
 protected:
 private:
-  mac_t m_mac;
+  address_t m_mac;
 };
 
 } // namespace ethernet
@@ -55,8 +55,8 @@ private:
 
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {
-  template<> struct hash<protocol::ethernet::mac_t> {
-    typedef protocol::ethernet::mac_t argument_type;
+  template<> struct hash<protocol::ethernet::address_t> {
+    typedef protocol::ethernet::address_t argument_type;
     typedef std::size_t result_type;
     result_type operator()( const argument_type& mac ) const {
       result_type value;
@@ -73,11 +73,11 @@ namespace std {
 
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {
-  template<> struct hash<protocol::ethernet::MacAddress> {
-    typedef protocol::ethernet::MacAddress argument_type;
+  template<> struct hash<protocol::ethernet::address> {
+    typedef protocol::ethernet::address argument_type;
     typedef std::size_t result_type;
     result_type operator()( const argument_type& mac ) const {
-      return std::hash<protocol::ethernet::mac_t>{}( mac.Value() );
+      return std::hash<protocol::ethernet::address_t>{}( mac.Value() );
       }
     };
 }

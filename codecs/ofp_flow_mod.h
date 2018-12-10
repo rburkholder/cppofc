@@ -22,7 +22,7 @@
 namespace codec {
 namespace ofp_flow_mod {
 
-  typedef protocol::ethernet::mac_t mac_t;
+  typedef protocol::ethernet::address_t mac_t;
 
   typedef std::function<void( uint32_t )> fCookie0x101_t; // in_port
   //typedef std::function<void( mac_t& )> fEth_t;
