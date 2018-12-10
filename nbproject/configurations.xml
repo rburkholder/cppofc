@@ -22,13 +22,16 @@
         <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="protocol" projectFiles="true">
-        <itemPath>protocol/ipv4/arp.h</itemPath>
-        <itemPath>protocol/ipv4/dhcp.h</itemPath>
+        <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
+          <itemPath>protocol/ipv4/address.h</itemPath>
+          <itemPath>protocol/ipv4/arp.h</itemPath>
+          <itemPath>protocol/ipv4/dhcp.h</itemPath>
+          <itemPath>protocol/ipv4/tcp.h</itemPath>
+          <itemPath>protocol/ipv4/udp.h</itemPath>
+        </logicalFolder>
         <itemPath>protocol/ethernet.h</itemPath>
         <itemPath>protocol/ipv4.h</itemPath>
         <itemPath>protocol/ipv6.h</itemPath>
-        <itemPath>protocol/ipv4/tcp.h</itemPath>
-        <itemPath>protocol/ipv4/udp.h</itemPath>
         <itemPath>protocol/vlan.h</itemPath>
       </logicalFolder>
       <itemPath>Buffer.h</itemPath>
@@ -62,13 +65,16 @@
       <logicalFolder name="f3" displayName="openflow" projectFiles="true">
       </logicalFolder>
       <logicalFolder name="f2" displayName="protocol" projectFiles="true">
-        <itemPath>protocol/ipv4/arp.cpp</itemPath>
-        <itemPath>protocol/ipv4/dhcp.cpp</itemPath>
+        <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
+          <itemPath>protocol/ipv4/address.cpp</itemPath>
+          <itemPath>protocol/ipv4/arp.cpp</itemPath>
+          <itemPath>protocol/ipv4/dhcp.cpp</itemPath>
+          <itemPath>protocol/ipv4/tcp.cpp</itemPath>
+          <itemPath>protocol/ipv4/udp.cpp</itemPath>
+        </logicalFolder>
         <itemPath>protocol/ethernet.cpp</itemPath>
         <itemPath>protocol/ipv4.cpp</itemPath>
         <itemPath>protocol/ipv6.cpp</itemPath>
-        <itemPath>protocol/ipv4/tcp.cpp</itemPath>
-        <itemPath>protocol/ipv4/udp.cpp</itemPath>
         <itemPath>protocol/vlan.cpp</itemPath>
       </logicalFolder>
       <itemPath>Buffer.cpp</itemPath>
@@ -207,6 +213,10 @@
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ipv4/address.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/address.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv4/arp.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4/arp.h" ex="false" tool="3" flavor2="0">
@@ -337,6 +347,10 @@
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/address.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ipv4/address.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ipv4/arp.cpp" ex="false" tool="1" flavor2="0">
       </item>

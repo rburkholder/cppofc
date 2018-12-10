@@ -54,6 +54,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/ovsdb_impl.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ipv4.o \
+	${OBJECTDIR}/protocol/ipv4/address.o \
 	${OBJECTDIR}/protocol/ipv4/arp.o \
 	${OBJECTDIR}/protocol/ipv4/dhcp.o \
 	${OBJECTDIR}/protocol/ipv4/tcp.o \
@@ -181,6 +182,11 @@ ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4.o protocol/ipv4.cpp
+
+${OBJECTDIR}/protocol/ipv4/address.o: protocol/ipv4/address.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv4/address.o protocol/ipv4/address.cpp
 
 ${OBJECTDIR}/protocol/ipv4/arp.o: protocol/ipv4/arp.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ipv4
