@@ -16,7 +16,7 @@
 #include <tuple>
 
 #include "../openflow/openflow-spec1.4.1.h"
-#include "../protocol/ethernet/mac.h"
+#include "../protocol/ethernet/address.h"
 #include "ofp_header.h"
 
 namespace codec {

@@ -14,7 +14,7 @@
 #include <boost/endian/arithmetic.hpp>
 
 //#include "../common.h"
-#include "../protocol/ethernet/mac.h"
+#include "../protocol/ethernet/address.h"
 #include "../hexdump.h"
 
 namespace ethernet {

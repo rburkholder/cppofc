@@ -33,7 +33,7 @@
 #include "ovsdb.h"
 #include "tcp_session.h"
 #include "control.h"
-#include "protocol/ethernet/mac.h"
+#include "protocol/ethernet/address.h"
 
 Control::Control( int port )
 :

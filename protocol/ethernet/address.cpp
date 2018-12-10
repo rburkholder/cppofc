@@ -20,7 +20,7 @@
 
 #define BOOST_SPIRIT_USE_PHOENIX_V3 1
 
-#include "mac.h"
+#include "address.h"
 
 namespace {
   static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };

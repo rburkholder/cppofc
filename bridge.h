@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 #include "common.h"
-#include "protocol/ethernet/mac.h"
+#include "protocol/ethernet/address.h"
 
 // TODO: add io_context
 //   allows a strand to be added and used for syncing updates from ovsdb and requests from tcp_session
