@@ -18,9 +18,12 @@ namespace ethernet {
 
 typedef uint8_t address_t[ 6 ];
 
+std::ostream& operator<<( std::ostream& stream, const protocol::ethernet::address_t& ); // not getting called with native address_t
+
 void ConvertStringToMac( const std::string& src, address_t& dst ); // hh:hh:hh:hh:hh:hh
 
 class address {
+  friend std::ostream& operator<<( std::ostream&, const address& );
 public:
 
   address();
@@ -42,12 +45,18 @@ public:
 
   const address_t& Value() const;
 
+  const address& operator=( const address& rhs );
+  const address& operator=( const address_t& rhs );
+
   bool operator==( const address_t& rhs ) const;
   bool operator==( const address& rhs ) const;
 
 protected:
 private:
   address_t m_mac;
+
+  std::ostream& Emit( std::ostream& stream ) const;
+
 };
 
 } // namespace ethernet

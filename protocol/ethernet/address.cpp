@@ -9,6 +9,8 @@
 
 #include <stdexcept>
 
+#define BOOST_SPIRIT_USE_PHOENIX_V3 1
+
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_rule.hpp>
 #include <boost/spirit/include/qi_grammar.hpp>
@@ -18,7 +20,7 @@
 //#include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 
-#define BOOST_SPIRIT_USE_PHOENIX_V3 1
+#include "../../hexdump.h"
 
 #include "address.h"
 
@@ -70,6 +72,11 @@ struct mac_parser_t: qi::grammar<Iterator, vMac_t()> {
 
 namespace protocol {
 namespace ethernet {
+
+std::ostream& operator<<( std::ostream& stream, const protocol::ethernet::address_t& mac ) {
+  stream << HexDump<const uint8_t*>( mac, mac + 6, ':' );
+  return stream;
+}
 
 ///
 /// \param macSrc
@@ -148,6 +155,16 @@ address::address( const address& rhs ) {
 
 const address_t& address::Value() const { return m_mac; }
 
+const address& address::operator=( const address& rhs ) {
+  std::memcpy( m_mac, rhs.m_mac, sizeof( address_t ) );
+  return *this;
+}
+
+const address& address::operator=( const address_t& rhs ) {
+  std::memcpy( m_mac, rhs, sizeof( address_t ) );
+  return *this;
+}
+
 bool address::operator==( const address_t& rhs ) const {
   return 0 == std::memcmp( m_mac, rhs, sizeof( address_t ) );
 }
@@ -156,5 +173,13 @@ bool address::operator==( const address& rhs ) const {
   return 0 == std::memcmp( m_mac, rhs.m_mac, sizeof( address_t ) );
 }
 
+std::ostream& address::Emit( std::ostream& stream ) const {
+  stream << m_mac;
+  return stream;
+}
+
+std::ostream& operator<<( std::ostream& stream, const address& mac ) {
+  return mac.Emit( stream );
+}
 } // namespace ethernet
 } // namespace protocol
