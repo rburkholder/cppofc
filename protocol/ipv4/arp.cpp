@@ -1,8 +1,8 @@
-/* 
+/*
  * File:   arp.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
- * 
+ *
  * Created on 2017/09/20, 4:53 PM
  */
 
@@ -19,8 +19,8 @@ Header::Header( const Header_& header ): m_header( header ) {
 Header::~Header() {}
 
 std::ostream& Header::Emit( std::ostream& stream ) const {
-  stream 
-    << std::hex 
+  stream
+    << std::hex
     << "hw=" << m_header.m_typeHardware
     << ",proto=" << m_header.m_typeProtocol
     << ",op=" << m_header.m_opcode
@@ -50,7 +50,7 @@ void Content::Init( Header_& header ) {
 }
 
 std::ostream& Content::Emit( std::ostream& stream ) const {
-  stream 
+  stream
     << ",hs=" << HexDump<uint8_t*>( m_addrHardwareSender, m_addrHardwareSender + m_lenHardware )
     << ",ps=" << HexDump<uint8_t*>( m_addrProtocolSender, m_addrProtocolSender + m_lenProtocol )
     << ",ht=" << HexDump<uint8_t*>( m_addrHardwareTarget, m_addrHardwareTarget + m_lenHardware )
@@ -58,7 +58,7 @@ std::ostream& Content::Emit( std::ostream& stream ) const {
     ;
   return stream;
 }
-  
+
 std::ostream& operator<<( std::ostream& stream, const Content& content ) {
   return content.Emit( stream );
 }
@@ -75,6 +75,33 @@ Packet::~Packet() {
 
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
   return packet.Emit( stream );
+}
+
+// ** IPv4
+
+IPv4_Ether::IPv4_Ether( uint8_t& rOctets )
+: m_ipv4( new ( &rOctets ) IPv4_Ether_ )
+{
+  Header_& header( m_ipv4->header );
+  assert(      1 == header.m_typeHardware );
+  assert( 0x0800 == header.m_typeProtocol );
+  assert(      6 == header.m_lenHardware );
+  assert(      4 == header.m_lenProtocol );
+  //assert(    ( 1 == header.m_opcode ) || ( 2 == header.m_opcode ) );
+}
+
+IPv4_Ether::~IPv4_Ether() {
+}
+
+// ** Cache
+
+void Cache::Update( IPv4_Ether& arp ) {
+  protocol::ipv4::address ipv4( arp.IPv4Sender() );
+  MacAddress mac( arp.MacSender() );
+  mapArp_t::iterator iterMapArpSender = m_mapArp.find( ipv4 );
+  if ( m_mapArp.end() == iterMapArpSender ) {
+    m_mapArp.insert( mapArp_t::value_type( ipv4, mac ) );
+  }
 }
 
 } // namespace arp
