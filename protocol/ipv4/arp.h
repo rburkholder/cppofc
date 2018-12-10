@@ -26,6 +26,7 @@
 
 
 namespace protocol {
+namespace ipv4 {
 namespace arp {
 
 // https://tools.ietf.org/html/rfc826
@@ -34,7 +35,6 @@ enum OpCode { ArpRequest=1, ArpReply, RARPRequest, RARPReply,
 DRARPRequest, DRARPReply, DRARPError, InARPRequest, InARPReply };
 
 typedef protocol::ethernet::address_t mac_t;
-typedef protocol::ethernet::address MacAddress;
 
 // ** Header
 
@@ -121,7 +121,7 @@ private:
 
 typedef protocol::ipv4::address_t ipv4_t;
 
-struct IPv4_Ether_ {
+struct IPv4Ether_t {
   Header_ header;
   mac_t macSender;
   ipv4_t ipv4Sender;
@@ -129,19 +129,23 @@ struct IPv4_Ether_ {
   ipv4_t ipv4Target;
 };
 
-class IPv4_Ether {
+class IPv4Ether {
+  friend std::ostream& operator<<( std::ostream&, const IPv4Ether& );
 public:
-  IPv4_Ether( uint8_t& );  // need a way to determine whether to initialize or not
-  virtual ~IPv4_Ether();
+  IPv4Ether( uint8_t& );  // need a way to determine whether to initialize or not
+  virtual ~IPv4Ether();
 
-  const mac_t& MacSender() { return m_ipv4->macSender; }
-  const mac_t& MacTarget() { return m_ipv4->macTarget; }
-  const ipv4_t& IPv4Sender() { return m_ipv4->ipv4Sender; }
-  const ipv4_t& IPv4Target() { return m_ipv4->ipv4Target; }
+  const mac_t& MacSender() const { return m_ipv4->macSender; }
+  const mac_t& MacTarget() const { return m_ipv4->macTarget; }
+  const ipv4_t& IPv4Sender() const { return m_ipv4->ipv4Sender; }
+  const ipv4_t& IPv4Target() const { return m_ipv4->ipv4Target; }
 
 protected:
 private:
-  IPv4_Ether_* m_ipv4;
+  IPv4Ether_t* m_ipv4;
+
+  std::ostream& Emit( std::ostream& stream ) const;
+
 };
 
 // ** Cache
@@ -149,15 +153,18 @@ private:
 class Cache {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
-  void Update( IPv4_Ether& );
+  void Update( const IPv4Ether& );
 protected:
 private:
-  typedef std::unordered_map<protocol::ipv4::address,MacAddress> mapArp_t;
+  typedef std::unordered_map<protocol::ipv4::address,protocol::ethernet::address> mapIpv4ToMac_t;
 
-  mapArp_t m_mapArp;
+  mapIpv4ToMac_t m_mapIpv4ToMac;
+
+  void Update( const protocol::ipv4::address&, const protocol::ethernet::address& );
 };
 
 } // namespace arp
+} // namespace ipv4
 } // namespace protocol
 
 #endif /* ARP_H */

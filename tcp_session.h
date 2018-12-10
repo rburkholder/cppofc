@@ -16,6 +16,8 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include "protocol/ipv4/arp.h"
+
 #include "common.h"
 #include "Buffer.h"
 #include "bridge.h"
@@ -66,6 +68,8 @@ private:
   std::atomic<uint32_t> m_transmitting;
 
   std::mutex m_mutex;
+
+  protocol::ipv4::arp::Cache m_arpCache;
 
   Buffer m_bufferAvailable;
   Buffer m_bufferTxQueue;

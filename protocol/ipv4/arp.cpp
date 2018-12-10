@@ -9,6 +9,7 @@
 #include "arp.h"
 
 namespace protocol {
+namespace ipv4 {
 namespace arp {
 
 // ** Header
@@ -79,8 +80,8 @@ std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
 
 // ** IPv4
 
-IPv4_Ether::IPv4_Ether( uint8_t& rOctets )
-: m_ipv4( new ( &rOctets ) IPv4_Ether_ )
+IPv4Ether::IPv4Ether( uint8_t& rOctets )
+: m_ipv4( new ( &rOctets ) IPv4Ether_t )
 {
   Header_& header( m_ipv4->header );
   assert(      1 == header.m_typeHardware );
@@ -90,19 +91,49 @@ IPv4_Ether::IPv4_Ether( uint8_t& rOctets )
   //assert(    ( 1 == header.m_opcode ) || ( 2 == header.m_opcode ) );
 }
 
-IPv4_Ether::~IPv4_Ether() {
+IPv4Ether::~IPv4Ether() {
+}
+
+std::ostream& IPv4Ether::Emit( std::ostream& stream ) const {
+  const protocol::ipv4::address ipv4Sender( IPv4Sender() );
+  const protocol::ipv4::address ipv4Target( IPv4Target() );
+  const protocol::ethernet::address macSender( MacSender() );
+  const protocol::ethernet::address macTarget( MacTarget() );
+  stream << "arp: sender(" << ipv4Sender << "," << macSender << "),target(" << ipv4Target << "," << macTarget << ")";
+  return stream;
+}
+
+std::ostream& operator<<( std::ostream& stream, const IPv4Ether& arp ) {
+  return arp.Emit( stream );
 }
 
 // ** Cache
 
-void Cache::Update( IPv4_Ether& arp ) {
-  protocol::ipv4::address ipv4( arp.IPv4Sender() );
-  MacAddress mac( arp.MacSender() );
-  mapArp_t::iterator iterMapArpSender = m_mapArp.find( ipv4 );
-  if ( m_mapArp.end() == iterMapArpSender ) {
-    m_mapArp.insert( mapArp_t::value_type( ipv4, mac ) );
+void Cache::Update( const protocol::ipv4::address& ipv4, const protocol::ethernet::address& mac ) {
+  mapIpv4ToMac_t::iterator iterMapIpv4ToMac = m_mapIpv4ToMac.find( ipv4 );
+  if ( m_mapIpv4ToMac.end() == iterMapIpv4ToMac ) {
+    iterMapIpv4ToMac = m_mapIpv4ToMac.insert( m_mapIpv4ToMac.begin(), mapIpv4ToMac_t::value_type( ipv4, mac ) );
+  }
+  else {
+    if ( iterMapIpv4ToMac->second.IsAllZero() && !mac.IsAllZero() ) {
+      iterMapIpv4ToMac->second = mac;
+    }
+  }
+}
+
+void Cache::Update( const IPv4Ether& arp ) {
+  {
+    const protocol::ipv4::address     ipv4( arp.IPv4Sender() );
+    const protocol::ethernet::address mac(  arp.MacSender() );
+    Update( ipv4, mac );
+  }
+  {
+    const protocol::ipv4::address     ipv4( arp.IPv4Target() );
+    const protocol::ethernet::address mac(  arp.MacTarget() );
+    Update( ipv4, mac );
   }
 }
 
 } // namespace arp
+} // namespace ipv4
 } // namespace protocol

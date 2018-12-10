@@ -27,7 +27,6 @@
 #include "protocol/ethernet.h"
 #include "protocol/ethernet/vlan.h"
 #include "protocol/ipv4.h"
-#include "protocol/ipv4/arp.h"
 #include "protocol/ipv4/udp.h"
 #include "protocol/ipv4/tcp.h"
 #include "protocol/ipv6.h"
@@ -286,7 +285,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         switch ( idEtherType ) {
           case protocol::ethernet::Ethertype::arp: {
-            protocol::arp::Packet arp( *pMessage );
+            protocol::ipv4::arp::IPv4Ether arp( *pMessage );
+            m_arpCache.Update( arp );
             std::cout << arp << ::std::endl;
             // maybe start a thread for other aux packet processing from above
             }
