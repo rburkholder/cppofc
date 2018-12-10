@@ -10,13 +10,17 @@
 #define IPV4_ADDRESS_H
 
 #include <string>
+#include <ostream>
 
 namespace protocol {
 namespace ipv4 {
 
 typedef uint8_t address_t[4];
 
+std::ostream& operator<<( std::ostream& stream, const address_t& ); // not getting called with native address_t
+
 class address {
+  friend std::ostream& operator<<( std::ostream&, const address& );
 public:
   address();
   address( const address_t& );
@@ -31,6 +35,9 @@ public:
 protected:
 private:
   address_t m_ipv4;
+
+  std::ostream& Emit( std::ostream& stream ) const;
+
 };
 
 } // namespace ipv4
