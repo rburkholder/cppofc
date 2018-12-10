@@ -23,6 +23,7 @@
       </logicalFolder>
       <logicalFolder name="f1" displayName="protocol" projectFiles="true">
         <logicalFolder name="f2" displayName="ethernet" projectFiles="true">
+          <itemPath>protocol/ethernet/mac.h</itemPath>
           <itemPath>protocol/ethernet/vlan.h</itemPath>
         </logicalFolder>
         <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
@@ -41,7 +42,6 @@
       <itemPath>common.h</itemPath>
       <itemPath>control.h</itemPath>
       <itemPath>hexdump.h</itemPath>
-      <itemPath>mac.h</itemPath>
       <itemPath>ovsdb.h</itemPath>
       <itemPath>ovsdb_impl.h</itemPath>
       <itemPath>ovsdb_structures.h</itemPath>
@@ -68,6 +68,7 @@
       </logicalFolder>
       <logicalFolder name="f2" displayName="protocol" projectFiles="true">
         <logicalFolder name="f2" displayName="ethernet" projectFiles="true">
+          <itemPath>protocol/ethernet/mac.cpp</itemPath>
           <itemPath>protocol/ethernet/vlan.cpp</itemPath>
         </logicalFolder>
         <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
@@ -84,7 +85,6 @@
       <itemPath>Buffer.cpp</itemPath>
       <itemPath>bridge.cpp</itemPath>
       <itemPath>control.cpp</itemPath>
-      <itemPath>mac.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>ovsdb.cpp</itemPath>
       <itemPath>ovsdb_impl.cpp</itemPath>
@@ -191,10 +191,6 @@
       </item>
       <item path="hexdump.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="mac.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="mac.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
@@ -212,6 +208,10 @@
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/mac.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/mac.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -326,10 +326,6 @@
       </item>
       <item path="hexdump.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="mac.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="mac.h" ex="false" tool="3" flavor2="0">
-      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="openflow/openflow-spec1.4.1.h" ex="false" tool="3" flavor2="0">
@@ -347,6 +343,10 @@
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/mac.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/mac.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet/vlan.cpp" ex="false" tool="1" flavor2="0">
       </item>

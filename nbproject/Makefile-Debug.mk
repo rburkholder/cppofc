@@ -48,11 +48,11 @@ OBJECTFILES= \
 	${OBJECTDIR}/codecs/ofp_port_status.o \
 	${OBJECTDIR}/codecs/ofp_switch_features.o \
 	${OBJECTDIR}/control.o \
-	${OBJECTDIR}/mac.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/ovsdb.o \
 	${OBJECTDIR}/ovsdb_impl.o \
 	${OBJECTDIR}/protocol/ethernet.o \
+	${OBJECTDIR}/protocol/ethernet/mac.o \
 	${OBJECTDIR}/protocol/ethernet/vlan.o \
 	${OBJECTDIR}/protocol/ipv4.o \
 	${OBJECTDIR}/protocol/ipv4/address.o \
@@ -153,11 +153,6 @@ ${OBJECTDIR}/control.o: control.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/control.o control.cpp
 
-${OBJECTDIR}/mac.o: mac.cpp
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} "$@.d"
-	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/mac.o mac.cpp
-
 ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
@@ -177,6 +172,11 @@ ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
+
+${OBJECTDIR}/protocol/ethernet/mac.o: protocol/ethernet/mac.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ethernet
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet/mac.o protocol/ethernet/mac.cpp
 
 ${OBJECTDIR}/protocol/ethernet/vlan.o: protocol/ethernet/vlan.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol/ethernet

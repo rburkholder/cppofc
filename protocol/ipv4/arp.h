@@ -21,7 +21,7 @@
 #include <boost/endian/arithmetic.hpp>
 
 #include "../../hexdump.h"
-#include "../../mac.h"
+#include "../ethernet/mac.h"
 #include "address.h"
 
 
