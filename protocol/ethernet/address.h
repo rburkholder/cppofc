@@ -5,13 +5,16 @@
  * Created on October 5, 2017, 7:09 PM
  */
 
-#ifndef MAC_H
-#define MAC_H
+#ifndef MAC_ADDRESS_H
+#define MAC_ADDRESS_H
 
 #include <cstring>
 #include <cstdint>
 #include <vector>
 #include <string>
+
+namespace protocol {
+namespace ethernet {
 
 typedef uint8_t mac_t[ 6 ];
 
@@ -47,10 +50,13 @@ private:
   mac_t m_mac;
 };
 
+} // namespace ethernet
+} // namespace protocol
+
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {
-  template<> struct hash<mac_t> {
-    typedef mac_t argument_type;
+  template<> struct hash<protocol::ethernet::mac_t> {
+    typedef protocol::ethernet::mac_t argument_type;
     typedef std::size_t result_type;
     result_type operator()( const argument_type& mac ) const {
       result_type value;
@@ -67,14 +73,14 @@ namespace std {
 
 // http://en.cppreference.com/w/cpp/utility/hash
 namespace std {
-  template<> struct hash<MacAddress> {
-    typedef MacAddress argument_type;
+  template<> struct hash<protocol::ethernet::MacAddress> {
+    typedef protocol::ethernet::MacAddress argument_type;
     typedef std::size_t result_type;
     result_type operator()( const argument_type& mac ) const {
-      return std::hash<mac_t>{}( mac.Value() );
+      return std::hash<protocol::ethernet::mac_t>{}( mac.Value() );
       }
     };
 }
 
-#endif /* MAC_H */
+#endif /* MAC_ADDRESS_H */
 

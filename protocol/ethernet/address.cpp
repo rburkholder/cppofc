@@ -23,9 +23,9 @@
 #include "address.h"
 
 namespace {
-  static const mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-  static const mac_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0  };
-  static const mac_t multicast = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }; // IEEE 802 Multicast MAC Address (high 3 bytes)
+  static const protocol::ethernet::mac_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  static const protocol::ethernet::mac_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0  };
+  static const protocol::ethernet::mac_t multicast = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }; // IEEE 802 Multicast MAC Address (high 3 bytes)
 }
 
 namespace {
@@ -67,6 +67,9 @@ struct mac_parser_t: qi::grammar<Iterator, vMac_t()> {
 
 };
 }
+
+namespace protocol {
+namespace ethernet {
 
 ///
 /// \param macSrc
@@ -152,3 +155,6 @@ bool MacAddress::operator==( const mac_t& rhs ) const {
 bool MacAddress::operator==( const MacAddress& rhs ) const {
   return 0 == std::memcmp( m_mac, rhs.m_mac, sizeof( mac_t ) );
 }
+
+} // namespace ethernet
+} // namespace protocol

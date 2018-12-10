@@ -332,6 +332,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
           // nSrcPort_ comes from match decode
           [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
 
+            typedef protocol::ethernet::MacAddress MacAddress;
+
             MacAddress macSrc( ethernet.GetSrcMac() );
             MacAddress macDst( ethernet.GetDstMac() );
 

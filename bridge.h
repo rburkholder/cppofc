@@ -34,6 +34,9 @@ public:
   typedef uint16_t idVlan_t;
   typedef uint32_t idGroup_t;
 
+  typedef protocol::ethernet::mac_t mac_t;
+  typedef protocol::ethernet::MacAddress MacAddress;
+
   typedef std::set<idVlan_t> setVlan_t;
   typedef std::set<ofport_t> setPort_t;
 

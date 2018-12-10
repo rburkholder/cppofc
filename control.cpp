@@ -568,7 +568,7 @@ void Control::HandleInterfaceUpdate_local( const ovsdb::structures::uuidInterfac
       }
     }
 
-    ConvertStringToMac( interface.mac_in_use, bi.mac_in_use );
+    protocol::ethernet::ConvertStringToMac( interface.mac_in_use, bi.mac_in_use );
 
     m_bridge.UpdateInterface( bi );
 

@@ -33,6 +33,9 @@ namespace arp {
 enum OpCode { ArpRequest=1, ArpReply, RARPRequest, RARPReply,
 DRARPRequest, DRARPReply, DRARPError, InARPRequest, InARPReply };
 
+typedef protocol::ethernet::mac_t mac_t;
+typedef protocol::ethernet::MacAddress MacAddress;
+
 // ** Header
 
 struct Header_ { // used to overlay inbound data
