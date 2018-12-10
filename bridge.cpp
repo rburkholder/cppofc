@@ -249,10 +249,10 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           auto* pActions = ::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
           pActions->init();
 
-          if ( bSrcAccess ) {
-            if ( vlan == interfaceDst.tag ) {} // pass packet
+          if ( bSrcAccess ) { // working with source access port
+            if ( vlan == interfaceDst.tag ) {} // pass packet to access port
             else {
-              // need the 802.1q header
+              // attach the 802.1q header
               assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
 
               auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
@@ -262,12 +262,12 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
               pActionSetVlan->init( vlan );
             }
           }
-          else { // working with source trunk
-            if ( vlan == interfaceDst.tag ) { // destination access port
+          else { // working with source trunk port
+            if ( vlan == interfaceDst.tag ) { // destination access port, so pop vlan
               auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
               pAction->init();
             }
-            else { // pass packet
+            else { // pass packet onto trunk port
               assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
             }
           }
@@ -311,7 +311,9 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             v.resize( v.size() + nOctets );
             auto* pAppend = v.data() + size;
             std::memcpy( pAppend, pPacket, nOctets );
+
             pOut->header.length = v.size();
+
             m_fTransmitBuffer( std::move( v ) );
           }
 
