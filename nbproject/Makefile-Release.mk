@@ -53,6 +53,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/ovsdb.o \
 	${OBJECTDIR}/ovsdb_impl.o \
 	${OBJECTDIR}/protocol/ethernet.o \
+	${OBJECTDIR}/protocol/ethernet/vlan.o \
 	${OBJECTDIR}/protocol/ipv4.o \
 	${OBJECTDIR}/protocol/ipv4/address.o \
 	${OBJECTDIR}/protocol/ipv4/arp.o \
@@ -60,7 +61,6 @@ OBJECTFILES= \
 	${OBJECTDIR}/protocol/ipv4/tcp.o \
 	${OBJECTDIR}/protocol/ipv4/udp.o \
 	${OBJECTDIR}/protocol/ipv6.o \
-	${OBJECTDIR}/protocol/vlan.o \
 	${OBJECTDIR}/tcp_session.o
 
 
@@ -178,6 +178,11 @@ ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet.o protocol/ethernet.cpp
 
+${OBJECTDIR}/protocol/ethernet/vlan.o: protocol/ethernet/vlan.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol/ethernet
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ethernet/vlan.o protocol/ethernet/vlan.cpp
+
 ${OBJECTDIR}/protocol/ipv4.o: protocol/ipv4.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
@@ -212,11 +217,6 @@ ${OBJECTDIR}/protocol/ipv6.o: protocol/ipv6.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/ipv6.o protocol/ipv6.cpp
-
-${OBJECTDIR}/protocol/vlan.o: protocol/vlan.cpp
-	${MKDIR} -p ${OBJECTDIR}/protocol
-	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/vlan.o protocol/vlan.cpp
 
 ${OBJECTDIR}/tcp_session.o: tcp_session.cpp
 	${MKDIR} -p ${OBJECTDIR}

@@ -22,6 +22,9 @@
         <itemPath>openflow/openflow-spec1.4.1.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="protocol" projectFiles="true">
+        <logicalFolder name="f2" displayName="ethernet" projectFiles="true">
+          <itemPath>protocol/ethernet/vlan.h</itemPath>
+        </logicalFolder>
         <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
           <itemPath>protocol/ipv4/address.h</itemPath>
           <itemPath>protocol/ipv4/arp.h</itemPath>
@@ -32,7 +35,6 @@
         <itemPath>protocol/ethernet.h</itemPath>
         <itemPath>protocol/ipv4.h</itemPath>
         <itemPath>protocol/ipv6.h</itemPath>
-        <itemPath>protocol/vlan.h</itemPath>
       </logicalFolder>
       <itemPath>Buffer.h</itemPath>
       <itemPath>bridge.h</itemPath>
@@ -65,6 +67,9 @@
       <logicalFolder name="f3" displayName="openflow" projectFiles="true">
       </logicalFolder>
       <logicalFolder name="f2" displayName="protocol" projectFiles="true">
+        <logicalFolder name="f2" displayName="ethernet" projectFiles="true">
+          <itemPath>protocol/ethernet/vlan.cpp</itemPath>
+        </logicalFolder>
         <logicalFolder name="f1" displayName="ipv4" projectFiles="true">
           <itemPath>protocol/ipv4/address.cpp</itemPath>
           <itemPath>protocol/ipv4/arp.cpp</itemPath>
@@ -75,7 +80,6 @@
         <itemPath>protocol/ethernet.cpp</itemPath>
         <itemPath>protocol/ipv4.cpp</itemPath>
         <itemPath>protocol/ipv6.cpp</itemPath>
-        <itemPath>protocol/vlan.cpp</itemPath>
       </logicalFolder>
       <itemPath>Buffer.cpp</itemPath>
       <itemPath>bridge.cpp</itemPath>
@@ -209,6 +213,10 @@
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ethernet/vlan.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/vlan.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
@@ -236,10 +244,6 @@
       <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/vlan.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcp_session.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -344,6 +348,10 @@
       </item>
       <item path="protocol/ethernet.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="protocol/ethernet/vlan.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/ethernet/vlan.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="protocol/ipv4.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv4.h" ex="false" tool="3" flavor2="0">
@@ -371,10 +379,6 @@
       <item path="protocol/ipv6.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="protocol/ipv6.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="protocol/vlan.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="protocol/vlan.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="tcp_session.cpp" ex="false" tool="1" flavor2="0">
       </item>

@@ -25,7 +25,7 @@
 #include "codecs/ofp_packet_out.h"
 
 #include "protocol/ethernet.h"
-#include "protocol/vlan.h"
+#include "protocol/ethernet/vlan.h"
 #include "protocol/ipv4.h"
 #include "protocol/ipv4/arp.h"
 #include "protocol/ipv4/udp.h"
