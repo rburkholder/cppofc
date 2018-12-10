@@ -17,6 +17,7 @@
 #include "../protocol/ethernet/address.h"
 #include "../hexdump.h"
 
+namespace protocol {
 namespace ethernet {
 
 // https://en.wikipedia.org/wiki/Ethernet_frame
@@ -78,6 +79,7 @@ private:
 };
 
 } // namespace ethernet
+} // namespace protocol
 
 #endif /* ETHERNET_H */
 
