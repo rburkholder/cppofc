@@ -87,7 +87,6 @@ private:
   };
 
   typedef std::unordered_map<MacAddress,MacInfo> mapMac_t;
-  //typedef std::unordered_map<mac_t,MacInfo> mapMac_t;
   mapMac_t m_mapMac;
 
   typedef std::map<ofport_t,interface_t> mapInterface_t;
