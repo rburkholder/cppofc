@@ -82,7 +82,7 @@ std::ostream& operator<<( std::ostream& stream, const protocol::ethernet::addres
 /// \param macSrc
 /// \param macDst
 void ConvertStringToMac( const std::string& macSrc, address_t& macDst ) {
-  typedef std::vector<uint8_t> vMac_t;
+
   vMac_t vResult;
   vResult.reserve( 6 );
 
