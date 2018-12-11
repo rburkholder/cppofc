@@ -19,6 +19,8 @@ typedef uint8_t address_t[4];
 
 std::ostream& operator<<( std::ostream& stream, const address_t& ); // not getting called with native address_t
 
+void ConvertStringToIPv4( const std::string& sIPv4, address_t& ipv4 );
+
 class address {
   friend std::ostream& operator<<( std::ostream&, const address& );
 public:
