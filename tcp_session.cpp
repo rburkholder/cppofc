@@ -44,6 +44,8 @@ namespace asio = boost::asio;
 
 // 2017/09/28 - test port up/down/add/delete messages
 
+// 2018/12/08 test for more packet lengths.
+
   tcp_session::tcp_session( Bridge& bridge, ip::tcp::socket socket)
     : m_bridge( bridge ),
       m_socket( std::move( socket ) ),
