@@ -16,6 +16,22 @@
 #include "codecs/ofp_barrier.h"
 #include "codecs/ofp_packet_out.h"
 
+/*
+ ovs-ofctl dump-flows ovsbr0
+ ovs-ofctl dump-groups ovsbr0
+ ovsdb-client dump
+ ovs-vsctl list Port enp5s0
+ ovs-vsctl list Interface vlan90
+ ovs-vsctl add-port ovsbr0 enp5s0 tag=70 trunks=60,90 vlan_mode=native-tagged
+ ovs-vsctl list open_vswitch
+ ovs-ovctl dump-ports-desc ovsbr0
+ ovs-appctl bridge/dump-flows ovsbr0
+ ovsdb-client list-dbs
+ ovs-ofctl snoop ovsbr0
+ ovs-ofctl show ovsbr0
+ ovs-vsctl set  port enp5s0 tag=90
+ */
+
 namespace {
   // TODO: move this out to common?
   template<typename T>
