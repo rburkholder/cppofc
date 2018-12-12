@@ -449,146 +449,144 @@ bool decode_impl::parse_statistics( const json& j ) {
 
 void decode_impl::parse( vByte_t::const_iterator begin, size_t lenRead ) {
 
-  //std::cout << "*** lenRead " << lenRead << std::endl;
+  json j;
+  try {
+    j = json::parse( begin, begin + lenRead );
+    std::cout << j.dump(2) << std::endl;
 
-        json j;
-        try {
-          j = json::parse( begin, begin + lenRead );
-          std::cout << j.dump(2) << std::endl;
+    // process read state
 
-          // process read state
+    switch ( m_state ) {
+      case start:
+        std::cout << "*** something arrived in state: start, stuck here" << std::endl;
+        break;
+      case listdb: {
+          m_state = stuck;
 
-          switch ( m_state ) {
-            case start:
-              std::cout << "*** something arrived in state: start, stuck here" << std::endl;
-              break;
-            case listdb: {
-                m_state = stuck;
+          assert( j["error"].is_null() );
+          assert( 1 == j["id"] );
 
-                assert( j["error"].is_null() );
-                assert( 1 == j["id"] );
+          auto& result = j["result"];
+          if ( result.is_array() ) {
+            parse_listdb( result );
 
-                auto& result = j["result"];
-                if ( result.is_array() ) {
-                  parse_listdb( result );
+            m_state = startBridgeMonitor;
+            send_monitor_bridges();
+          }
+          else {
+            std::cout << "ovsdb stuck in listdb" << std::endl;
+          }
 
-                  m_state = startBridgeMonitor;
-                  send_monitor_bridges();
-                }
-                else {
-                  std::cout << "ovsdb stuck in listdb" << std::endl;
-                }
+        }
+        break;
+      case startBridgeMonitor: {
+          m_state = stuck;
 
-              }
-              break;
-            case startBridgeMonitor: {
-                m_state = stuck;
+          assert( j["error"].is_null() );
+          assert( 2 == j["id"] );
 
-                assert( j["error"].is_null() );
-                assert( 2 == j["id"] );
+          auto& result = j["result"];
+          parse_bridge( result );
 
-                auto& result = j["result"];
-                parse_bridge( result );
+          m_state = startPortMonitor;
+          send_monitor_ports();
 
-                m_state = startPortMonitor;
-                send_monitor_ports();
+        }
+        break;
+      case startPortMonitor: {
+          m_state = stuck;
 
-              }
-              break;
-            case startPortMonitor: {
-                m_state = stuck;
+          assert( j["error"].is_null() );
+          assert( 3 == j["id"] );
 
-                assert( j["error"].is_null() );
-                assert( 3 == j["id"] );
+          auto& result = j["result"];
+          parse_port( result );
 
-                auto& result = j["result"];
-                parse_port( result );
+          m_state = startInterfaceMonitor;
+          send_monitor_interfaces();
 
-                m_state = startInterfaceMonitor;
-                send_monitor_interfaces();
+        }
+        break;
+      case startInterfaceMonitor: {
+          m_state = stuck;
 
-              }
-              break;
-            case startInterfaceMonitor: {
-                m_state = stuck;
+          assert( j["error"].is_null() );
+          assert( 4 == j["id"] ); // will an update inter-leave here?
+            // should we just do a big switch on in coming id's to be more flexible?
+            // then mark a vector of flags to indicate that it has been processed?
 
-                assert( j["error"].is_null() );
-                assert( 4 == j["id"] ); // will an update inter-leave here?
-                  // should we just do a big switch on in coming id's to be more flexible?
-                  // then mark a vector of flags to indicate that it has been processed?
+          auto& result = j["result"];
+          parse_interface( result );
 
-                auto& result = j["result"];
-                parse_interface( result );
+          m_state = startStatisticsMonitor;
+          send_monitor_statistics();
 
-                m_state = startStatisticsMonitor;
-                send_monitor_statistics();
+        }
+        break;
+      case startStatisticsMonitor: {
+          m_state = stuck;
 
-              }
-              break;
-            case startStatisticsMonitor: {
-                m_state = stuck;
+          assert( j["error"].is_null() );
+          assert( 5 == j["id"] ); // will an update inter-leave here?
+            // should we just do a big switch on in coming id's to be more flexible?
+            // then mark a vector of flags to indicate that it has been processed?
 
-                assert( j["error"].is_null() );
-                assert( 5 == j["id"] ); // will an update inter-leave here?
-                  // should we just do a big switch on in coming id's to be more flexible?
-                  // then mark a vector of flags to indicate that it has been processed?
+          auto& result = j["result"];
+          parse_statistics( result );
 
-                auto& result = j["result"];
-                parse_statistics( result );
-
-                m_state = listen;
-              }
-              break;
-            case listen: {
-                // process the monitor/update message
-                // TODO: move into parse_update
-                assert( j["id"].is_null() );
-                std::string xpect = j["method"];
-                assert( "update" == j["method"] );
-                auto& params = j["params"];
-                json::iterator iterParams = params.begin();
-                assert( (*iterParams).is_array() );
-                auto& list = *iterParams;
-                iterParams++;
-                assert( (*iterParams).is_object() );
-                auto& items = *iterParams;
-                iterParams++;
-                assert( params.end() == iterParams );
-                std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
-                  // use spirit to parse the strings?
-                  if ( "bridge" == key ) {
+          m_state = listen;
+        }
+        break;
+      case listen: {
+          // process the monitor/update message
+          // TODO: move into parse_update
+          assert( j["id"].is_null() );
+          std::string xpect = j["method"];
+          assert( "update" == j["method"] );
+          auto& params = j["params"];
+          json::iterator iterParams = params.begin();
+          assert( (*iterParams).is_array() );
+          auto& list = *iterParams;
+          iterParams++;
+          assert( (*iterParams).is_object() );
+          auto& items = *iterParams;
+          iterParams++;
+          assert( params.end() == iterParams );
+          std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
+            // use spirit to parse the strings?
+            if ( "bridge" == key ) {
 //                    parse_bridge( items );  // format is different, more testing
-                  }
-                  if ( "port" == key ) {
-//                    parse_port( items );  // format is different, more testing
-                  }
-                  if ( "interface" == key ) {
-//                    parse_interface( items );  // format is different, more testing
-                  }
-                  if ( "statistics" == key ) {
-//                    parse_statistics( items );  // format is different, more testing
-                  }
-                } );
-              }
-              break;
-            case stuck:
-              std::cout << "ovsdb arrived in stuck state" << std::endl;
-              break;
-          }
-        }
-        catch ( json::parse_error& e ) {
-          if ( 101 == e.id ) {
-            if ( nullptr != strstr( e.what(), "unexpected '{'" ) ) {
-              // need to recursively split the string and try again
-              //std::cout << "*** decode_impl::parse: splitting json " << lenRead << std::endl;
-              //std::cout << "   " << e.what() << std::endl;
-              parse( begin, e.byte - 1 );
-              parse( begin + e.byte - 1, lenRead - e.byte + 1 );
             }
-            else assert( 0 );
-          }
-          else assert( 0 );
+            if ( "port" == key ) {
+//                    parse_port( items );  // format is different, more testing
+            }
+            if ( "interface" == key ) {
+//                    parse_interface( items );  // format is different, more testing
+            }
+            if ( "statistics" == key ) {
+//                    parse_statistics( items );  // format is different, more testing
+            }
+          } );
         }
+        break;
+      case stuck:
+        std::cout << "ovsdb arrived in stuck state" << std::endl;
+        break;
+    }
+  }
+  catch ( json::parse_error& e ) {
+    if ( 101 == e.id ) {
+      if ( nullptr != strstr( e.what(), "unexpected '{'" ) ) {
+        // need to recursively split the string and try again
+        //std::cout << "*** decode_impl::parse: splitting json " << lenRead << std::endl;
+        //std::cout << "   " << e.what() << std::endl;
+        parse( begin, e.byte - 1 );
+        parse( begin + e.byte - 1, lenRead - e.byte + 1 );
+      }
+      else assert( 0 );
+    }
+    else assert( 0 );
+  }
 
 }
 
