@@ -90,6 +90,8 @@ private:
 
   void do_read();
 
+  void parse( vByte_t::const_iterator begin, size_t );
+
   bool parse_listdb( const json& );
   bool parse_bridge( const json& );
   bool parse_port( const json& );

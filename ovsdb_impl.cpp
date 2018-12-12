@@ -447,25 +447,17 @@ bool decode_impl::parse_statistics( const json& j ) {
   return true;
 }
 
-void decode_impl::do_read() {
-  m_vRx.resize( max_length );
-  m_socket.async_read_some( boost::asio::buffer(m_vRx),
-      [this](boost::system::error_code ec, const std::size_t lenRead)
-      {
-        if (ec) {
-          std::cout << ">>> ovsdb read error: " << ec.message() << std::endl;
-        }
-        else {
-          std::cout << ">>> ovsdb total read length: " << lenRead << std::endl;
-          for ( size_t ix = 0; ix < lenRead; ix++ ) {
-            std::cout << m_vRx[ ix ];
-          }
-          std::cout << std::endl;
-          auto j = json::parse( m_vRx.begin(), m_vRx.begin() + lenRead );
-          //std::cout << j.dump(2) << std::endl;
-          std::cout << ">>> ovsdb read end." << std::endl;
+void decode_impl::parse( vByte_t::const_iterator begin, size_t lenRead ) {
+
+  //std::cout << "*** lenRead " << lenRead << std::endl;
+
+        json j;
+        try {
+          j = json::parse( begin, begin + lenRead );
+          std::cout << j.dump(2) << std::endl;
 
           // process read state
+
           switch ( m_state ) {
             case start:
               std::cout << "*** something arrived in state: start, stuck here" << std::endl;
@@ -529,7 +521,7 @@ void decode_impl::do_read() {
                 parse_interface( result );
 
                 m_state = startStatisticsMonitor;
-//                send_monitor_statistics();
+                send_monitor_statistics();
 
               }
               break;
@@ -551,6 +543,7 @@ void decode_impl::do_read() {
                 // process the monitor/update message
                 // TODO: move into parse_update
                 assert( j["id"].is_null() );
+                std::string xpect = j["method"];
                 assert( "update" == j["method"] );
                 auto& params = j["params"];
                 json::iterator iterParams = params.begin();
@@ -564,16 +557,16 @@ void decode_impl::do_read() {
                 std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
                   // use spirit to parse the strings?
                   if ( "bridge" == key ) {
-                    parse_bridge( items );
+//                    parse_bridge( items );  // format is different, more testing
                   }
                   if ( "port" == key ) {
-                    parse_port( items );
+//                    parse_port( items );  // format is different, more testing
                   }
                   if ( "interface" == key ) {
-                    parse_interface( items );
+//                    parse_interface( items );  // format is different, more testing
                   }
                   if ( "statistics" == key ) {
-                    parse_statistics( items );
+//                    parse_statistics( items );  // format is different, more testing
                   }
                 } );
               }
@@ -582,6 +575,40 @@ void decode_impl::do_read() {
               std::cout << "ovsdb arrived in stuck state" << std::endl;
               break;
           }
+        }
+        catch ( json::parse_error& e ) {
+          if ( 101 == e.id ) {
+            if ( nullptr != strstr( e.what(), "unexpected '{'" ) ) {
+              // need to recursively split the string and try again
+              //std::cout << "*** decode_impl::parse: splitting json " << lenRead << std::endl;
+              //std::cout << "   " << e.what() << std::endl;
+              parse( begin, e.byte - 1 );
+              parse( begin + e.byte - 1, lenRead - e.byte + 1 );
+            }
+            else assert( 0 );
+          }
+          else assert( 0 );
+        }
+
+}
+
+void decode_impl::do_read() {
+  m_vRx.resize( max_length );
+  m_socket.async_read_some( boost::asio::buffer(m_vRx),
+      [this](boost::system::error_code ec, const std::size_t lenRead)
+      {
+        if (ec) {
+          std::cout << ">>> ovsdb read error: " << ec.message() << std::endl;
+        }
+        else {
+          std::cout << ">>> ovsdb total read length: " << lenRead << std::endl;
+          for ( size_t ix = 0; ix < lenRead; ix++ ) {
+            std::cout << m_vRx[ ix ];
+          }
+          std::cout << std::endl;
+
+          parse( m_vRx.begin(), lenRead );
+          std::cout << ">>> ovsdb read end." << std::endl;
         }
         do_read();
       });
