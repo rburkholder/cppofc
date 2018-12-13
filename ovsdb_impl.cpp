@@ -371,14 +371,27 @@ bool decode_impl::parse_interface( const json& j ) {
 
   //std::cout << j.dump(2) << std::endl;
 
-  auto& interfaces = j["Interface"];
+  const auto& interfaces = j["Interface"];
 
   for ( json::const_iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
     uuid_t uuidInterface = iterInterfaceJson.key();
     mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
     assert( m_mapInterface.end() != iterInterface );
 
-    auto& age = iterInterfaceJson.value();
+    const auto& age = iterInterfaceJson.value();
+
+    // sample code for diffing the input
+    //json::const_iterator iterOld;
+    //json::const_iterator iterNew;
+    //json patch;
+
+    //iterOld = age.find( "old" );
+    //iterNew = age.find( "new" );
+
+    //if ( ( age.end() != iterOld ) && ( age.end() != iterNew ) ) {
+    //  patch = json::diff( *iterOld, *iterNew );
+    //  std::cout << patch.dump( 2 ) << std::endl;
+    //}
 
     for ( json::const_iterator iterAgeObject = age.begin(); age.end() != iterAgeObject; iterAgeObject++ ) {
       if ( "new" == iterAgeObject.key() ) {
@@ -440,7 +453,7 @@ bool decode_impl::parse_statistics( const json& j ) {
 
   for ( json::const_iterator iterInterfaceJson = interfaces.begin(); interfaces.end() != iterInterfaceJson; iterInterfaceJson++ ) {
     uuid_t uuidInterface = iterInterfaceJson.key();
-    std::cout << "ovsdb_impl::parse_statistics: " << uuidInterface << std::endl;
+    //std::cout << "ovsdb_impl::parse_statistics: " << uuidInterface << std::endl;
     mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
     assert( m_mapInterface.end() != iterInterface );
 
@@ -614,16 +627,16 @@ void decode_impl::parse( vByte_t::const_iterator begin, size_t lenRead ) {
           std::for_each( list.begin(), list.end(), [this, &items](auto& key) {
             // use spirit to parse the strings?
             if ( "bridge" == key ) {
-                    parse_bridge( items );  // format is different, more testing
+              parse_bridge( items );  // use json.diff
             }
             if ( "port" == key ) {
-                    parse_port( items );  // format is different, more testing
+              parse_port( items );  // use json.diff
             }
             if ( "interface" == key ) {
-                    parse_interface( items );  // format is different, more testing
+              parse_interface( items );  // use json.diff
             }
             if ( "statistics" == key ) {
-                    parse_statistics( items );  // format is different, more testing
+              parse_statistics( items );  // use json.diff
             }
           } );
         }
@@ -655,17 +668,19 @@ void decode_impl::do_read() {
       [this](boost::system::error_code ec, const std::size_t lenRead)
       {
         if (ec) {
-          std::cout << ">>> ovsdb read error: " << ec.message() << std::endl;
+          //std::cout << ">>> ovsdb read error: " << ec.message() << std::endl;
         }
         else {
           std::cout << ">>> ovsdb total read length: " << lenRead << std::endl;
-          for ( size_t ix = 0; ix < lenRead; ix++ ) {
-            std::cout << m_vRx[ ix ];
+          if ( false ) {
+            for ( size_t ix = 0; ix < lenRead; ix++ ) {
+              std::cout << m_vRx[ ix ];
+            }
+            std::cout << std::endl;
           }
-          std::cout << std::endl;
 
           parse( m_vRx.begin(), lenRead );
-          std::cout << ">>> ovsdb read end." << std::endl;
+          //std::cout << ">>> ovsdb read end." << std::endl;
         }
         do_read();
       });
