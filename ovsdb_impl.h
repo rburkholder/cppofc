@@ -47,12 +47,8 @@ private:
 
   decode& m_ovsdb;
 
-  typedef std::map<std::string,size_t&> mapStatistics_t;
   struct interface_t: public structures::interface_t {
-    mapStatistics_t mapStatistics;  // for now
-    structures::statistics_t* statistics;  // for the future
-    interface_t(): statistics( new structures::statistics_t ) {}
-    virtual ~interface_t() { delete statistics; }
+    structures::statistics_t statistics;
   };
   typedef std::set<uuid_t> setInterface_t;
 

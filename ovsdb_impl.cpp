@@ -456,6 +456,7 @@ bool decode_impl::parse_statistics( const json& j ) {
     //std::cout << "ovsdb_impl::parse_statistics: " << uuidInterface << std::endl;
     mapInterface_t::iterator iterInterface = m_mapInterface.find( uuidInterface );
     assert( m_mapInterface.end() != iterInterface );
+    structures::statistics_t& stats( iterInterface->second.statistics );
 
     auto& age = iterInterfaceJson.value();
 
@@ -474,47 +475,40 @@ bool decode_impl::parse_statistics( const json& j ) {
           iterElements++;
           assert( (*iterElements).is_array() );
           auto& statistics = *iterElements;
-          //std::cout << "===" << statistics.dump() << std::endl;
+          //std::cout << "===" << statistics.dump(2) << std::endl;
           for ( json::iterator iterCombo = statistics.begin(); statistics.end() != iterCombo; iterCombo++ ) {
-            mapStatistics_t& map( interfaceMap.mapStatistics );
             for ( json::iterator iterStatistic = (*iterCombo).begin(); (*iterCombo).end() != iterStatistic; iterStatistic++ ) {
               std::string name( *iterStatistic );
               iterStatistic++;
-              mapStatistics_t::iterator iter = map.find( name );
-              if ( map.end() == iter ) {
-                bool bFound( false );
+              bool bFound( false );
                 // TODO: construct via macro to ensure consistency
                 // take a look at the spirit example:
                 //   https://www.boost.org/doc/libs/1_64_0/libs/spirit/doc/html/spirit/qi/tutorials/complex___our_first_complex_parser.html
-                if ( "collisions"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->collisions ) ); bFound = true;
-                if ( "rx_bytes"     == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_bytes ) ); bFound = true;
-                if ( "rx_crc_err"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_crc_err ) ); bFound = true;
-                if ( "rx_dropped"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_dropped ) ); bFound = true;
-                if ( "rx_errors"    == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_errors ) ); bFound = true;
-                if ( "rx_frame_err" == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_frame_err ) ); bFound = true;
-                if ( "rx_over_err"  == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_over_err ) ); bFound = true;
-                if ( "rx_packets"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->rx_packets ) ); bFound = true;
-                if ( "tx_bytes"     == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->tx_bytes ) ); bFound = true;
-                if ( "tx_dropped"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->tx_dropped ) ); bFound = true;
-                if ( "tx_errors"    == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->tx_errors ) ); bFound = true;
-                if ( "tx_packets"   == name ) iter = map.insert( map.begin(), mapStatistics_t::value_type( name, interfaceMap.statistics->tx_packets ) ); bFound = true;
-                if ( !bFound ) std::cout << "ovsdb_impl::parse_statistics did not find " << name << std::endl;
-              }
-              iter->second = *iterStatistic; // place into statistics_t via reference in map
+              if ( "collisions"   == name ) { stats.collisions =   (*iterStatistic); bFound = true; }
+              if ( "rx_bytes"     == name ) { stats.rx_bytes =     (*iterStatistic); bFound = true; }
+              if ( "rx_crc_err"   == name ) { stats.rx_crc_err =   (*iterStatistic); bFound = true; }
+              if ( "rx_dropped"   == name ) { stats.rx_dropped =   (*iterStatistic); bFound = true; }
+              if ( "rx_errors"    == name ) { stats.rx_errors =    (*iterStatistic); bFound = true; }
+              if ( "rx_frame_err" == name ) { stats.rx_frame_err = (*iterStatistic); bFound = true; }
+              if ( "rx_over_err"  == name ) { stats.rx_over_err =  (*iterStatistic); bFound = true; }
+              if ( "rx_packets"   == name ) { stats.rx_packets =   (*iterStatistic); bFound = true; }
+              if ( "tx_bytes"     == name ) { stats.tx_bytes =     (*iterStatistic); bFound = true; }
+              if ( "tx_dropped"   == name ) { stats.tx_dropped =   (*iterStatistic); bFound = true; }
+              if ( "tx_errors"    == name ) { stats.tx_errors =    (*iterStatistic); bFound = true; }
+              if ( "tx_packets"   == name ) { stats.tx_packets =   (*iterStatistic); bFound = true; }
+              if ( !bFound ) std::cout << "ovsdb_impl::parse_statistics did not find " << name << std::endl;
             }
           }
         }
 
         if ( nullptr != m_ovsdb.m_f.fStatisticsUpdate ) {
-          m_ovsdb.m_f.fStatisticsUpdate( uuidInterface, *interfaceMap.statistics );
+          m_ovsdb.m_f.fStatisticsUpdate( uuidInterface, stats );
         }
       }
       if ( "old" == iterAgeObject.key() ) {
         // TODO: last of the statistics are presented
       }
     }
-
-
   }
 
   return true;
