@@ -68,6 +68,7 @@ void Control::Start() {
         BOOST_LOG_TRIVIAL(trace) << "signal " << signal_number << " received.";
         // TODO: need to work on close-down process here
         m_ioWork.reset();
+        exit(0);
         // plus other stuff (closing the sockets, for instance)
       }
     } );
