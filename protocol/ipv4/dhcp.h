@@ -13,8 +13,6 @@
 
 #include <boost/endian/arithmetic.hpp>
 
-#include "../../hexdump.h"
-
 // https://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol
 
 namespace protocol {
@@ -26,7 +24,7 @@ namespace endian=boost::endian;
 // ** Header_
 
 struct Header_ { // used to overlay inbound data, https://www.ietf.org/rfc/rfc2131.txt
-  uint8_t op; // 1 = BOOTREQUEST, 2 = BOOTREPLY
+  uint8_t op; // 1 = BOOTREQUEST, 2 = BOOTREPLY (BoOTP messages)
   uint8_t htype; // 1 = 10mb ethernet., hardware address
   uint8_t hlen;  // 6 or 10mb ethernet), Hardware address length
   uint8_t hops;  // Client sets to zero, may be used by relay agents
@@ -40,13 +38,10 @@ struct Header_ { // used to overlay inbound data, https://www.ietf.org/rfc/rfc21
   uint8_t chaddr[16]; // Client hardware address.
   char szname[64]; // Optional server host name, null terminated string
   char szfile[128]; // Boot file name, null terminated string; "generic" name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.
-  endian::big_int32_t magic_cookie;
-  uint8_t options[0];
+  uint8_t magic_cookie[4]; // should be 99, 130, 83 and 99
+  uint8_t options[0];  // RFC 2132 gives the complete set for use in DHCP
 
 };
-
-// DHCP messages from a client to a server are sent to the 'DHCP server' port (67), and
-// DHCP messages from a server to a client are sent to the 'DHCP client' port (68).
 
 // ** Header
 
@@ -54,12 +49,12 @@ class Header {
   friend std::ostream& operator<<( std::ostream&, const Header& );
 public:
 
-  Header( const Header_& );
+  Header( Header_& );
   virtual ~Header();
 
 protected:
 private:
-  const Header_& m_header;
+  Header_& m_header;
 
   std::ostream& Emit( std::ostream& stream ) const;
 };
@@ -84,11 +79,6 @@ private:
 
   Header_* m_pHeader_;
   //Content m_Content;
-
-//  std::ostream& Emit( std::ostream& stream ) const {
-//    stream << "ipv4: " << *m_pHeader_;
-//    return stream;
-//  }
 
 };
 
