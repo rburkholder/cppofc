@@ -484,18 +484,26 @@ bool decode_impl::parse_statistics( const json& j ) {
                 // TODO: construct via macro to ensure consistency
                 // take a look at the spirit example:
                 //   https://www.boost.org/doc/libs/1_64_0/libs/spirit/doc/html/spirit/qi/tutorials/complex___our_first_complex_parser.html
-              if ( "collisions"   == name ) { stats.collisions =   (*iterStatistic); bFound = true; }
-              if ( "rx_bytes"     == name ) { stats.rx_bytes =     (*iterStatistic); bFound = true; }
-              if ( "rx_crc_err"   == name ) { stats.rx_crc_err =   (*iterStatistic); bFound = true; }
-              if ( "rx_dropped"   == name ) { stats.rx_dropped =   (*iterStatistic); bFound = true; }
-              if ( "rx_errors"    == name ) { stats.rx_errors =    (*iterStatistic); bFound = true; }
-              if ( "rx_frame_err" == name ) { stats.rx_frame_err = (*iterStatistic); bFound = true; }
-              if ( "rx_over_err"  == name ) { stats.rx_over_err =  (*iterStatistic); bFound = true; }
-              if ( "rx_packets"   == name ) { stats.rx_packets =   (*iterStatistic); bFound = true; }
-              if ( "tx_bytes"     == name ) { stats.tx_bytes =     (*iterStatistic); bFound = true; }
-              if ( "tx_dropped"   == name ) { stats.tx_dropped =   (*iterStatistic); bFound = true; }
-              if ( "tx_errors"    == name ) { stats.tx_errors =    (*iterStatistic); bFound = true; }
-              if ( "tx_packets"   == name ) { stats.tx_packets =   (*iterStatistic); bFound = true; }
+              switch ( name[0] ) {
+                case 'c':
+                  if ( "collisions"   == name ) { stats.collisions =   (*iterStatistic); bFound = true; }
+                  break;
+                case 'r':
+                  if ( "rx_bytes"     == name ) { stats.rx_bytes =     (*iterStatistic); bFound = true; }
+                  if ( "rx_crc_err"   == name ) { stats.rx_crc_err =   (*iterStatistic); bFound = true; }
+                  if ( "rx_dropped"   == name ) { stats.rx_dropped =   (*iterStatistic); bFound = true; }
+                  if ( "rx_errors"    == name ) { stats.rx_errors =    (*iterStatistic); bFound = true; }
+                  if ( "rx_frame_err" == name ) { stats.rx_frame_err = (*iterStatistic); bFound = true; }
+                  if ( "rx_over_err"  == name ) { stats.rx_over_err =  (*iterStatistic); bFound = true; }
+                  if ( "rx_packets"   == name ) { stats.rx_packets =   (*iterStatistic); bFound = true; }
+                  break;
+                case 't':
+                  if ( "tx_bytes"     == name ) { stats.tx_bytes =     (*iterStatistic); bFound = true; }
+                  if ( "tx_dropped"   == name ) { stats.tx_dropped =   (*iterStatistic); bFound = true; }
+                  if ( "tx_errors"    == name ) { stats.tx_errors =    (*iterStatistic); bFound = true; }
+                  if ( "tx_packets"   == name ) { stats.tx_packets =   (*iterStatistic); bFound = true; }
+                  break;
+              }
               if ( !bFound ) std::cout << "ovsdb_impl::parse_statistics did not find " << name << std::endl;
             }
           }
