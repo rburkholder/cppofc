@@ -30,6 +30,7 @@
  ovs-ofctl snoop ovsbr0
  ovs-ofctl show ovsbr0
  ovs-vsctl set  port enp5s0 tag=90
+ ovs-ofctl queue-stats ovsbr0
  */
 
 namespace {
