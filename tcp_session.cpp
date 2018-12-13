@@ -312,7 +312,10 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               case 17: {// udp
                 protocol::udp::Packet udp( ipv4.GetData() );
                 std::cout << udp << ::std::endl;
-                if ( ( 67 == udp.GetHeader().dst_port ) || ( 68 == udp.GetHeader().dst_port ) ) {
+                if (
+                  ( 67 == udp.GetHeader().dst_port ) || // to server
+                  ( 68 == udp.GetHeader().dst_port ) )  // to client
+                {
                   protocol::ipv4::dhcp::Packet dhcp( udp.GetData() );
                   std::cout << dhcp << ::std::endl;
                 }
