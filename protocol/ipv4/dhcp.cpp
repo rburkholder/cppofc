@@ -1,8 +1,8 @@
-/* 
+/*
  * File:   dhcp.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
- * 
+ *
  * Created on November 13, 2018, 7:50 PM
  */
 
@@ -18,7 +18,7 @@ namespace dhcp {
 namespace {
 std::string format( uint32_t addr ) {
   std::stringstream ss;
-  ss 
+  ss
     << (uint16_t)(               addr  >> 24 ) << "."
     << (uint16_t)( (0x00ff0000 & addr) >> 16 ) << "."
     << (uint16_t)( (0x0000ff00 & addr) >>  8 ) << "."
@@ -34,7 +34,7 @@ Header::Header( const Header_& header ): m_header( header ) {
 Header::~Header() {}
 
 std::ostream& Header::Emit( std::ostream& stream ) const {
-  stream 
+  stream
     << "op=" << (uint16_t)m_header.op
     << ",htype=" << (uint16_t)m_header.htype
     << ",hlen=" << (uint16_t)m_header.hlen
@@ -50,7 +50,7 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
     << ",yiaddr=" << format(m_header.yiaddr)
     << ",siaddr=" << format(m_header.siaddr)
     << ",giaddr=" << format(m_header.giaddr)
-    << "mac=" << std::hex
+    << ",mac=" << std::hex
       << (uint16_t)m_header.chaddr[0] << ":"
       << (uint16_t)m_header.chaddr[1] << ":"
       << (uint16_t)m_header.chaddr[2] << ":"
@@ -58,7 +58,10 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
       << (uint16_t)m_header.chaddr[4] << ":"
       << (uint16_t)m_header.chaddr[5]
     << std::dec
-    << "option=" << m_header.options[0]
+    << ",name='" << m_header.szname << "'"
+    << ",file='" << m_header.szfile << "'"
+    << ",cookie=" << m_header.magic_cookie
+    << ",option=" << m_header.options[0]
     ;
   return stream;
 }
