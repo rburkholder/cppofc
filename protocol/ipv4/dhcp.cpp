@@ -100,8 +100,21 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
             }
           }
           break;
+        case 26: {
+          auto* mtu = new( p ) endian::big_int16_t;
+          std::cout << ",mtu=" << *mtu;
+          }
+          break;
         case 28:
           std::cout << ",bcast=" << HexDump<const uint8_t*>( p, p + len );
+          break;
+        case 33:
+          std::cout << ",static_route=" << HexDump<const uint8_t*>( p, p + len );
+          break;
+        case 35: {
+          auto* to = new( p ) endian::big_int32_t;
+          std::cout << ",arp_timeout=" << *to;
+          }
           break;
         case 42:
           std::cout << ",ntp=" << HexDump<const uint8_t*>( p, p + len );
@@ -164,6 +177,11 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
         case 55:
           std::cout << ",param_request=" << HexDump<const uint8_t*>( p, p + len );
           break;
+        case 57: {
+          auto* msg = new( p ) endian::big_int16_t;
+          std::cout << ",max_msg_size=" << *msg;
+          }
+          break;
         case 58: {
           auto* t1 = new( p ) endian::big_int32_t;
           std::cout << ",t1_renew=" << *t1;
@@ -182,6 +200,12 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
           break;
         case 70:
           std::cout << ",pop3=" << HexDump<const uint8_t*>( p, p + len );
+          break;
+        case 71:
+          std::cout << ",nntp=" << HexDump<const uint8_t*>( p, p + len );
+          break;
+        case 74:
+          std::cout << ",irc=" << HexDump<const uint8_t*>( p, p + len );
           break;
         default:
           std::cout << ",option " << (uint16_t) id << "=" << HexDump<const uint8_t*>( p, p + len );

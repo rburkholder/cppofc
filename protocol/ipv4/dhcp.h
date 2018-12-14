@@ -39,7 +39,7 @@ struct Header_ { // used to overlay inbound data, https://www.ietf.org/rfc/rfc21
   char szname[64]; // Optional server host name, null terminated string
   char szfile[128]; // Boot file name, null terminated string; "generic" name or null in DHCPDISCOVER, fully qualified directory-path name in DHCPOFFER.
   uint8_t magic_cookie[4]; // should be 99, 130, 83 and 99
-  uint8_t options[0];  // RFC 2132 gives the complete set for use in DHCP
+  uint8_t options[0];  // RFC 2132 gives the complete set for use in DHCP https://tools.ietf.org/html/rfc2132
 
 };
 
