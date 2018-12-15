@@ -78,6 +78,8 @@
           <itemPath>protocol/ipv4/tcp.cpp</itemPath>
           <itemPath>protocol/ipv4/udp.cpp</itemPath>
         </logicalFolder>
+        <itemPath>protocol/dns.cpp</itemPath>
+        <itemPath>protocol/dns.h</itemPath>
         <itemPath>protocol/ethernet.cpp</itemPath>
         <itemPath>protocol/ipv4.cpp</itemPath>
         <itemPath>protocol/ipv6.cpp</itemPath>
@@ -204,6 +206,10 @@
       <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ovsdb_structures.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/dns.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/dns.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -339,6 +345,10 @@
       <item path="ovsdb_impl.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ovsdb_structures.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="protocol/dns.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="protocol/dns.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="protocol/ethernet.cpp" ex="false" tool="1" flavor2="0">
       </item>

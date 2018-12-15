@@ -51,6 +51,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/ovsdb.o \
 	${OBJECTDIR}/ovsdb_impl.o \
+	${OBJECTDIR}/protocol/dns.o \
 	${OBJECTDIR}/protocol/ethernet.o \
 	${OBJECTDIR}/protocol/ethernet/address.o \
 	${OBJECTDIR}/protocol/ethernet/vlan.o \
@@ -167,6 +168,11 @@ ${OBJECTDIR}/ovsdb_impl.o: ovsdb_impl.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ovsdb_impl.o ovsdb_impl.cpp
+
+${OBJECTDIR}/protocol/dns.o: protocol/dns.cpp
+	${MKDIR} -p ${OBJECTDIR}/protocol
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -DBOOST_LOG_DYN_LINK -D_DEBUG -I/usr/local/include -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/protocol/dns.o protocol/dns.cpp
 
 ${OBJECTDIR}/protocol/ethernet.o: protocol/ethernet.cpp
 	${MKDIR} -p ${OBJECTDIR}/protocol
