@@ -11,6 +11,7 @@
 #include "bridge.h"
 #include "openflow/openflow-spec1.4.1.h"
 
+#include "codecs/append.h"
 #include "codecs/ofp_group_mod.h"
 #include "codecs/ofp_flow_mod.h"
 #include "codecs/ofp_barrier.h"
@@ -32,19 +33,6 @@
  ovs-vsctl set  port enp5s0 tag=90
  ovs-ofctl queue-stats ovsbr0
  */
-
-namespace {
-  // TODO: move this out to common?
-  template<typename T>
-  T* Append( vByte_t& v ) {
-    size_t increment( sizeof( T ) );
-    size_t placeholder( v.size() );
-    size_t new_size = placeholder + increment;
-    v.resize( new_size );
-    T* p = new( v.data() + placeholder ) T;
-    return p;
-  }
-}
 
 Bridge::Bridge( )
 : m_bRulesInjectionActive( false ), m_bGroupTrunkAllAdded( false )
@@ -194,10 +182,10 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           vByte_t v = std::move( m_fAcquireBuffer() );
           v.clear();
 
-          auto* pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
+          auto* pOut = ofp::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
           pOut->initv2( ofp_ingress );
 
-          auto* pGroup = ::Append<ofp141::ofp_action_group>( v );
+          auto* pGroup = ofp::Append<ofp141::ofp_action_group>( v );
           pGroup->type = ofp141::ofp_action_type::OFPAT_GROUP;
           pGroup->len  = sizeof( ofp141::ofp_action_group );
           pGroup->group_id = vlan + ( bSrcAccess ? 10000 : 20000 );
@@ -222,7 +210,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           vByte_t v = std::move( m_fAcquireBuffer() );
           v.clear();
 
-          auto* pFlowMod = ::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
+          auto* pFlowMod = ofp::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
           pFlowMod->init();
           pFlowMod->idle_timeout = 30;
           pFlowMod->cookie = 0x201;
@@ -235,16 +223,16 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           v.resize( v.size() - sizeof( pFlowMod->match.pad ) );  // subtract the padding field in ofp_match
           vByte_t::size_type sizeMatchesStart = v.size();
 
-          auto* pMatchInPort = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_in_port_>( v );
+          auto* pMatchInPort = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_in_port_>( v );
           pMatchInPort->init( ofp_ingress );
 
-          auto* pMatchDstMac = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          auto* pMatchDstMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
           pMatchDstMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst.Value() );
 
-          auto* pMatchSrcMac = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          auto* pMatchSrcMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
           pMatchSrcMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc.Value() );
 
-          auto* pMatchVlan   = ::Append<codec::ofp_flow_mod::ofpxmt_ofb_vlan_vid_>( v );
+          auto* pMatchVlan   = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_vlan_vid_>( v );
           if ( bSrcAccess ) {
             pMatchVlan->init();
           }
@@ -263,7 +251,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
 
           vByte_t::size_type sizeActionsStart = v.size();
 
-          auto* pActions = ::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
+          auto* pActions = ofp::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
           pActions->init();
 
           if ( bSrcAccess ) { // working with source access port
@@ -272,16 +260,16 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
               // attach the 802.1q header
               assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
 
-              auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
+              auto pActionPushVlan = ofp::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
               pActionPushVlan->init( 0x8100 );
 
-              auto pActionSetVlan= ::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
+              auto pActionSetVlan= ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
               pActionSetVlan->init( vlan );
             }
           }
           else { // working with source trunk port
             if ( vlan == interfaceDst.tag ) { // destination access port, so pop vlan
-              auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
+              auto pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
               pAction->init();
             }
             else { // pass packet onto trunk port
@@ -289,7 +277,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             }
           }
 
-          auto* pOutput = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+          auto* pOutput = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
           pOutput->init( iterMapMacDst->second.m_inPort );
 
           pActions->len = v.size() - sizeActionsStart;
@@ -305,7 +293,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             vByte_t v = std::move( m_fAcquireBuffer() );
             v.clear();
 
-            auto* pBarrier = ::Append<codec::ofp_barrier::ofp_barrier_>( v );
+            auto* pBarrier = ofp::Append<codec::ofp_barrier::ofp_barrier_>( v );
             pBarrier->init();
 
             m_fTransmitBuffer( std::move( v ) );
@@ -318,10 +306,10 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             vByte_t v = std::move( m_fAcquireBuffer() );
             v.clear();
 
-            auto*  pOut = ::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
+            auto*  pOut = ofp::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
             pOut->initv2( ofp_ingress );
 
-            auto* pOutput = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+            auto* pOutput = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
             pOutput->init( ofp141::ofp_port_no::OFPP_TABLE );
 
             pOut->actions_len = pOutput->len; // simple way for now
@@ -466,7 +454,7 @@ void Bridge::BuildGroups() {
     void AddCommand( ofp141::ofp_group_mod_command cmd, Bridge::idGroup_t idGroup ) {
       //std::cout << "BuildGroup::AddCommand" << std::endl;
       v.clear();
-      pMod = ::Append<codec::ofp_group_mod::ofp_group_mod_>( v );
+      pMod = ofp::Append<codec::ofp_group_mod::ofp_group_mod_>( v );
       pMod->init( cmd, idGroup );
       //std::cout << "BuildGroup::AddCommand: " << pMod->header.length << std::endl;
     }
@@ -476,7 +464,7 @@ void Bridge::BuildGroups() {
 
       size_t sizeStarting = v.size();
 
-      auto pBucket = ::Append<codec::ofp_group_mod::ofp_bucket_>( v );
+      auto pBucket = ofp::Append<codec::ofp_group_mod::ofp_bucket_>( v );
       pBucket->init();
 
       switch ( op_ ) {
@@ -484,19 +472,19 @@ void Bridge::BuildGroups() {
           // nothing to do
           break;
         case op::pop: {
-          auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
+          auto pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
           pAction->init();
           }
           break;
         case op::push:
-          auto pActionPushVlan = ::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
+          auto pActionPushVlan = ofp::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
           pActionPushVlan->init( 0x8100 );
-          auto pActionSetField = ::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
+          auto pActionSetField = ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
           pActionSetField->init( idVlan );
           break;
       }
 
-      auto pAction = ::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+      auto pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
       pAction->init( ofport );
       pAction->max_len = 0;
       //std::cout << "BuildGroup::pAction port " << pAction->port << std::endl;

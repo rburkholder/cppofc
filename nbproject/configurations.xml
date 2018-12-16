@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f2" displayName="codecs" projectFiles="true">
+        <itemPath>codecs/append.h</itemPath>
         <itemPath>codecs/datapathid.h</itemPath>
         <itemPath>codecs/ofp_async_config.h</itemPath>
         <itemPath>codecs/ofp_barrier.cpp</itemPath>
@@ -145,6 +146,8 @@
       </item>
       <item path="bridge.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="codecs/append.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="codecs/datapathid.h" ex="false" tool="3" flavor2="0">
@@ -283,6 +286,8 @@
       <item path="bridge.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="bridge.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="codecs/append.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="codecs/datapathid.cpp" ex="false" tool="1" flavor2="0">
       </item>
