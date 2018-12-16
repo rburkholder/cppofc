@@ -298,7 +298,8 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
 
           m_fTransmitBuffer( std::move( v ) );
 
-          // ===
+          // === append a barrier message to ensure flow rules are installed prior to
+          //       resubmitting packet to tables
           //if ( false )
           {
             vByte_t v = std::move( m_fAcquireBuffer() );
@@ -310,7 +311,8 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             m_fTransmitBuffer( std::move( v ) );
           }
 
-          // ===
+          // === append command to send packet back to the tables for processing
+          //        flow rules have been installed above
           //if ( false )
           {
             vByte_t v = std::move( m_fAcquireBuffer() );
