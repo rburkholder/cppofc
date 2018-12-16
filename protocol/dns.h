@@ -35,7 +35,87 @@ enum rr_type {
   TXT = 16 // text strings
 };
 
+enum rr_qtype { // includes all rr_type values
+  AXFR = 252, // request for at transfer of an entire zone
+  MAILB = 253, // request for mailbox-related records (MB, MG, or MR)
+  MAILA = 254, // request for all mail agent RRs (obsolete - see MX)
+  ALL = 255 // request for all records (NOTE: seen as a '*')
+};
+
+enum rr_class {
+  IN = 1, // the internet
+  CS = 2, // CSNET (obsolete)
+  CH = 3, // CHAOS class
+  HS = 4  // Hesiod [dyer 87]
+};
+
+enum rr_qclass {
+  ANY = 255 // any class (NOTE: seen as a '*'), superset of rr_class
+};
+
+/*
+ * general RR (resource record) layout:
+ *   NAME
+ *   TYPE
+ *   CLASS
+ *   TTL
+ *   RDLENGTH
+ *   RDATA
+ *
+ * standard RR: NS, SOA, CNAME, and PTR
+ */
+
+/*
+ * notes:
+ * name server logic in [RFC-1034]  https://tools.ietf.org/html/rfc1034
+ */
+
+struct soa_ { // measurements in seconds
+  endian::big_uint32_t serial; // version number of the original copy of the zone, wraps using sequence logic
+  endian::big_uint32_t refresh; // time interval before the zone should be refreshed
+  endian::big_uint32_t retry;  // time interval that should elapse before a failed refresh should be retried
+  endian::big_uint32_t expire; // time value that specifies the upper limit on the time interval that can elapse before the zone is no longer authoritative
+  endian::big_uint32_t minimum; // minimum TTL field that should be exported with any RR from this zone
+};
+
+/*
+ * message format:
+ *   header
+ *   question (question for the name server)
+ *   answer (RRs answering the question)
+ *   authority (RRs pointing toward an authority)
+ *   additional (RRs hoding additional information)
+ */
+
+
 struct header_ { // https://tools.ietf.org/html/rfc1035
+  endian::big_uint16_t id;  // copied to reply from request
+  endian::big_uint16_t flags;
+  endian::big_uint16_t qdcount; // number of entries in the question section
+  endian::big_uint16_t ancount; // number of entries in the answer section
+  endian::big_uint16_t nscount; // number of entries in the name server resource records section
+  endian::big_uint16_t arcount; // number of entries in the additional records section
+};
+
+enum header_flag {
+  header_flag_qr    = 0x8000, // 0 query, 1 response
+  header_flag_opcode= 0x7100, // 0 query, 1 inverse query, 2 server status, 3 - 15 reserved
+  header_flag_aa    = 0x0400, // authoritative answer
+  header_flag_tc    = 0x0200, // truncation
+  header_flag_rd    = 0x0100, // recursion desired
+  header_flag_ra    = 0x0080, // recursion available
+  header_flag_z     = 0x0070, // future, zeros
+  header_flag_rcode = 0x000f  // rcode:
+};
+
+enum rcode {
+  no_error = 0,
+  format_error = 1,
+  server_failure = 2,
+  name_error = 3,
+  not_implemented = 4,
+  refused = 5
+    // 6 - 15 reserved for future use
 };
 
 } // namespace dns
