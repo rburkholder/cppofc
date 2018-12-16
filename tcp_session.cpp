@@ -347,6 +347,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
           }; // end of lambda( in_port )
 
+          //codec::ofp_flow_mod::fCookie0x102_t fCookie0x102 = [](){};
+
         switch ( pPacket->cookie ) {
           case 0x101: {
             // for decoding the IN_PORT to supply to the bridge
