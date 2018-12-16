@@ -10,7 +10,7 @@
 #define OFP_APPEND_H
 
 namespace ofp {
-  // TODO: move this out to common?
+
   template<typename T>
   T* Append( vByte_t& v ) {
     size_t increment( sizeof( T ) );
@@ -20,6 +20,7 @@ namespace ofp {
     T* p = new( v.data() + placeholder ) T;
     return p;
   }
+
 } // namespace ofp
 
 #endif /* OFP_APPEND_H */
