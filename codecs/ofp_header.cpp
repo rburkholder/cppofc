@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ofp_header.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
@@ -9,16 +9,18 @@
 #include "ofp_header.h"
 
 namespace codec {
-  
-uint32_t ofp_header::m_xid = 0;
+namespace ofp_header {
 
-void ofp_header::NewXid( ofp_header_& header ) {
-  m_xid++;
-  header.xid = m_xid;
+uint32_t xid {};
+
+void NewXid( ofp_header_& header ) {
+  xid++;
+  header.xid = xid;
 }
 
-void ofp_header::CopyXid( const ofp_header_& src, ofp_header_& dst ) {
+void CopyXid( const ofp_header_& src, ofp_header_& dst ) {
   dst.xid = src.xid;
 }
 
+} // namespace ofp_header
 } // namespace codec
