@@ -77,7 +77,7 @@ namespace ofp_flow_mod {
     }
   };
 
-  struct ofpxmt_ofb_eth_ {
+  struct ofpxmt_ofb_eth_mac_ {
     //oxm_header_ header;
     boost::endian::big_uint32_t header;
     mac_t mac;
@@ -91,6 +91,30 @@ namespace ofp_flow_mod {
         );
       header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC, field, 6 );
       std::memcpy( mac, mac_, sizeof( mac_t ) );
+    }
+  };
+
+  struct ofpxmt_ofb_eth_type_ {
+    boost::endian::big_uint32_t header;
+    boost::endian::big_uint16_t ethernet_type;
+
+    void init( uint16_t ethernet_type_ ) {
+      header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+      ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_TYPE,
+      2 );
+      ethernet_type = ethernet_type_;
+    }
+  };
+
+  struct ofpxmt_ofb_metadata_ {
+    boost::endian::big_uint32_t header;
+    boost::endian::big_uint64_t metadata;
+
+    void init( uint32_t metadata_ ) {
+      header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+      ofp141::oxm_ofb_match_fields::OFPXMT_OFB_METADATA,
+      8 );
+      metadata = metadata_;
     }
   };
 
@@ -145,14 +169,14 @@ namespace ofp_flow_mod {
             break;
           case ofp141::OFPXMT_OFB_ETH_DST: {
             assert( 6 == p->oxm_length() );
-            ofpxmt_ofb_eth_* pMac = new( p ) ofpxmt_ofb_eth_;
+            ofpxmt_ofb_eth_mac_* pMac = new( p ) ofpxmt_ofb_eth_mac_;
             //if ( nullptr != std::get<fEthDest_t>( rfMatch ) ) {
             //  std::get<fEthDest_t>( rfMatch )( pMac->mac );
             //}
             }
           case ofp141::OFPXMT_OFB_ETH_SRC: {
             assert( 6 == p->oxm_length() );
-            ofpxmt_ofb_eth_* pMac = new( p ) ofpxmt_ofb_eth_;
+            ofpxmt_ofb_eth_mac_* pMac = new( p ) ofpxmt_ofb_eth_mac_;
             //if ( nullptr != std::get<fEthSrc_t>( rfMatch ) ) {
             //  std::get<fEthSrc_t>( rfMatch )( pMac->mac );
             //}

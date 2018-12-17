@@ -121,6 +121,7 @@ private:
   fTransmitBuffer_t m_fTransmitBuffer;
 
   void BuildGroups();
+  void InsertArpIntercept();
 
 };
 

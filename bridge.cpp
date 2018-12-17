@@ -16,6 +16,7 @@
 #include "codecs/ofp_flow_mod.h"
 #include "codecs/ofp_barrier.h"
 #include "codecs/ofp_packet_out.h"
+#include "protocol/ethernet.h"
 
 /*
  ovs-ofctl dump-flows ovsbr0
@@ -111,6 +112,7 @@ Bridge::MacStatus Bridge::Update( nPort_t nPort, idVlan_t idVlan, const MacAddre
   return status;
 }
 
+// TODO:  two parameters:  1) forward via group or outport only, and 2) add metadata to match
 void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
                       const MacAddress& macSrc, const MacAddress& macDst,
                       uint8_t* pPacket, size_t nOctets
@@ -227,10 +229,10 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           auto* pMatchInPort = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_in_port_>( v );
           pMatchInPort->init( ofp_ingress );
 
-          auto* pMatchDstMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          auto* pMatchDstMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_mac_>( v );
           pMatchDstMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_DST, macDst.Value() );
 
-          auto* pMatchSrcMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_>( v );
+          auto* pMatchSrcMac = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_mac_>( v );
           pMatchSrcMac->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_ETH_SRC, macSrc.Value() );
 
           auto* pMatchVlan   = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_vlan_vid_>( v );
@@ -443,6 +445,52 @@ void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuff
 
   // TODO: send what we know
   BuildGroups();
+  InsertArpIntercept();
+}
+
+void Bridge::InsertArpIntercept() {
+
+  std::cout << "InsertArpIntercept" << std::endl;
+
+  vByte_t v = std::move( m_fAcquireBuffer() );
+
+  auto* pMod = ofp::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
+  pMod->init();
+  pMod->cookie = 0x102;
+  pMod->priority = 2048;
+
+  auto* pMatch = new ( &pMod->match ) codec::ofp_flow_mod::ofp_match_;
+
+  assert( 4 ==  sizeof( pMod->match.pad ) );
+  v.resize( v.size() - sizeof( pMod->match.pad ) );  // subtract the padding field in ofp_match
+  vByte_t::size_type sizeMatchesStart = v.size();
+
+  auto* pMatchEthernetType = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_type_>( v );
+  pMatchEthernetType->init( protocol::ethernet::Ethertype::arp );
+
+  auto* pMatchMetadata = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_metadata_>( v );
+  pMatchMetadata->init( 0 );
+
+  pMatch->length += v.size() - sizeMatchesStart;
+
+  v.resize( v.size() + pMatch->fill_size() );
+  pMatch->fill();
+
+  vByte_t::size_type sizeActionsStart = v.size();
+
+  auto* pActions = ofp::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
+  pActions->init();
+
+  auto* pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+  pAction->init(); // defaults to controller
+  pAction->max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+
+  //pActions->len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
+  pActions->len = v.size() - sizeActionsStart;
+
+  pMod->header.length = v.size();
+
+  m_fTransmitBuffer( std::move( v ) );
 }
 
 void Bridge::BuildGroups() {

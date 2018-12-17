@@ -214,14 +214,13 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
         auto* pMod = ofp::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
         pMod->init();
-        pMod->command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
         pMod->cookie = 0x101;
 
         auto* pActions = ofp::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
         pActions->init();
 
         auto* pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
-        pAction->init();
+        pAction->init();  // defaults to controller
         pAction->max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
 
         pActions->len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
@@ -285,11 +284,11 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
           idEtherType = ethernet.GetEthertype();
         }
         switch ( idEtherType ) {
-          case protocol::ethernet::Ethertype::arp: {
-            protocol::ipv4::arp::ethernet arp( *pMessage );
-            m_arpCache.Update( arp );
-            std::cout << arp << ::std::endl;
-            // maybe start a thread for other aux packet processing from above
+          case protocol::ethernet::Ethertype::arp: { // dealt with further down
+              protocol::ipv4::arp::ethernet arp( *pMessage );
+              if ( 0x102 != pPacket->cookie ) {
+                std::cout << "wrong section of code [arp]: " << arp << ::std::endl;
+              }
             }
             break;
           case protocol::ethernet::Ethertype::ieee8021q: {  // 802.1q vlan (shouldn't be able to get here )
@@ -347,13 +346,32 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
           }; // end of lambda( in_port )
 
-          codec::ofp_flow_mod::fInPortCookie_t fCookie0x102 = [this](nPort_t nSrcPort){ // arp
+          codec::ofp_flow_mod::fInPortCookie_t fCookie0x102 =
+            [this, idVlan, &ethernet, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort){ // arp
+
+              protocol::ipv4::arp::ethernet arp( *pMessage );
+              std::cout << "cookie 102: " << arp << ::std::endl;
+
+              m_arpCache.Update( arp );
+
+              typedef protocol::ethernet::address MacAddress;
+
+              MacAddress macSrc( ethernet.GetSrcMac() );
+              MacAddress macDst( ethernet.GetDstMac() );
+
+              Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
+              m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
           };
 
         switch ( pPacket->cookie ) {
           case 0x101: {
             // for decoding the IN_PORT to supply to the bridge
             pMatch->decode( fCookie0x101 ); // process match fields via the lambda
+            }
+            break;
+          case 0x102: {
+            // for decoding the IN_PORT to supply to the bridge
+            pMatch->decode( fCookie0x102 ); // process match fields via the lambda
             }
             break;
           default:
