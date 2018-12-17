@@ -34,6 +34,8 @@
  ovs-vsctl set port enp5s0 tag=90
  ovs-ofctl queue-stats ovsbr0
  ovs-ofctl --verbose  show ovsbr0
+ ovs-dpctl dump-flows
+ ovs-appctl dpif/dump-flows ovsbr0
  */
 
 Bridge::Bridge( )
