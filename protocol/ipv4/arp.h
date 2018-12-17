@@ -121,7 +121,7 @@ private:
 
 typedef protocol::ipv4::address_t ipv4_t;
 
-struct IPv4Ether_t {
+struct ethernet_t {
   Header_ header;
   mac_t macSender;
   ipv4_t ipv4Sender;
@@ -129,11 +129,11 @@ struct IPv4Ether_t {
   ipv4_t ipv4Target;
 };
 
-class IPv4Ether {
-  friend std::ostream& operator<<( std::ostream&, const IPv4Ether& );
+class ethernet {
+  friend std::ostream& operator<<( std::ostream&, const ethernet& );
 public:
-  IPv4Ether( uint8_t& );  // need a way to determine whether to initialize or not
-  virtual ~IPv4Ether();
+  ethernet( uint8_t& );  // need a way to determine whether to initialize or not
+  virtual ~ethernet();
 
   const mac_t& MacSender() const { return m_ipv4->macSender; }
   const mac_t& MacTarget() const { return m_ipv4->macTarget; }
@@ -142,7 +142,7 @@ public:
 
 protected:
 private:
-  IPv4Ether_t* m_ipv4;
+  ethernet_t* m_ipv4;
 
   std::ostream& Emit( std::ostream& stream ) const;
 
@@ -153,7 +153,7 @@ private:
 class Cache {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
-  void Update( const IPv4Ether& );
+  void Update( const ethernet& );
 protected:
 private:
   typedef std::unordered_map<protocol::ipv4::address,protocol::ethernet::address> mapIpv4ToMac_t;

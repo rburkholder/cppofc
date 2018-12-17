@@ -208,6 +208,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             QueueTxToWrite( std::move( v ) );
           } );
 
+        // this table miss entry then starts to generate Packet_in messages
         vByte_t v = std::move( GetAvailableBuffer() );
         v.clear();
 
@@ -285,7 +286,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         switch ( idEtherType ) {
           case protocol::ethernet::Ethertype::arp: {
-            protocol::ipv4::arp::IPv4Ether arp( *pMessage );
+            protocol::ipv4::arp::ethernet arp( *pMessage );
             m_arpCache.Update( arp );
             std::cout << arp << ::std::endl;
             // maybe start a thread for other aux packet processing from above
@@ -329,6 +330,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             break;
         }
 
+        // TODO: these lambdas should be initialized out side of scope
         // create a lambda (TODO: needs to be restructured, for handling message
         //   needs to be integral to the cookie switch statement (to be refactored)
         codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
@@ -345,7 +347,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
           }; // end of lambda( in_port )
 
-          //codec::ofp_flow_mod::fCookie0x102_t fCookie0x102 = [](){};
+          //codec::ofp_flow_mod::fCookie0x102_t fCookie0x102 = [](){ // arp
+          //};
 
         switch ( pPacket->cookie ) {
           case 0x101: {

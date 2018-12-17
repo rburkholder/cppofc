@@ -80,8 +80,8 @@ std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
 
 // ** IPv4
 
-IPv4Ether::IPv4Ether( uint8_t& rOctets )
-: m_ipv4( new ( &rOctets ) IPv4Ether_t )
+ethernet::ethernet( uint8_t& rOctets )
+: m_ipv4( new ( &rOctets ) ethernet_t )
 {
   Header_& header( m_ipv4->header );
   assert(      1 == header.m_typeHardware );
@@ -91,10 +91,10 @@ IPv4Ether::IPv4Ether( uint8_t& rOctets )
   //assert(    ( 1 == header.m_opcode ) || ( 2 == header.m_opcode ) );
 }
 
-IPv4Ether::~IPv4Ether() {
+ethernet::~ethernet() {
 }
 
-std::ostream& IPv4Ether::Emit( std::ostream& stream ) const {
+std::ostream& ethernet::Emit( std::ostream& stream ) const {
   const protocol::ipv4::address ipv4Sender( IPv4Sender() );
   const protocol::ipv4::address ipv4Target( IPv4Target() );
   const protocol::ethernet::address macSender( MacSender() );
@@ -103,7 +103,7 @@ std::ostream& IPv4Ether::Emit( std::ostream& stream ) const {
   return stream;
 }
 
-std::ostream& operator<<( std::ostream& stream, const IPv4Ether& arp ) {
+std::ostream& operator<<( std::ostream& stream, const ethernet& arp ) {
   return arp.Emit( stream );
 }
 
@@ -121,7 +121,7 @@ void Cache::Update( const protocol::ipv4::address& ipv4, const protocol::etherne
   }
 }
 
-void Cache::Update( const IPv4Ether& arp ) {
+void Cache::Update( const ethernet& arp ) {
   {
     const protocol::ipv4::address     ipv4( arp.IPv4Sender() );
     const protocol::ethernet::address mac(  arp.MacSender() );
