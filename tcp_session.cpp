@@ -333,7 +333,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         // TODO: these lambdas should be initialized out side of scope
         // create a lambda (TODO: needs to be restructured, for handling message
         //   needs to be integral to the cookie switch statement (to be refactored)
-        codec::ofp_flow_mod::fCookie0x101_t fCookie0x101 =  // this will require improvement as more matches are implemented
+        codec::ofp_flow_mod::fInPortCookie_t fCookie0x101 =  // this will require improvement as more matches are implemented
           // nSrcPort_ comes from match decode
           [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
 
@@ -347,8 +347,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
           }; // end of lambda( in_port )
 
-          //codec::ofp_flow_mod::fCookie0x102_t fCookie0x102 = [](){ // arp
-          //};
+          codec::ofp_flow_mod::fInPortCookie_t fCookie0x102 = [this](nPort_t nSrcPort){ // arp
+          };
 
         switch ( pPacket->cookie ) {
           case 0x101: {

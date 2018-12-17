@@ -24,7 +24,7 @@ namespace ofp_flow_mod {
 
   typedef protocol::ethernet::address_t mac_t;
 
-  typedef std::function<void( uint32_t )> fCookie0x101_t; // in_port
+  typedef std::function<void( uint32_t )> fInPortCookie_t; // in_port
   //typedef std::function<void( mac_t& )> fEth_t;
 
   // included in oxm fields.
@@ -118,7 +118,7 @@ namespace ofp_flow_mod {
     // TODO: will need to refactor as different matches are required
     // decodes *this ofp_match structure
     // 2018/12/08, really only need IN_PORT for now
-    void decode( fCookie0x101_t& fCookie0x101 ) {
+    void decode( fInPortCookie_t& fCookie0x101 ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p;
