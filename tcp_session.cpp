@@ -36,6 +36,7 @@
 #include "common.h"
 #include "hexdump.h"
 #include "tcp_session.h"
+#include "codecs/append.h"
 
 namespace asio = boost::asio;
 
@@ -207,28 +208,25 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             QueueTxToWrite( std::move( v ) );
           } );
 
-        // this table miss entry then starts to generate Packet_in messages
-        struct add_table_miss_flow {
-          codec::ofp_flow_mod::ofp_flow_mod_ mod;
-          codec::ofp_flow_mod::ofp_instruction_actions_ actions;
-          codec::ofp_flow_mod::ofp_action_output_ action;
-          void init() {
-            mod.init();
-            actions.init();
-            action.init();
-            action.max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
-            mod.header.length = sizeof( add_table_miss_flow );
-            mod.cookie = 0x101; // can change this as cookie usage becomes refined
-            actions.len += sizeof( action );
-            // need to update pMatch length once match fields are added
-          }
-        };
-
         vByte_t v = std::move( GetAvailableBuffer() );
-        v.resize( sizeof( add_table_miss_flow ) );
-        auto pMod = new( v.data() ) add_table_miss_flow;
+        v.clear();
+
+        auto* pMod = ofp::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
         pMod->init();
-        pMod->mod.command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
+        pMod->command = ofp141::ofp_flow_mod_command::OFPFC_ADD; // by default
+        pMod->cookie = 0x101;
+
+        auto* pActions = ofp::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
+        pActions->init();
+
+        auto* pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+        pAction->init();
+        pAction->max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+
+        pActions->len += sizeof( codec::ofp_flow_mod::ofp_action_output_ );
+
+        pMod->header.length = v.size();
+
         std::cout
           << "Sent MissFlow flow entry: "
           << HexDump<vByte_iter_t>( v.begin(), v.end() )
