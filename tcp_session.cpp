@@ -27,11 +27,10 @@
 #include "protocol/ethernet.h"
 #include "protocol/ethernet/vlan.h"
 #include "protocol/ipv4.h"
+#include "protocol/ipv4/dhcp.h"
 #include "protocol/ipv4/udp.h"
 #include "protocol/ipv4/tcp.h"
 #include "protocol/ipv6.h"
-
-#include "protocol/ipv4/dhcp.h"
 
 #include "common.h"
 #include "hexdump.h"
@@ -272,6 +271,8 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         uint16_t idVlan( 0 ); // init to 0 if no 802.1q header found (will need to deal with QinQ at some point)
         uint8_t* pMessage( nullptr ); // depending upon 802.1q shim, calculate message location
         uint16_t idEtherType( 0 );
+        bool bDecoded( false );
+
         if ( protocol::ethernet::Ethertype::ieee8021q == ethernet.GetEthertype() ) {
           ethernet::vlan vlan( ethernet.GetMessage() );
           std::cout << "found vlan: " << vlan << ::std::endl;
@@ -285,10 +286,30 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
         }
         switch ( idEtherType ) {
           case protocol::ethernet::Ethertype::arp: { // dealt with further down
-              protocol::ipv4::arp::ethernet arp( *pMessage );
-              if ( 0x102 != pPacket->cookie ) {
-                std::cout << "wrong section of code [arp]: " << arp << ::std::endl;
-              }
+
+            if ( 0x102 != pPacket->cookie ) {
+              std::cout << "**** arp, expected cookie 0x102, not " << pPacket->cookie << std::endl;
+            }
+
+            pMatch->decode(
+              [this, idVlan, &ethernet, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
+
+                protocol::ipv4::arp::ethernet arp( *pMessage );
+                std::cout << "arp: " << arp << ::std::endl;
+
+                m_arpCache.Update( arp );
+
+                typedef protocol::ethernet::address MacAddress;
+
+                MacAddress macSrc( ethernet.GetSrcMac() );
+                MacAddress macDst( ethernet.GetDstMac() );
+
+                Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
+                m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
+
+              } ); // process match fields via the lambda
+            bDecoded = true;
+
             }
             break;
           case protocol::ethernet::Ethertype::ieee8021q: {  // 802.1q vlan (shouldn't be able to get here )
@@ -298,27 +319,46 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             }
             break;
           case protocol::ethernet::Ethertype::ipv4: {
-            protocol::ipv4::Packet ipv4( *pMessage );
-            std::cout << ipv4 << ::std::endl;
+              protocol::ipv4::Packet ipv4( *pMessage );
+              std::cout << ipv4 << ::std::endl;
 
-            switch ( ipv4.GetHeader().protocol ) {
-              case 6: {// tcp
-                protocol::tcp::Packet tcp( ipv4.GetData() );
-                std::cout << tcp << ::std::endl;
+              switch ( ipv4.GetHeader().protocol ) {
+                case 6: {// tcp
+                  protocol::tcp::Packet tcp( ipv4.GetData() );
+                  std::cout << tcp << ::std::endl;
+                  }
+                  break;
+                case 17: {// udp
+                  protocol::udp::Packet udp( ipv4.GetData() );
+                  std::cout << udp << ::std::endl;
+                  if (
+                    ( 67 == udp.GetHeader().dst_port ) || // to server
+                    ( 68 == udp.GetHeader().dst_port ) )  // to client
+                  {
+
+                    if ( 0x103 != pPacket->cookie ) {
+                      std::cout << "**** dhcp, expected cookie 0x103, not " << pPacket->cookie << std::endl;
+                    }
+
+                    pMatch->decode( // use two cookies or one for each direction?
+                      [this, idVlan, &ethernet, &udp, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort){
+
+                        protocol::ipv4::dhcp::Packet dhcp( udp.GetData() );
+                        std::cout << "cookie 103: " << dhcp << ::std::endl;
+
+                        typedef protocol::ethernet::address MacAddress;
+
+                        MacAddress macSrc( ethernet.GetSrcMac() );
+                        MacAddress macDst( ethernet.GetDstMac() );
+
+                        Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
+                        m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
+                      }
+                    );
+                    bDecoded = true;
+                  }
+                  break;
                 }
-                break;
-              case 17: {// udp
-                protocol::udp::Packet udp( ipv4.GetData() );
-                std::cout << udp << ::std::endl;
-                if (
-                  ( 67 == udp.GetHeader().dst_port ) || // to server
-                  ( 68 == udp.GetHeader().dst_port ) )  // to client
-                {
-                  protocol::ipv4::dhcp::Packet dhcp( udp.GetData() );
-                  std::cout << dhcp << ::std::endl;
-                }
-                }
-                break;
               }
             }
             break;
@@ -329,30 +369,10 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             break;
         }
 
-        // TODO: these lambdas should be initialized out side of scope
-        // create a lambda (TODO: needs to be restructured, for handling message
-        //   needs to be integral to the cookie switch statement (to be refactored)
-        codec::ofp_flow_mod::fInPortCookie_t fCookie0x101 =  // this will require improvement as more matches are implemented
-          // nSrcPort_ comes from match decode
-          [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
-
-            typedef protocol::ethernet::address MacAddress;
-
-            MacAddress macSrc( ethernet.GetSrcMac() );
-            MacAddress macDst( ethernet.GetDstMac() );
-
-            Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
-            m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
-
-          }; // end of lambda( in_port )
-
-          codec::ofp_flow_mod::fInPortCookie_t fCookie0x102 =
-            [this, idVlan, &ethernet, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort){ // arp
-
-              protocol::ipv4::arp::ethernet arp( *pMessage );
-              std::cout << "cookie 102: " << arp << ::std::endl;
-
-              m_arpCache.Update( arp );
+        if ( !bDecoded ) {
+          if ( 0x101 == pPacket->cookie ) { // nSrcPort_ comes from match decode
+            pMatch->decode( // for decoding the IN_PORT to supply to the bridge
+              [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
 
               typedef protocol::ethernet::address MacAddress;
 
@@ -361,23 +381,13 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
               Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
               m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
-          };
 
-        switch ( pPacket->cookie ) {
-          case 0x101: {
-            // for decoding the IN_PORT to supply to the bridge
-            pMatch->decode( fCookie0x101 ); // process match fields via the lambda
-            }
-            break;
-          case 0x102: {
-            // for decoding the IN_PORT to supply to the bridge
-            pMatch->decode( fCookie0x102 ); // process match fields via the lambda
-            }
-            break;
-          default:
-            assert( 0 );  // need to catch unknown packet_in, shouldn't be any
-            // could be because of mal-formed packet if commands are incorrect
-            break;
+              }
+            );
+          }
+          else {
+            std::cout << "*****  undecoded packet with cookie " << pPacket->cookie << std::endl;
+          }
         }
 
         break;

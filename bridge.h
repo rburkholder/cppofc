@@ -122,6 +122,7 @@ private:
 
   void BuildGroups();
   void InsertArpIntercept();
+  void InsertDhcpIntercept( uint16_t port );
 
 };
 

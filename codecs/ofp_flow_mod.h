@@ -106,6 +106,36 @@ namespace ofp_flow_mod {
     }
   };
 
+  struct ofpxmt_ofb_ip_proto_ {
+    boost::endian::big_uint32_t header;
+    uint8_t protocol;
+
+    void init( uint8_t protocol_ ) {
+      header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+      ofp141::oxm_ofb_match_fields::OFPXMT_OFB_IP_PROTO,
+      1 );
+      protocol = protocol_;
+    }
+  };
+
+  struct ofpxmt_ofb_port_ {
+    boost::endian::big_uint32_t header;
+    boost::endian::big_uint16_t port;
+
+    void init( ofp141::oxm_ofb_match_fields field, uint16_t port_ ) {
+      assert(
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_DST == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_SRC == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_TCP_DST == field ) ||
+        ( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_TCP_SRC == field )
+        );
+      header = OXM_HEADER(ofp141::ofp_oxm_class::OFPXMC_OPENFLOW_BASIC,
+      field,
+      2 );
+      port = port_;
+    }
+  };
+
   struct ofpxmt_ofb_metadata_ {
     boost::endian::big_uint32_t header;
     boost::endian::big_uint64_t metadata;
@@ -142,7 +172,7 @@ namespace ofp_flow_mod {
     // TODO: will need to refactor as different matches are required
     // decodes *this ofp_match structure
     // 2018/12/08, really only need IN_PORT for now
-    void decode( fInPortCookie_t& fCookie0x101 ) {
+    void decode( fInPortCookie_t fCookie0x101 ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p;
