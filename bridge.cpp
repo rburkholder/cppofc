@@ -190,11 +190,18 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           auto* pOut = ofp::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
           pOut->initv2( ofp_ingress );
 
+          vByte_t::size_type sizePreAction = v.size();
+
+          auto* pActionSetMetadata = ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_metadata_>( v );
+          pActionSetMetadata->init( 1 );  // todo, pass this in at some point, currently used to bypass static flows
+
           auto* pGroup = ofp::Append<ofp141::ofp_action_group>( v );
           pGroup->type = ofp141::ofp_action_type::OFPAT_GROUP;
           pGroup->len  = sizeof( ofp141::ofp_action_group );
           pGroup->group_id = vlan + ( bSrcAccess ? 10000 : 20000 );
-          pOut->actions_len = pGroup->len; // simple way for now
+
+          //pOut->actions_len = pGroup->len; // simple way for now
+          pOut->actions_len = v.size() - sizePreAction;
 
           vByte_t::size_type size = v.size();
           v.resize( v.size() + nOctets );
@@ -265,16 +272,16 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
               // attach the 802.1q header
               assert( interfaceDst.setTrunk.end() != interfaceDst.setTrunk.find( vlan ) );
 
-              auto pActionPushVlan = ofp::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
+              auto* pActionPushVlan = ofp::Append<codec::ofp_flow_mod::ofp_action_push_vlan_>( v );
               pActionPushVlan->init( 0x8100 );
 
-              auto pActionSetVlan= ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
+              auto* pActionSetVlan  = ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_vlan_id_>( v );
               pActionSetVlan->init( vlan );
             }
           }
           else { // working with source trunk port
             if ( vlan == interfaceDst.tag ) { // destination access port, so pop vlan
-              auto pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
+              auto* pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_pop_vlan_>( v );
               pAction->init();
             }
             else { // pass packet onto trunk port
@@ -314,10 +321,15 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
             auto*  pOut = ofp::Append<codec::ofp_packet_out::ofp_packet_out_>( v );
             pOut->initv2( ofp_ingress );
 
+            vByte_t::size_type sizePreAction = v.size();
+
+            auto* pActionSetMetadata = ofp::Append<codec::ofp_flow_mod::ofp_action_set_field_metadata_>( v );
+            pActionSetMetadata->init( 1 );  // todo, pass this in at some point, currently used to bypass static flows
+
             auto* pOutput = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
             pOutput->init( ofp141::ofp_port_no::OFPP_TABLE );
 
-            pOut->actions_len = pOutput->len; // simple way for now
+            pOut->actions_len = v.size() - sizePreAction;
 
             vByte_t::size_type size = v.size();
             v.resize( v.size() + nOctets );

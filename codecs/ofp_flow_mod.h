@@ -172,7 +172,7 @@ namespace ofp_flow_mod {
     // TODO: will need to refactor as different matches are required
     // decodes *this ofp_match structure
     // 2018/12/08, really only need IN_PORT for now
-    void decode( fInPortCookie_t fCookie0x101 ) {
+    void decode( fInPortCookie_t fDecode ) {
       const uint16_t lenMatches( length - 4 );
       uint16_t cnt( 0 );
       oxm_header_* p;
@@ -191,8 +191,8 @@ namespace ofp_flow_mod {
             assert( sizeof(uint32_t) == p->oxm_length() );
             ofpxmt_ofb_in_port_* pInPort = new( p ) ofpxmt_ofb_in_port_;
             std::cout << "in_port=" << pInPort->port << std::endl;
-            if ( nullptr != fCookie0x101 ) {
-              fCookie0x101( pInPort->port );
+            if ( nullptr != fDecode ) {
+              fDecode( pInPort->port );
             } // if
             bFoundInPort = true;
             } // case
@@ -258,9 +258,8 @@ namespace ofp_flow_mod {
     uint8_t* tlv() { return (uint8_t*)(&field[0]); }
   };
 
-  // TODO: fix this:  'field' is causing an issue.
   struct ofp_action_set_field_vlan_id_: public ofp141::ofp_action_set_field {
-    static const size_t placeholding = sizeof( ofpxmt_ofb_vlan_vid_ ) - 4;
+    static const size_t placeholding = sizeof( ofpxmt_ofb_vlan_vid_ ) - sizeof( field );
     static const size_t padding
       = 16 -
         ( sizeof( ofp141::ofp_action_set_field ) + placeholding );
@@ -271,6 +270,25 @@ namespace ofp_flow_mod {
       auto pVid = new( &(field[0]) ) ofpxmt_ofb_vlan_vid_;
       pVid->init( idVlan );
       std::memset( pad, 0, padding );
+      type = ofp141::ofp_action_type::OFPAT_SET_FIELD;
+      len = 16;
+    }
+  };
+
+  struct ofp_action_set_field_metadata_: public ofp141::ofp_action_set_field {
+    typedef ofpxmt_ofb_metadata_ ofpxmt;
+    static const size_t placeholding = sizeof( ofpxmt ) - sizeof( field );
+    static const size_t padding
+      = 16 -
+        ( sizeof( ofp141::ofp_action_set_field ) + placeholding );
+    //assert( 0 == padding );
+    uint8_t placeholder[ placeholding ];
+    //uint8_t pad[ padding ];
+    void init( uint64_t metadata ) {
+      assert( 16 == sizeof( ofp_action_set_field_metadata_ ) );
+      auto pMeta = new( &(field[0]) ) ofpxmt;
+      pMeta->init( metadata );
+      //std::memset( pad, 0, padding );
       type = ofp141::ofp_action_type::OFPAT_SET_FIELD;
       len = 16;
     }
