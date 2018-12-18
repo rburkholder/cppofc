@@ -215,8 +215,7 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           // install rules into table and route via tables
           std::cout
             << "bridge::forward specific from " << ofp_ingress
-            << ", to vlan " << vlan
-            << std::endl;
+            << " in vlan " << vlan;
 
           vByte_t v = std::move( m_fAcquireBuffer() );
           v.clear();
@@ -290,6 +289,8 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
 
           auto* pOutput = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
           pOutput->init( iterMapMacDst->second.m_inPort );
+
+          std::cout << " out port " << iterMapMacDst->second.m_inPort << std::endl;
 
           pActions->len = v.size() - sizeActionsStart;
 
