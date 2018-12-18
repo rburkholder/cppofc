@@ -200,7 +200,6 @@ void Bridge::Forward( ofport_t ofp_ingress, idVlan_t vlan,
           pGroup->len  = sizeof( ofp141::ofp_action_group );
           pGroup->group_id = vlan + ( bSrcAccess ? 10000 : 20000 );
 
-          //pOut->actions_len = pGroup->len; // simple way for now
           pOut->actions_len = v.size() - sizePreAction;
 
           vByte_t::size_type size = v.size();
@@ -462,6 +461,8 @@ void Bridge::StartRulesInjection( fAcquireBuffer_t fAcquireBuffer, fTransmitBuff
   InsertArpIntercept();
   InsertDhcpIntercept( 67 );
   InsertDhcpIntercept( 68 );
+  InsertDnsIntercept( protocol::ethernet::Ethertype::ipv4, ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_DST, 17 );
+  InsertDnsIntercept( protocol::ethernet::Ethertype::ipv4, ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_SRC, 17 );
 }
 
 void Bridge::InsertArpIntercept() {
@@ -534,6 +535,57 @@ void Bridge::InsertDhcpIntercept( uint16_t port ) {
 
   auto* pMatchPort = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_port_>( v );
   pMatchPort->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_DST, port );
+
+  auto* pMatchMetadata = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_metadata_>( v );
+  pMatchMetadata->init( 0 );
+
+  pMatch->length += v.size() - sizeMatchesStart;
+
+  v.resize( v.size() + pMatch->fill_size() );
+  pMatch->fill();
+
+  vByte_t::size_type sizeActionsStart = v.size();
+
+  auto* pActions = ofp::Append<codec::ofp_flow_mod::ofp_instruction_actions_>( v );
+  pActions->init();
+
+  auto* pAction = ofp::Append<codec::ofp_flow_mod::ofp_action_output_>( v );
+  pAction->init(); // defaults to controller
+  pAction->max_len = ofp141::ofp_controller_max_len::OFPCML_NO_BUFFER;
+
+  pActions->len = v.size() - sizeActionsStart;
+
+  pMod->header.length = v.size();
+
+  m_fTransmitBuffer( std::move( v ) );
+}
+
+void Bridge::InsertDnsIntercept( uint16_t ethertype, uint16_t field, uint8_t protocol ) {
+
+  //std::cout << "InsertDnsIntercept" << std::endl;
+
+  vByte_t v = std::move( m_fAcquireBuffer() );
+
+  auto* pMod = ofp::Append<codec::ofp_flow_mod::ofp_flow_mod_>( v );
+  pMod->init();
+  pMod->cookie = 0x104;
+  pMod->priority = 2048;
+
+  auto* pMatch = new ( &pMod->match ) codec::ofp_flow_mod::ofp_match_;
+
+  assert( 4 ==  sizeof( pMod->match.pad ) );
+  v.resize( v.size() - sizeof( pMod->match.pad ) );  // subtract the padding field in ofp_match
+  vByte_t::size_type sizeMatchesStart = v.size();
+
+  auto* pMatchEthernetType = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_eth_type_>( v );
+  pMatchEthernetType->init( ethertype );
+
+  auto* pMatchProtocol = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_ip_proto_>( v );
+  pMatchProtocol->init( protocol );
+
+  auto* pMatchPort = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_port_>( v );
+  //pMatchPort->init( ofp141::oxm_ofb_match_fields::OFPXMT_OFB_UDP_DST, 53 );
+  pMatchPort->init( (ofp141::oxm_ofb_match_fields)field, 53 );
 
   auto* pMatchMetadata = ofp::Append<codec::ofp_flow_mod::ofpxmt_ofb_metadata_>( v );
   pMatchMetadata->init( 0 );

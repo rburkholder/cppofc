@@ -123,6 +123,7 @@ private:
   void BuildGroups();
   void InsertArpIntercept();
   void InsertDhcpIntercept( uint16_t port );
+  void InsertDnsIntercept( uint16_t ethertype, uint16_t match, uint8_t protocol );
 
 };
 

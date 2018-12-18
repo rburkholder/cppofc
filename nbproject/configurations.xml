@@ -34,6 +34,7 @@
           <itemPath>protocol/ipv4/tcp.h</itemPath>
           <itemPath>protocol/ipv4/udp.h</itemPath>
         </logicalFolder>
+        <itemPath>protocol/dns.h</itemPath>
         <itemPath>protocol/ethernet.h</itemPath>
         <itemPath>protocol/ipv4.h</itemPath>
         <itemPath>protocol/ipv6.h</itemPath>
@@ -80,7 +81,6 @@
           <itemPath>protocol/ipv4/udp.cpp</itemPath>
         </logicalFolder>
         <itemPath>protocol/dns.cpp</itemPath>
-        <itemPath>protocol/dns.h</itemPath>
         <itemPath>protocol/ethernet.cpp</itemPath>
         <itemPath>protocol/ipv4.cpp</itemPath>
         <itemPath>protocol/ipv6.cpp</itemPath>

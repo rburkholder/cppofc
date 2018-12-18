@@ -78,25 +78,6 @@ struct soa_ { // measurements in seconds
   endian::big_uint32_t minimum; // minimum TTL field that should be exported with any RR from this zone
 };
 
-/*
- * message format:
- *   header
- *   question (question for the name server)
- *   answer (RRs answering the question)
- *   authority (RRs pointing toward an authority)
- *   additional (RRs hoding additional information)
- */
-
-
-struct header_ { // https://tools.ietf.org/html/rfc1035
-  endian::big_uint16_t id;  // copied to reply from request
-  endian::big_uint16_t flags;
-  endian::big_uint16_t qdcount; // number of entries in the question section
-  endian::big_uint16_t ancount; // number of entries in the answer section
-  endian::big_uint16_t nscount; // number of entries in the name server resource records section
-  endian::big_uint16_t arcount; // number of entries in the additional records section
-};
-
 enum header_flag {
   header_flag_qr    = 0x8000, // 0 query, 1 response
   header_flag_opcode= 0x7100, // 0 query, 1 inverse query, 2 server status, 3 - 15 reserved
@@ -116,6 +97,63 @@ enum rcode {
   not_implemented = 4,
   refused = 5
     // 6 - 15 reserved for future use
+};
+
+/*
+ * message format:
+ *   header
+ *   question (question for the name server)
+ *   answer (RRs answering the question)
+ *   authority (RRs pointing toward an authority)
+ *   additional (RRs hoding additional information)
+ */
+
+struct header_ { // https://tools.ietf.org/html/rfc1035
+  endian::big_uint16_t id;  // copied to reply from request
+  endian::big_uint16_t flags;
+  endian::big_uint16_t qdcount; // number of entries in the question section
+  endian::big_uint16_t ancount; // number of entries in the answer section
+  endian::big_uint16_t nscount; // number of entries in the name server resource records section
+  endian::big_uint16_t arcount; // number of entries in the additional records section
+};
+
+// ** Header
+
+class Header {
+  friend std::ostream& operator<<( std::ostream&, const Header& );
+public:
+
+  Header( header_& );
+  virtual ~Header();
+
+protected:
+private:
+  header_& m_header;
+
+  std::ostream& Emit( std::ostream& stream ) const;
+};
+
+std::ostream& operator<<( std::ostream& stream, const Header& header );
+
+// ** Packet
+
+class Packet {
+  friend std::ostream& operator<<( std::ostream&, const Packet& );
+public:
+
+  Packet( uint8_t& );  // need a way to determine whether to initialize or not
+  virtual ~Packet();
+
+  const header_& GetHeader() {
+    return *m_pHeader_;
+  }
+
+protected:
+private:
+
+  header_* m_pHeader_;
+  //Content m_Content;
+
 };
 
 } // namespace dns

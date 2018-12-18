@@ -26,6 +26,7 @@
 
 #include "protocol/ethernet.h"
 #include "protocol/ethernet/vlan.h"
+#include "protocol/dns.h"
 #include "protocol/ipv4.h"
 #include "protocol/ipv4/dhcp.h"
 #include "protocol/ipv4/udp.h"
@@ -332,6 +333,32 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                   protocol::udp::Packet udp( ipv4.GetData() );
                   std::cout << udp << ::std::endl;
                   if (
+                    ( 53 == udp.GetHeader().dst_port ) ||
+                    ( 53 == udp.GetHeader().src_port )
+                    )
+                  {
+                    if ( 0x104 != pPacket->cookie ) {
+                      std::cout << "**** dns, expected cookie 0x104, not " << pPacket->cookie << std::endl;
+                    }
+
+                    pMatch->decode(
+                      [this, idVlan, &ethernet, &udp, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort){
+
+                        protocol::dns::Packet dns( udp.GetData() );
+                        std::cout << "cookie 104: " << dns << ::std::endl;
+
+                        typedef protocol::ethernet::address MacAddress;
+
+                        MacAddress macSrc( ethernet.GetSrcMac() );
+                        MacAddress macDst( ethernet.GetDstMac() );
+
+                        Bridge::MacStatus statusSrcLookup = m_bridge.Update( nSrcPort, idVlan, macSrc );
+                        m_bridge.Forward( nSrcPort, idVlan, macSrc, macDst, pPayload, length );
+                      }
+                    );
+                    bDecoded = true;
+                  }
+                  if (
                     ( 67 == udp.GetHeader().dst_port ) || // to server
                     ( 68 == udp.GetHeader().dst_port ) )  // to client
                   {
@@ -340,7 +367,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
                       std::cout << "**** dhcp, expected cookie 0x103, not " << pPacket->cookie << std::endl;
                     }
 
-                    pMatch->decode( // use two cookies or one for each direction?
+                    pMatch->decode(
                       [this, idVlan, &ethernet, &udp, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort){
 
                         protocol::ipv4::dhcp::Packet dhcp( udp.GetData() );
@@ -369,7 +396,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             break;
         }
 
-        if ( !bDecoded ) {
+        if ( !bDecoded ) { // TODO: factor out and 'Forward' based upon flag
           if ( 0x101 == pPacket->cookie ) { // nSrcPort_ comes from match decode
             pMatch->decode( // for decoding the IN_PORT to supply to the bridge
               [this, idVlan, &ethernet, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
