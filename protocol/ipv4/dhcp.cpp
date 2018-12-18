@@ -28,6 +28,17 @@ std::string format( uint32_t addr ) {
     ;
   return ss.str();
 }
+
+std::ostream& operator<<( std::ostream& os, const uint8_t* p ) {
+  os
+    << (uint16_t) *(p + 0) << "."
+    << (uint16_t) *(p + 1) << "."
+    << (uint16_t) *(p + 2) << "."
+    << (uint16_t) *(p + 3)
+    ;
+  return os;
+}
+
 }
 
 Header::Header( Header_& header ): m_header( header ) {
@@ -74,13 +85,13 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
       uint8_t len = *p; p++;
       switch ( id ) {
         case 1:
-          std::cout << ",subnet=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",subnet=" << p;
           break;
         case 3:
-          std::cout << ",router=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",router=" << p;
           break;
         case 6:
-          std::cout << ",dns=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",dns=" << p;
           break;
         case 12: { // TODO: check for 0 term.
             std::cout << ",host_name=";
@@ -106,10 +117,10 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
           }
           break;
         case 28:
-          std::cout << ",bcast=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",bcast=" << p;
           break;
         case 33:
-          std::cout << ",static_route=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",static_route=" << p;
           break;
         case 35: {
           auto* to = new( p ) endian::big_int32_t;
@@ -117,7 +128,7 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
           }
           break;
         case 42:
-          std::cout << ",ntp=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",ntp=" << p;
           break;
         case 44:
           std::cout << ",NBNS=" << HexDump<const uint8_t*>( p, p + len );
@@ -132,7 +143,7 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
           std::cout << ",NBScope=" << HexDump<const uint8_t*>( p, p + len );
           break;
         case 50:
-          std::cout << ",requested_ip=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",requested_ip=" << p;
           break;
         case 51: {
           auto* lt = new( p ) endian::big_int32_t;
@@ -172,7 +183,7 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
           }
           break;
         case 54:
-          std::cout << ",server=" << HexDump<const uint8_t*>( p, p + len );
+          std::cout << ",server=" << p;
           break;
         case 55:
           std::cout << ",param_request=" << HexDump<const uint8_t*>( p, p + len );
