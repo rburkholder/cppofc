@@ -33,11 +33,62 @@ Header::Header( header_& header ): m_header( header ) {
 Header::~Header() {}
 
 std::ostream& Header::Emit( std::ostream& stream ) const {
+  uint16_t flags( m_header.flags );
   stream
     << "id=" << m_header.id
-    << std::hex
-    << ",flags=0x" << m_header.flags
-    << std::dec
+    << ",flags=("
+      << ( ( flags & header_flag_qr ) ? "resp" : "qry" )
+      ;
+  stream << ",op:";
+  switch ( ( flags & header_flag_opcode ) >> 11 ) {
+    case 0:
+      stream << "qry";
+      break;
+    case 1:
+      stream << "inv_qry";
+      break;
+    case 2:
+      stream << "stat";
+      break;
+    default:
+      stream << "rsrvd";
+      break;
+  };
+  stream
+    << ",auth:"
+    << ( ( flags & header_flag_aa ) ? "yes" : "no" )
+    << ",trunc:"
+    << ( ( flags & header_flag_tc ) ? "yes" : "no" )
+    << ",recurse_desired:"
+    << ( ( flags & header_flag_rd ) ? "yes" : "no" )
+    << ",recurse_avail:"
+    << ( ( flags & header_flag_ra ) ? "yes" : "no" )
+    << ",rcode="
+    ;
+  switch ( flags & header_flag_rcode ) {
+    case 0:
+      stream << "no_error";
+      break;
+    case 1:
+      stream << "format_error";
+      break;
+    case 2:
+      stream << "server_fail";
+      break;
+    case 3:
+      stream << "name_error";
+      break;
+    case 4:
+      stream << "not_impl";
+      break;
+    case 5:
+      stream << "refused";
+      break;
+    default:
+      stream << "reserved(" << ( flags & header_flag_rcode );
+  };
+  stream
+    << ")"
     << ",ques=" << m_header.qdcount
     << ",answ=" << m_header.ancount
     << ",nsrr=" << m_header.nscount
