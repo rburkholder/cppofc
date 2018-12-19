@@ -9,6 +9,8 @@
 #ifndef DNS_H
 #define DNS_H
 
+#include <string>
+
 #include <boost/endian/arithmetic.hpp>
 
 namespace protocol {
@@ -102,19 +104,34 @@ enum rcode {
 /*
  * message format:
  *   header
- *   question (question for the name server)
- *   answer (RRs answering the question)
- *   authority (RRs pointing toward an authority)
- *   additional (RRs hoding additional information)
+ *   question (question for the name server), QNAME, QTYPE, QCLASS
+ *   answer (RRs answering the question), NAME, TYPE, CLASS, TTL, RDLENGTH, RDATA
+ *   authority (RRs pointing toward an authority), NAME, TYPE, CLASS, TTL, RDLENGTH, RDATA
+ *   additional (RRs hoding additional information), NAME, TYPE, CLASS, TTL, RDLENGTH, RDATA
  */
 
 struct header_ { // https://tools.ietf.org/html/rfc1035
   endian::big_uint16_t id;  // copied to reply from request
   endian::big_uint16_t flags;
-  endian::big_uint16_t qdcount; // number of entries in the question section
-  endian::big_uint16_t ancount; // number of entries in the answer section
-  endian::big_uint16_t nscount; // number of entries in the name server resource records section
-  endian::big_uint16_t arcount; // number of entries in the additional records section
+  endian::big_uint16_t qdcount; // cnt in question section, rfc1035, page 27
+  endian::big_uint16_t ancount; // cnt in answer section
+  endian::big_uint16_t nscount; // cnt in name server resource records section
+  endian::big_uint16_t arcount; // cnt in additional records section
+};
+
+struct question_ {
+  std::string m_name;
+  uint16_t m_qtype;
+  uint16_t m_qclass;
+};
+
+struct rr_ {
+  std::string m_name;
+  uint16_t m_type;
+  uint16_t m_class;
+  uint32_t m_ttl;
+  uint16_t m_rdlen;
+  uint8_t* m_prd;
 };
 
 // ** Header
@@ -141,18 +158,24 @@ class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
 
-  Packet( uint8_t& );  // need a way to determine whether to initialize or not
+  Packet( uint8_t& ); // TODO: require packet length for validation purposes
   virtual ~Packet();
 
   const header_& GetHeader() {
-    return *m_pHeader_;
+    return *m_pHeader;
   }
 
 protected:
 private:
 
-  header_* m_pHeader_;
+  uint8_t* m_pPacket;
+  header_* m_pHeader;
+  uint8_t* m_pData;
   //Content m_Content;
+
+  uint8_t* DecodeName( uint8_t* p, std::string& name ) const;
+  uint8_t* DecodeQuestion( uint8_t* p, question_& q ) const;
+  uint8_t* DecodeResourceRecord( uint8_t* p, rr_& ) const;
 
 };
 
