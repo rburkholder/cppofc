@@ -6,6 +6,8 @@
  * Created on November 8, 2018, 3:30 PM
  */
 
+#include "../../hexdump.h"
+
 #include "tcp.h"
 
 namespace protocol {

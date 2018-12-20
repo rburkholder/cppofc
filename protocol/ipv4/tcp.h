@@ -13,8 +13,6 @@
 
 #include <boost/endian/arithmetic.hpp>
 
-#include "../../hexdump.h"
-
 // https://en.wikipedia.org/wiki/Transmission_Control_Protocol
 
 namespace protocol {
