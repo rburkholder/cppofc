@@ -1,10 +1,12 @@
-/* 
+/*
  * File:   ipv4.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
- * 
+ *
  * Created on November 7, 2018, 7:57 PM
  */
+
+#include "ipv4/address.h"
 
 #include "ipv4.h"
 
@@ -18,16 +20,30 @@ Header::Header( const Header_& header ): m_header( header ) {
 
 Header::~Header() {}
 
+bool Header_::Validate() {
+  return
+    ( 4 == version() ) &&
+    ( 5 <= ihl() )
+    ;
+}
+
 std::ostream& Header::Emit( std::ostream& stream ) const {
-  stream 
-    << "ihl=" << (uint16_t) ( m_header.ihl() ) // should be 5 (20 bytes without options)
-    << std::hex 
-    << ",src_ip=0x" << m_header.source_ip
-    << ",dst_ip=0x" << m_header.destination_ip
+
+  address src( m_header.source_ip );
+  address dst( m_header.destination_ip );
+
+  stream
+    << "protocol=" << (uint16_t) m_header.protocol
+    << ",ihl=" << (uint16_t) ( m_header.ihl() ) // should be 5 (20 bytes without options)
+    << ",src_ip=" << src
+    << ",dst_ip=" << dst
+    << std::hex
     << ",qos=0x" << (uint16_t) m_header.qos
     << std::dec
+    << ",df=" << m_header.df()
+    << ",mf=" << m_header.mf()
     << ",ttl=" << (uint16_t) m_header.ttl
-    << ",protocol=" << (uint16_t) m_header.protocol
+    << ",len=" << m_header.length
     ;
   return stream;
 }

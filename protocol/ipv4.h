@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   ipv4.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
@@ -14,6 +14,8 @@
 #include <boost/endian/arithmetic.hpp>
 
 #include "../hexdump.h"
+
+#include "ipv4/address.h"
 
 // https://en.wikipedia.org/wiki/IPv4
 
@@ -33,31 +35,33 @@ struct Header_ { // used to overlay inbound data
   endian::big_uint8_t ttl;
   endian::big_uint8_t protocol;
   endian::big_uint16_t checksum;
-  endian::big_uint32_t source_ip;
-  endian::big_uint32_t destination_ip;
+  address_t source_ip;
+  address_t destination_ip;
   uint8_t options[0];
-  
+
   uint8_t ihl() const { return version_ihl & 0x0f; }
   uint8_t version() const { return version_ihl >> 4; }
   uint8_t dscp() const { return qos >> 2; }
   uint8_t ecn() const { return qos & 0x03; }
-  uint16_t offset() const { 
+  uint16_t offset() const {
     uint16_t flags_fragment_ = flags_fragment;
-    return flags_fragment_ & 0x1fff; 
+    return flags_fragment_ & 0x1fff;
   }
-  bool df() const { 
+  bool df() const {
     uint16_t flags_fragment_ = flags_fragment;
-    return ( 0 < ( flags_fragment_ & 0x400 ) ); 
+    return ( 0 < ( flags_fragment_ & 0x400 ) );
   }
-  bool mf() const { 
+  bool mf() const {
     uint16_t flags_fragment_ = flags_fragment;
-    return ( 0 < ( flags_fragment_ & 0x200 ) ); 
+    return ( 0 < ( flags_fragment_ & 0x200 ) );
   }
-  
+
   uint8_t& data() {
     assert( 5 <= ihl() );
     return 5 == ihl() ? options[0] : ( options + ( ( ihl() - 5 ) * 4 ) )[0];
   }
+
+  bool Validate();
 };
 
 // ** Header
@@ -65,14 +69,14 @@ struct Header_ { // used to overlay inbound data
 class Header {
   friend std::ostream& operator<<( std::ostream&, const Header& );
 public:
-  
+
   Header( const Header_& );
   virtual ~Header();
-  
-protected:  
-private:  
+
+protected:
+private:
   const Header_& m_header;
-  
+
   std::ostream& Emit( std::ostream& stream ) const;
 };
 
@@ -83,10 +87,10 @@ std::ostream& operator<<( std::ostream& stream, const Header& header );
 class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
-  
+
   Packet( uint8_t& );  // need a way to determine whether to initialize or not
   virtual ~Packet();
-  
+
   const Header_& GetHeader() {
     return *m_pHeader_;
   }
@@ -96,10 +100,10 @@ public:
 
 protected:
 private:
-  
+
   Header_* m_pHeader_;
   //Content m_Content;
-  
+
 //  std::ostream& Emit( std::ostream& stream ) const {
 //    stream << "ipv4: " << *m_pHeader_;
 //    return stream;

@@ -37,9 +37,7 @@ public:
 protected:
 private:
   address_t m_ipv4;
-
   std::ostream& Emit( std::ostream& stream ) const;
-
 };
 
 } // namespace ipv4
