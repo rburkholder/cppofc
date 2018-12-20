@@ -325,7 +325,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
 
               switch ( ipv4.GetHeader().protocol ) {
                 case 6: {// tcp
-                  protocol::tcp::Packet tcp( ipv4.GetData() );
+                  protocol::tcp::Packet tcp( ipv4.GetData(), 0 ); // TODO: need to fix
                   std::cout << tcp << ::std::endl;
                   }
                   break;

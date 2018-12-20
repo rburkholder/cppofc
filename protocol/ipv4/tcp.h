@@ -87,7 +87,7 @@ class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
 
-  Packet( uint8_t& );  // need a way to determine whether to initialize or not
+  Packet( uint8_t&, size_t len );
   virtual ~Packet();
 
   const Header_& GetHeader() {

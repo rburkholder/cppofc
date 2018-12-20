@@ -119,7 +119,7 @@ std::ostream& operator<<( std::ostream& stream, const Header& header ) {
 
 // ** Packet
 
-Packet::Packet( uint8_t& rOctets ) {
+Packet::Packet( uint8_t& rOctets, size_t len ) {
   m_pHeader_ = new ( &rOctets ) Header_;
   //m_Content.Init( *m_pHeader_ );
 }
