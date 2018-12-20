@@ -15,12 +15,12 @@ namespace ipv4 {
 
 // ** Header
 
-Header::Header( const header_& header ): m_header( header ) {
+Header::Header( const header& header ): m_header( header ) {
 }
 
 Header::~Header() {}
 
-bool header_::Validate() {
+bool header::Validate() {
   return
     ( 4 == version() ) &&
     ( 5 <= ihl() )
@@ -55,7 +55,7 @@ std::ostream& operator<<( std::ostream& stream, const Header& header ) {
 // ** Packet
 
 Packet::Packet( uint8_t& rOctets ) {
-  m_pHeader_ = new ( &rOctets ) header_;
+  m_pHeader_ = new ( &rOctets ) header;
   //m_Content.Init( *m_pHeader_ );
 }
 
