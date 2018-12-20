@@ -1,8 +1,8 @@
-/* 
+/*
  * File:   tcp.cpp
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
- * 
+ *
  * Created on November 8, 2018, 3:30 PM
  */
 
@@ -19,16 +19,21 @@ Header::Header( const Header_& header ): m_header( header ) {
 Header::~Header() {}
 
 std::ostream& Header::Emit( std::ostream& stream ) const {
-  stream 
+  stream
     <<  "src_port=" << m_header.src_port
     << ",dst_port=" << m_header.dst_port
     << ",seq="      << m_header.sequence_num
-    << ",ack="      << m_header.acknowledgement_num
-    << ",checksum=" << m_header.checksum
-    << ",syn="      << m_header.syn() 
-    << ",ack="      << m_header.ack()
+    << ",ack="      << m_header.ack() << "," << m_header.acknowledgement_num
+//    << ",checksum=" << m_header.checksum
+    << ",syn="      << m_header.syn()
     << ",rst="      << m_header.rst()
     << ",fin="      << m_header.fin()
+    << ",psh="      << m_header.psh()
+    << ",urg="      << m_header.urg()
+    << ",ns="       << m_header.ns()
+    << ",cwr="      << m_header.cwr()
+    << ",ece="      << m_header.ece()
+    << ",offset="   << m_header.offset()
     ;
   return stream;
 }

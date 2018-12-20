@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   tcp.h
  * Author: Raymond Burkholder
  *         raymond@burkholder.net
@@ -34,26 +34,29 @@ struct Header_ { // used to overlay inbound data
   endian::big_uint16_t checksum;
   endian::big_uint16_t urgent;
   uint8_t options[0];
-  
-  uint8_t offset() const {
-    assert( 5 <= offset() );
+
+  uint16_t offset() const {
+    uint16_t aggregate_( aggregate );
+    uint8_t offset_( aggregate_ >> 12 );
+    assert(  5 <= offset_ );
+    assert( 15 >= offset_ );
     return ((uint16_t)aggregate) >> 12;
   }
-  
+
   uint16_t flags() const {
     return ((uint16_t)aggregate) & 0x1ff;
   }
-  
-  bool  ns() const { return 0 < ((uint16_t)aggregate & 0x100); }
-  bool cwr() const { return 0 < ((uint16_t)aggregate & 0x080); }
-  bool ece() const { return 0 < ((uint16_t)aggregate & 0x040); }
-  bool urg() const { return 0 < ((uint16_t)aggregate & 0x020); }
-  bool ack() const { return 0 < ((uint16_t)aggregate & 0x010); }
-  bool psh() const { return 0 < ((uint16_t)aggregate & 0x008); }
-  bool rst() const { return 0 < ((uint16_t)aggregate & 0x004); }
-  bool syn() const { return 0 < ((uint16_t)aggregate & 0x002); }
-  bool fin() const { return 0 < ((uint16_t)aggregate & 0x001); }
-  
+
+  bool  ns() const { return 0 < (((uint16_t)aggregate) & 0x100); } // ECN-nonce - concealment protection
+  bool cwr() const { return 0 < (((uint16_t)aggregate) & 0x080); } // Congestion Window Reduced (CWR)
+  bool ece() const { return 0 < (((uint16_t)aggregate) & 0x040); } // ECN-Echo
+  bool urg() const { return 0 < (((uint16_t)aggregate) & 0x020); } // Urgent pointer field is significant
+  bool ack() const { return 0 < (((uint16_t)aggregate) & 0x010); } // Acknowledgment field is significant
+  bool psh() const { return 0 < (((uint16_t)aggregate) & 0x008); } // push the buffered data to the receiving application
+  bool rst() const { return 0 < (((uint16_t)aggregate) & 0x004); } // Reset the connection
+  bool syn() const { return 0 < (((uint16_t)aggregate) & 0x002); } // Synchronize sequence numbers
+  bool fin() const { return 0 < (((uint16_t)aggregate) & 0x001); } // Last packet from sender.
+
   uint8_t& data() {
     return 5 == offset() ? options[0] : ( options + ( ( offset() - 5 ) * 4 ) )[0];
   }
@@ -64,14 +67,14 @@ struct Header_ { // used to overlay inbound data
 class Header {
   friend std::ostream& operator<<( std::ostream&, const Header& );
 public:
-  
+
   Header( const Header_& );
   virtual ~Header();
 
-protected:  
-private:  
+protected:
+private:
   const Header_& m_header;
-  
+
   std::ostream& Emit( std::ostream& stream ) const;
 };
 
@@ -82,10 +85,10 @@ std::ostream& operator<<( std::ostream& stream, const Header& header );
 class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
-  
+
   Packet( uint8_t& );  // need a way to determine whether to initialize or not
   virtual ~Packet();
-  
+
   const Header_& GetHeader() {
     return *m_pHeader_;
   }
@@ -95,10 +98,10 @@ public:
 
 protected:
 private:
-  
+
   Header_* m_pHeader_;
   //Content m_Content;
-  
+
   std::ostream& Emit( std::ostream& stream ) const {
     stream << "tcp: " << *m_pHeader_;
     return stream;
