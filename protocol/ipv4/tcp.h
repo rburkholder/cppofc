@@ -33,7 +33,7 @@ struct Header_ { // used to overlay inbound data
   endian::big_uint16_t window;
   endian::big_uint16_t checksum;
   endian::big_uint16_t urgent;
-  uint8_t options[0];
+  uint8_t options[0]; // http://www.iana.org/assignments/tcp-parameters/tcp-parameters.xhtml
 
   uint16_t offset() const {
     uint16_t aggregate_( aggregate );
@@ -58,7 +58,8 @@ struct Header_ { // used to overlay inbound data
   bool fin() const { return 0 < (((uint16_t)aggregate) & 0x001); } // Last packet from sender.
 
   uint8_t& data() {
-    return 5 == offset() ? options[0] : ( options + ( ( offset() - 5 ) * 4 ) )[0];
+    uint16_t offset_( offset() );
+    return 5 == offset_ ? options[0] : ( options + ( ( offset_ - 5 ) * 4 ) )[0];
   }
 };
 
