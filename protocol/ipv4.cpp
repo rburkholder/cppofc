@@ -6,6 +6,8 @@
  * Created on November 7, 2018, 7:57 PM
  */
 
+#include "../hexdump.h"
+
 #include "ipv4/address.h"
 
 #include "ipv4.h"
@@ -43,8 +45,13 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
     << ",df=" << m_header.df()
     << ",mf=" << m_header.mf()
     << ",ttl=" << (uint16_t) m_header.ttl
-    << ",len=" << m_header.length
+    << ",data_len=" << m_header.data_len()
     ;
+
+  if ( 5 < m_header.ihl() ) {
+    stream << HexDump<const uint8_t*>( m_header.options, m_header.options + ( ( m_header.ihl() - 5 ) * 4 ) );
+  }
+
   return stream;
 }
 

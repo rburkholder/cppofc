@@ -61,6 +61,8 @@ struct header { // used to overlay inbound data
     return 5 == ihl() ? options[0] : ( options + ( ( ihl() - 5 ) * 4 ) )[0];
   }
 
+  uint16_t data_len() const { return (uint16_t)length - ( ihl() * 4 ); }
+
   bool Validate();
 };
 
