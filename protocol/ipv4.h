@@ -26,7 +26,7 @@ namespace endian=boost::endian;
 
 // ** Header_
 
-struct Header_ { // used to overlay inbound data
+struct header_ { // used to overlay inbound data
   uint8_t version_ihl;
   uint8_t qos;
   endian::big_uint16_t length;
@@ -70,12 +70,12 @@ class Header {
   friend std::ostream& operator<<( std::ostream&, const Header& );
 public:
 
-  Header( const Header_& );
+  Header( const header_& );
   virtual ~Header();
 
 protected:
 private:
-  const Header_& m_header;
+  const header_& m_header;
 
   std::ostream& Emit( std::ostream& stream ) const;
 };
@@ -91,7 +91,7 @@ public:
   Packet( uint8_t& );  // need a way to determine whether to initialize or not
   virtual ~Packet();
 
-  const Header_& GetHeader() {
+  const header_& GetHeader() {
     return *m_pHeader_;
   }
   uint8_t& GetData() {
@@ -101,7 +101,7 @@ public:
 protected:
 private:
 
-  Header_* m_pHeader_;
+  header_* m_pHeader_;
   //Content m_Content;
 
 //  std::ostream& Emit( std::ostream& stream ) const {
