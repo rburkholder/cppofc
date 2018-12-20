@@ -106,11 +106,6 @@ private:
   header* m_pHeader_;
   //Content m_Content;
 
-//  std::ostream& Emit( std::ostream& stream ) const {
-//    stream << "ipv4: " << *m_pHeader_;
-//    return stream;
-//  }
-
 };
 
 } // namespace ipv4
