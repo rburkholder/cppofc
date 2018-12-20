@@ -101,11 +101,6 @@ private:
   header* m_pHeader_;
   //Content m_Content;
 
-  std::ostream& Emit( std::ostream& stream ) const {
-    stream << "tcp: " << *m_pHeader_;
-    return stream;
-  }
-
 };
 
 } // namespace tcp
