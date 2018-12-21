@@ -296,7 +296,7 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
               [this, idVlan, &ethernet, pMessage, pPayload, length = pPacket->total_len](nPort_t nSrcPort) {
 
                 protocol::ipv4::arp::ethernet arp( *pMessage );
-                std::cout << "arp: " << arp << ::std::endl;
+                std::cout << arp << ::std::endl;
 
                 m_arpCache.Update( arp );
 
