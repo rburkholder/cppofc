@@ -17,7 +17,6 @@
 #include <boost/spirit/include/qi_char.hpp>
 #include <boost/spirit/include/qi_lit.hpp>
 
-//#include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 
 #include "../../hexdump.h"
@@ -26,7 +25,8 @@
 
 namespace {
   static const protocol::ethernet::address_t broadcast = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-  static const protocol::ethernet::address_t allzero   = { 0x0,  0x0,  0x0,  0x0,  0x0,  0x0  };
+  static const protocol::ethernet::address_t allzero   = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  static const protocol::ethernet::address_t user      = { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 };
   static const protocol::ethernet::address_t multicast = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 }; // IEEE 802 Multicast MAC Address (high 3 bytes)
 }
 

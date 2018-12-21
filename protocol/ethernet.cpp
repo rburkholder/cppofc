@@ -6,6 +6,8 @@
  * Created on June 12, 2017, 4:53 PM
  */
 
+#include "../hexdump.h"
+
 #include "ethernet.h"
 
 namespace protocol {
