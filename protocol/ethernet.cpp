@@ -23,8 +23,8 @@ std::ostream& header::Emit( std::ostream& stream ) const {
   stream
     << "ethernet:"
     << " ethertype=0x" << std::hex << m_pHeader->m_ethertype << std::dec
-    << " srcmac=" << HexDump<uint8_t*>( m_pHeader->m_macSrc, m_pHeader->m_macSrc + 6 )
     << " dstmac=" << HexDump<uint8_t*>( m_pHeader->m_macDest, m_pHeader->m_macDest + 6 )
+    << " srcmac=" << HexDump<uint8_t*>( m_pHeader->m_macSrc, m_pHeader->m_macSrc + 6 )
     ;
 
   return stream;
