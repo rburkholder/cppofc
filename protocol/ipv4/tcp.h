@@ -85,7 +85,7 @@ class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
 
-  Packet( uint8_t&, size_t len );
+  Packet( uint8_t&, uint16_t len );
   virtual ~Packet();
 
   const header& GetHeader() {
