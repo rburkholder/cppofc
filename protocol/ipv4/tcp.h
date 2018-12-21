@@ -22,7 +22,7 @@ namespace endian=boost::endian;
 
 // ** Header_
 
-struct header { // used to overlay inbound data
+struct header_ { // used to overlay inbound data
   endian::big_uint16_t src_port;
   endian::big_uint16_t dst_port;
   endian::big_uint32_t sequence_num;
@@ -67,12 +67,12 @@ class Header {
   friend std::ostream& operator<<( std::ostream&, const Header& );
 public:
 
-  Header( const header& );
+  Header( const header_& );
   virtual ~Header();
 
 protected:
 private:
-  const header& m_header;
+  const header_& m_header;
 
   std::ostream& Emit( std::ostream& stream ) const;
 };
@@ -88,7 +88,7 @@ public:
   Packet( uint8_t&, uint16_t len );
   virtual ~Packet();
 
-  const header& GetHeader() {
+  const header_& GetHeader() {
     return *m_pHeader_;
   }
   uint8_t& GetData() {
@@ -98,7 +98,7 @@ public:
 protected:
 private:
 
-  header* m_pHeader_;
+  header_* m_pHeader_;
   //Content m_Content;
 
 };
