@@ -320,12 +320,12 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
             }
             break;
           case protocol::ethernet::Ethertype::ipv4: {
-              protocol::ipv4::Packet ipv4( *pMessage, 0 ); // TODO: send real length for validation
+              protocol::ipv4::Packet ipv4( *pMessage, pPacket->total_len - ( pMessage - pPayload ) );
               std::cout << ipv4 << ::std::endl;
 
               switch ( ipv4.GetHeader().protocol ) {
                 case 6: {// tcp
-                  protocol::tcp::Packet tcp( ipv4.GetData(), 0 ); // TODO: need to fix
+                  protocol::tcp::Packet tcp( ipv4.GetData(), ipv4.GetHeader().data_len() );
                   std::cout << tcp << ::std::endl;
                   }
                   break;

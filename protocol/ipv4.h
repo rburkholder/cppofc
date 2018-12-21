@@ -96,17 +96,20 @@ public:
   virtual ~Packet();
 
   const header_& GetHeader() {
-    return *m_pheader;
+    return *m_pheader_;
   }
   uint8_t& GetData() {
-    return m_pheader->data();
+    return m_pheader_->data();
   }
 
 protected:
 private:
 
-  header_* m_pheader;
+  header_* m_pheader_;
+  uint16_t m_length;
   //Content m_Content;
+
+  bool Validate() const;
 
 };
 

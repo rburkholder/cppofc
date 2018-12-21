@@ -122,7 +122,7 @@ std::ostream& operator<<( std::ostream& stream, const Header& header ) {
 // ** Packet
 
 Packet::Packet( uint8_t& rOctets, uint16_t len ) {
-  m_pHeader_ = new ( &rOctets ) header_;
+  m_pheader_ = new ( &rOctets ) header_;
   //m_Content.Init( *m_pHeader_ );
 }
 
@@ -130,7 +130,7 @@ Packet::~Packet() {
 }
 
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
-  Header header( *packet.m_pHeader_ );
+  Header header( *packet.m_pheader_ );
   stream << "tcp=" << header;
   return stream;
 }

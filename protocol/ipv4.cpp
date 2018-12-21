@@ -49,7 +49,7 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
     ;
 
   if ( 5 < m_header.ihl() ) {
-    stream << HexDump<const uint8_t*>( m_header.options, m_header.options + ( ( m_header.ihl() - 5 ) * 4 ) );
+    stream << "options=" << HexDump<const uint8_t*>( m_header.options, m_header.options + ( ( m_header.ihl() - 5 ) * 4 ) );
   }
 
   return stream;
@@ -65,19 +65,29 @@ std::ostream& operator<<( std::ostream& stream, const Header& header ) {
 
 // ** Packet
 
-Packet::Packet( uint8_t& rOctets, uint16_t len ) {
-  m_pheader = new ( &rOctets ) header_;
-  Header header_( *m_pheader );
-  //assert( header_.Validate( len ) );
+Packet::Packet( uint8_t& rOctets, uint16_t len ) : m_length( len ) {
+  m_pheader_ = new ( &rOctets ) header_;
+  //Validate( len );
   //m_Content.Init( *m_pHeader_ );
 }
 
 Packet::~Packet() {
 }
 
+bool Packet::Validate() const {
+  Header header( *m_pheader_ );
+  bool bStatus( header.Validate( m_length ) );
+  if ( !bStatus ) {
+    std::cout << ",ipv4 length mismatch: " << m_length << "(actual) vs " << m_pheader_->length << "(expected), [" << m_pheader_->data_len() << "]" << std::endl;
+    if ( m_length < m_pheader_->length ) assert( 0 ); // allow overage but not under (IGMP, ipv4 (protocol 2[IGMP]) packets will pad
+  }
+  return bStatus;
+}
+
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
-  Header header_( *packet.m_pheader );
+  Header header_( *packet.m_pheader_ );
   stream << "ipv4: " << header_;
+  packet.Validate();
   return stream;
 }
 
