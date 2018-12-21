@@ -22,7 +22,7 @@ Header::Header( const header& header ): m_header( header ) {
 
 Header::~Header() {}
 
-bool header::Validate() {
+bool header::validate() const {
   return
     ( 4 == version() ) &&
     ( 5 <= ihl() )
@@ -55,14 +55,20 @@ std::ostream& Header::Emit( std::ostream& stream ) const {
   return stream;
 }
 
+bool Header::Validate(uint16_t len) const {
+  return m_header.validate() &&  ( m_header.length == len );
+}
+
 std::ostream& operator<<( std::ostream& stream, const Header& header ) {
   return header.Emit( stream );
 }
 
 // ** Packet
 
-Packet::Packet( uint8_t& rOctets ) {
-  m_pHeader_ = new ( &rOctets ) header;
+Packet::Packet( uint8_t& rOctets, uint16_t len ) {
+  m_pheader = new ( &rOctets ) header;
+  Header header_( *m_pheader );
+  //assert( header_.Validate( len ) );
   //m_Content.Init( *m_pHeader_ );
 }
 
@@ -70,8 +76,8 @@ Packet::~Packet() {
 }
 
 std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
-  Header header( *packet.m_pHeader_ );
-  stream << "ipv4: " << header;
+  Header header_( *packet.m_pheader );
+  stream << "ipv4: " << header_;
   return stream;
 }
 

@@ -63,7 +63,7 @@ struct header { // used to overlay inbound data
 
   uint16_t data_len() const { return (uint16_t)length - ( ihl() * 4 ); }
 
-  bool Validate();
+  bool validate() const;
 };
 
 // ** Header
@@ -74,6 +74,8 @@ public:
 
   Header( const header& );
   virtual ~Header();
+
+  bool Validate( uint16_t len ) const;
 
 protected:
 private:
@@ -90,20 +92,20 @@ class Packet {
   friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
 
-  Packet( uint8_t& );  // need a way to determine whether to initialize or not
+  Packet( uint8_t&, uint16_t len );  // need a way to determine whether to initialize or not
   virtual ~Packet();
 
   const header& GetHeader() {
-    return *m_pHeader_;
+    return *m_pheader;
   }
   uint8_t& GetData() {
-    return m_pHeader_->data();
+    return m_pheader->data();
   }
 
 protected:
 private:
 
-  header* m_pHeader_;
+  header* m_pheader;
   //Content m_Content;
 
 };
