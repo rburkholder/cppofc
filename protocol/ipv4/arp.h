@@ -151,7 +151,6 @@ private:
 // ** Cache
 
 class Cache {
-  friend std::ostream& operator<<( std::ostream&, const Packet& );
 public:
   void Update( const ethernet& );
 protected:
