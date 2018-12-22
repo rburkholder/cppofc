@@ -125,7 +125,7 @@ struct question_ {
   uint16_t m_qclass;
 };
 
-struct rr_ {
+struct rr_ { // TODO: decode and keep separate each label, therefore use vector here? and then match into tree of domains
   std::string m_name;
   uint16_t m_type;
   uint16_t m_class;
@@ -177,6 +177,15 @@ private:
   uint8_t* DecodeQuestion( uint8_t* p, question_& q ) const;
   uint8_t* DecodeResourceRecord( uint8_t* p, rr_& ) const;
 
+};
+
+// ** Cache
+
+class Cache {
+public:
+  void Update( const rr_& );
+protected:
+private:
 };
 
 } // namespace dns

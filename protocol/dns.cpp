@@ -236,5 +236,15 @@ std::ostream& operator<<( std::ostream& stream, const Packet& packet ) {
   return stream;
 }
 
+// ** Cache
+
+void Cache::Update( const rr_& rr ) {
+  // need to clear the cache of that type, when new ones arrive
+  // need to clear all records with ALL is used in the question?
+  // assign only when an answer is provided, ignore the transmitted quesiton
+  //   ie, when the answer and additional resource records are provided.
+  // additional records are specific?
+}
+
 } // namespace dns
 } // namespace protocol
