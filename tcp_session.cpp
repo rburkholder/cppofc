@@ -72,7 +72,7 @@ void tcp_session::do_read() {
   //std::cout << "do_read begin: " << std::endl;
   // going to need to perform serialization as bytes come in (multiple packets joined together)?
   auto self(shared_from_this());
-  m_vRx.resize( max_length );
+  m_vRx.resize( max_length );  // TODO: supply multiple buffers?
   m_socket.async_read_some(boost::asio::buffer(m_vRx),
       [this, self](boost::system::error_code ec, const std::size_t lenRead)
       {
@@ -285,6 +285,9 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
           pMessage = &ethernet.GetMessage();
           idEtherType = ethernet.GetEthertype();
         }
+
+        bool bForward( false );
+
         switch ( idEtherType ) {
           case protocol::ethernet::Ethertype::arp: { // dealt with further down
 
@@ -415,6 +418,13 @@ void tcp_session::ProcessPacket( uint8_t* pBegin, const uint8_t* pEnd ) {
           else {
             std::cout << "*****  undecoded packet with cookie " << pPacket->cookie << std::endl;
           }
+        }
+
+        if ( bForward ) {
+          // some thinking to do, as the nSrcPort is needed here
+          // may not need the lambda's any more?  depends upon sophistication of the match parsing.
+          // in addition to setting bFoward, need to assign nSrcPort for availability here
+          // or pass into the lambda, the forwarding function
         }
 
         break;
