@@ -1,3 +1,29 @@
+2018/12/22
+
+sample map code from https://stackoverflow.com/questions/8011994/boost-spirit-grammar-match-noisy-input
+
+//Includes
+#include <boost/spirit/include/qi.hpp>
+#include <boost/fusion/adapted/std_pair.hpp>
+
+//Code
+using namespace boost::spirit;
+using ascii::char_;
+using ascii::string;
+
+qi::rule<std::string::iterator, std::pair<std::string, std::string>() > pair_rule =
+  *(char_ - ':') >> ':' >>
+  qi::omit[*ascii::space] >>
+  *(char_ - eol) >> (eol || eoi);
+
+qi::rule<std::string::iterator, std::map<std::string, std::string>() > map_rule =
+  +pair_rule;
+
+std::map<std::string, std::string> v;
+bool r = qi::parse(test.begin(), test.end(), map_rule, v); 
+
+
+
 2018/11/24
 https://nanomsg.org/documentation-zeromq.html - Differences between nanomsg and ZeroMQ
 https://nanomsg.org/documentation-zeromq.html - notice about draw backs of zeromq for req/rep model in the threading model
