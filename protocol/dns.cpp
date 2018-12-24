@@ -248,3 +248,10 @@ void Cache::Update( const rr_& rr ) {
 
 } // namespace dns
 } // namespace protocol
+
+// helpful links:
+//   https://routley.io/tech/2017/12/28/hand-writing-dns-messages.html
+//   https://tools.ietf.org/html/rfc1035
+
+// refers to tdns, an example library in c++:, with other good notes as well:
+//   https://powerdns.org/hello-dns/
