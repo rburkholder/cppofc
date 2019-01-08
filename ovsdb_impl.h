@@ -15,6 +15,7 @@
 
 #include <boost/asio/local/stream_protocol.hpp>
 
+// orthogonal json reference: http://seriot.ch/parsing_json.php
 #include <json.hpp>
 
 #include "common.h"
