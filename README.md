@@ -64,3 +64,13 @@ ip netns exec right ping 172.16.1.1
 # Show port assignments:
 
     ovs-appctl dpctl/show
+
+# destination:
+
+    Remove the link layer header
+    Find the destination IP address in the IP header
+    Do a table lookup to determine the IP address of the next hop
+    Determine link layer address of the next hop
+    Add link layer header to packet
+    Queue packet for sending
+    Send or drop packet (if link is congested)
