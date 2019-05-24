@@ -74,3 +74,6 @@ ip netns exec right ping 172.16.1.1
     Add link layer header to packet
     Queue packet for sending
     Send or drop packet (if link is congested)
+
+# ncira extensions
+ look in https://github.com/osrg/openvswitch/blob/master/include/openflow/nicira-ext.h
