@@ -76,4 +76,6 @@ ip netns exec right ping 172.16.1.1
     Send or drop packet (if link is congested)
 
 # ncira extensions
- look in https://github.com/osrg/openvswitch/blob/master/include/openflow/nicira-ext.h
+ look in 
+ * https://github.com/osrg/openvswitch/blob/master/include/openflow/nicira-ext.h
+ * https://ryu.readthedocs.io/en/latest/nicira_ext_ref.html
